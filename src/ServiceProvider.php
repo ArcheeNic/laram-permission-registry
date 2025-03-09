@@ -72,6 +72,14 @@ class ServiceProvider extends BaseServiceProvider
             __DIR__ . '/Views' => resource_path('views/vendor/permission-registry'),
         ], 'permission-registry-views');
 
+        // Загрузка языковых файлов
+        $this->loadTranslationsFrom(__DIR__ . '/Lang', 'permission-registry');
+
+        // Публикация языковых файлов
+        $this->publishes([
+            __DIR__ . '/Lang' => resource_path('lang/vendor/permission-registry'),
+        ], 'permission-registry-lang');
+
         // Регистрация middleware
         Route::aliasMiddleware('permission', CheckPermission::class);
 
