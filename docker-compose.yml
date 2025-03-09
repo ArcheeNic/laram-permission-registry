@@ -1,0 +1,47 @@
+version: '3'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+    working_dir: /app
+    tty: true
+    command: tail -f /dev/null
+
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: vendor/bin/phpunit
+
+  install:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: composer install --no-interaction
+
+  laravel-demo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+      - ./demo:/demo
+    working_dir: /demo
+    ports:
+      - "8000:8000"
+    command: >
+      bash -c "composer create-project --prefer-dist laravel/laravel . && 
+              composer config repositories.local path /app && 
+              composer require artprog/permission-registry:@dev && 
+              php artisan permission-registry:install && 
+              php artisan serve --host=0.0.0.0"
