@@ -41,7 +41,8 @@ class ServiceProvider extends BaseServiceProvider
 
         // Регистрация конфигурации
         $this->mergeConfigFrom(
-            __DIR__ . '/../config/permission-registry.php', 'permission-registry'
+            __DIR__ . '/config/permission-registry.php',
+            'permission-registry'
         );
     }
 
@@ -49,7 +50,7 @@ class ServiceProvider extends BaseServiceProvider
     {
         // Публикация конфигурации
         $this->publishes([
-            __DIR__ . '/../config/permission-registry.php' => config_path('permission-registry.php'),
+            __DIR__ . '/config/permission-registry.php' => config_path('permission-registry.php'),
         ], 'permission-registry-config');
 
         // Публикация миграций
