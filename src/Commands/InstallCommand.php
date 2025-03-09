@@ -37,13 +37,6 @@ class InstallCommand extends Command
             $this->call('migrate');
         }
 
-        // Публикация представлений
-        if ($this->confirm('Хотите опубликовать представления для настройки?', false)) {
-            $this->call('vendor:publish', [
-                '--tag' => 'permission-registry-views',
-            ]);
-        }
-
         // Публикация языковых файлов
         if ($this->confirm('Хотите опубликовать языковые файлы для перевода?', true)) {
             $this->call('vendor:publish', [
