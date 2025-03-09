@@ -50,7 +50,7 @@ run_laravel_demo() {
     cd /demo
     composer create-project --prefer-dist laravel/laravel .
     composer config repositories.local path /app
-    composer require artprog/permission-registry:@dev
+    composer require archee-nic/permission-registry:@dev
     php artisan vendor:publish --tag=permission-registry-migrations
     php artisan vendor:publish --tag=permission-registry-config
     php artisan migrate

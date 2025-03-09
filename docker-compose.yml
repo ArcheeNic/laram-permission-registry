@@ -42,6 +42,6 @@ services:
     command: >
       bash -c "composer create-project --prefer-dist laravel/laravel . && 
               composer config repositories.local path /app && 
-              composer require artprog/permission-registry:@dev && 
+              composer require archee-nic/permission-registry:@dev && 
               php artisan permission-registry:install && 
               php artisan serve --host=0.0.0.0"
