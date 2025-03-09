@@ -73,12 +73,7 @@ class ServiceProvider extends BaseServiceProvider
         ], 'permission-registry-views');
 
         // Загрузка языковых файлов
-        $this->loadTranslationsFrom(__DIR__ . '/Lang', 'permission-registry');
-
-        // Публикация языковых файлов
-        $this->publishes([
-            __DIR__ . '/Lang' => resource_path('lang/vendor/permission-registry'),
-        ], 'permission-registry-lang');
+        $this->loadJsonTranslationsFrom(__DIR__ . '/Lang');
 
         // Регистрация middleware
         Route::aliasMiddleware('permission', CheckPermission::class);
