@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Modules\PermissionRegistry\Livewire;
+namespace ArcheeNic\PermissionRegistry\Livewire;
 
-use App\Modules\PermissionRegistry\Models\PermissionField;
+use ArcheeNic\PermissionRegistry\Models\PermissionField;
 use Livewire\Component;
 use Livewire\WithPagination;
 

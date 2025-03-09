@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\PermissionRegistry\Middleware;
+namespace ArcheeNic\PermissionRegistry\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\PermissionRegistry\Database\Migrations;
+namespace ArcheeNic\PermissionRegistry\Database\Migrations;
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;

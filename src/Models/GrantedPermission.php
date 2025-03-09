@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Modules\PermissionRegistry\Models;
+namespace ArcheeNic\PermissionRegistry\Models;
 
-use App\Modules\PermissionRegistry\Models\Base\GrantedPermission as BaseGrantedPermission;
+use ArcheeNic\PermissionRegistry\Models\Base\GrantedPermission as BaseGrantedPermission;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 

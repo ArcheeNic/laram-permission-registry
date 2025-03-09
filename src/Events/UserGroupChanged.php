@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\PermissionRegistry\Events;
+namespace ArcheeNic\PermissionRegistry\Events;
 
 readonly class UserGroupChanged
 {

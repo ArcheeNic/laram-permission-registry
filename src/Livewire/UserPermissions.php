@@ -1,15 +1,15 @@
 <?php
 
-namespace App\Modules\PermissionRegistry\Livewire;
+namespace ArcheeNic\PermissionRegistry\Livewire;
 
 use App\Models\User;
-use App\Modules\PermissionRegistry\Actions\GrantPermissionAction;
-use App\Modules\PermissionRegistry\Actions\RevokePermissionAction;
-use App\Modules\PermissionRegistry\Models\GrantedPermission;
-use App\Modules\PermissionRegistry\Models\Permission;
+use ArcheeNic\PermissionRegistry\Actions\GrantPermissionAction;
+use ArcheeNic\PermissionRegistry\Actions\RevokePermissionAction;
+use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
+use ArcheeNic\PermissionRegistry\Models\Permission;
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Modules\PermissionRegistry\Models\VirtualUser;
+use ArcheeNic\PermissionRegistry\Models\VirtualUser;
 
 class UserPermissions extends Component
 {

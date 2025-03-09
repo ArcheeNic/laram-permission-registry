@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Modules\PermissionRegistry\Actions;
+namespace ArcheeNic\PermissionRegistry\Actions;
 
-use App\Modules\PermissionRegistry\Models\GrantedPermission;
+use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
 use Illuminate\Support\Collection;
 
 class GetUserPermissionsAction

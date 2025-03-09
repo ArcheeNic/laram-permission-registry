@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Modules\PermissionRegistry\Controllers;
+namespace ArcheeNic\PermissionRegistry\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Modules\PermissionRegistry\Models\Permission;
-use App\Modules\PermissionRegistry\Models\PermissionField;
+use ArcheeNic\PermissionRegistry\Models\Permission;
+use ArcheeNic\PermissionRegistry\Models\PermissionField;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 

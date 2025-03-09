@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Modules\PermissionRegistry\Actions;
+namespace ArcheeNic\PermissionRegistry\Actions;
 
-use App\Modules\PermissionRegistry\Events\UserPositionChanged;
-use App\Modules\PermissionRegistry\Models\UserPosition;
+use ArcheeNic\PermissionRegistry\Events\UserPositionChanged;
+use ArcheeNic\PermissionRegistry\Models\UserPosition;
 use Illuminate\Support\Facades\Event;
 
 class AssignUserPositionAction

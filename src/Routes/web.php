@@ -1,10 +1,10 @@
 <?php
 
-use App\Modules\PermissionRegistry\Controllers\PermissionController;
-use App\Modules\PermissionRegistry\Controllers\PermissionFieldController;
-use App\Modules\PermissionRegistry\Controllers\PermissionGroupController;
-use App\Modules\PermissionRegistry\Controllers\PositionController;
-use App\Modules\PermissionRegistry\Controllers\UserController;
+use ArcheeNic\PermissionRegistry\Controllers\PermissionController;
+use ArcheeNic\PermissionRegistry\Controllers\PermissionFieldController;
+use ArcheeNic\PermissionRegistry\Controllers\PermissionGroupController;
+use ArcheeNic\PermissionRegistry\Controllers\PositionController;
+use ArcheeNic\PermissionRegistry\Controllers\UserController;
 
 // Главная страница модуля
 Route::get('', function () {

@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Modules\PermissionRegistry\Controllers;
+namespace ArcheeNic\PermissionRegistry\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Modules\PermissionRegistry\Actions\GrantPermissionAction;
-use App\Modules\PermissionRegistry\Actions\RevokePermissionAction;
-use App\Modules\PermissionRegistry\Models\GrantedPermission;
-use App\Modules\PermissionRegistry\Models\Permission;
-use App\Modules\PermissionRegistry\Models\VirtualUser;
+use ArcheeNic\PermissionRegistry\Actions\GrantPermissionAction;
+use ArcheeNic\PermissionRegistry\Actions\RevokePermissionAction;
+use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
+use ArcheeNic\PermissionRegistry\Models\Permission;
+use ArcheeNic\PermissionRegistry\Models\VirtualUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 

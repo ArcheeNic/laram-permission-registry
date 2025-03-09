@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Modules\PermissionRegistry\Models;
+namespace ArcheeNic\PermissionRegistry\Models;
 
-use App\Modules\PermissionRegistry\Models\Base\Position as BasePosition;
+use ArcheeNic\PermissionRegistry\Models\Base\Position as BasePosition;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;

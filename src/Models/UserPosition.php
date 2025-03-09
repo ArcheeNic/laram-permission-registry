@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Modules\PermissionRegistry\Models;
+namespace ArcheeNic\PermissionRegistry\Models;
 
-use App\Modules\PermissionRegistry\Models\Base\UserPosition as BaseUserPosition;
+use ArcheeNic\PermissionRegistry\Models\Base\UserPosition as BaseUserPosition;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class UserPosition extends BaseUserPosition

@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Modules\PermissionRegistry\Actions;
+namespace ArcheeNic\PermissionRegistry\Actions;
 
-use App\Modules\PermissionRegistry\Models\GrantedPermission;
-use App\Modules\PermissionRegistry\Models\Permission;
+use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
+use ArcheeNic\PermissionRegistry\Models\Permission;
 
 class PermissionChecker
 {

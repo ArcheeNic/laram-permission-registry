@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Modules\PermissionRegistry\Models;
+namespace ArcheeNic\PermissionRegistry\Models;
 
-use App\Modules\PermissionRegistry\Models\Base\PermissionField as BasePermissionField;
+use ArcheeNic\PermissionRegistry\Models\Base\PermissionField as BasePermissionField;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class PermissionField extends BasePermissionField

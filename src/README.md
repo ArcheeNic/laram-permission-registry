@@ -114,7 +114,7 @@ GrantedPermission <--> GrantedPermissionFieldValue
 // Пример глобального слушателя для перехвата события
 namespace App\Listeners;
 
-use App\Modules\PermissionRegistry\Events\PermissionGranted;
+use ArcheeNic\PermissionRegistry\Events\PermissionGranted;
 use App\Modules\OtherModule\Events\AccessChanged;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Support\Facades\Event;

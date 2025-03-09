@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\PermissionRegistry\Models\Base;
+namespace ArcheeNic\PermissionRegistry\Models\Base;
 
 use Illuminate\Database\Eloquent\Model;
 

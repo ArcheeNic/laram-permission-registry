@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Modules\PermissionRegistry\Actions;
+namespace ArcheeNic\PermissionRegistry\Actions;
 
-use App\Modules\PermissionRegistry\Events\UserGroupChanged;
-use App\Modules\PermissionRegistry\Models\UserGroup;
+use ArcheeNic\PermissionRegistry\Events\UserGroupChanged;
+use ArcheeNic\PermissionRegistry\Models\UserGroup;
 use Illuminate\Support\Facades\Event;
 
 class AssignUserGroupAction

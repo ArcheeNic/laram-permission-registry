@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Modules\PermissionRegistry\Actions;
+namespace ArcheeNic\PermissionRegistry\Actions;
 
-use App\Modules\PermissionRegistry\Events\AfterPermissionGranted;
-use App\Modules\PermissionRegistry\Events\BeforePermissionGranted;
-use App\Modules\PermissionRegistry\Models\GrantedPermission;
-use App\Modules\PermissionRegistry\Models\GrantedPermissionFieldValue;
-use App\Modules\PermissionRegistry\Models\Permission;
+use ArcheeNic\PermissionRegistry\Events\AfterPermissionGranted;
+use ArcheeNic\PermissionRegistry\Events\BeforePermissionGranted;
+use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
+use ArcheeNic\PermissionRegistry\Models\GrantedPermissionFieldValue;
+use ArcheeNic\PermissionRegistry\Models\Permission;
 use Illuminate\Support\Facades\Event;
 
 class GrantPermissionAction

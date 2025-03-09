@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Modules\PermissionRegistry\Models;
+namespace ArcheeNic\PermissionRegistry\Models;
 
-use App\Modules\PermissionRegistry\Models\Base\GrantedPermissionFieldValue as BaseGrantedPermissionFieldValue;
+use ArcheeNic\PermissionRegistry\Models\Base\GrantedPermissionFieldValue as BaseGrantedPermissionFieldValue;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class GrantedPermissionFieldValue extends BaseGrantedPermissionFieldValue

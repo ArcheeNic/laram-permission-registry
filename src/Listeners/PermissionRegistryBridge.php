@@ -2,9 +2,9 @@
 
 namespace App\Listeners;
 
-use App\Modules\PermissionRegistry\Events\AfterPermissionGranted;
-use App\Modules\PermissionRegistry\Events\AfterPermissionRevoked;
-use App\Modules\PermissionRegistry\Events\UserPositionChanged;
+use ArcheeNic\PermissionRegistry\Events\AfterPermissionGranted;
+use ArcheeNic\PermissionRegistry\Events\AfterPermissionRevoked;
+use ArcheeNic\PermissionRegistry\Events\UserPositionChanged;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Support\Facades\Event;
 

@@ -1,16 +1,16 @@
 <?php
 
-namespace App\Modules\PermissionRegistry\Actions;
+namespace ArcheeNic\PermissionRegistry\Actions;
 
-use App\Modules\PermissionRegistry\Events\AfterPermissionGranted;
-use App\Modules\PermissionRegistry\Events\BeforePermissionGranted;
-use App\Modules\PermissionRegistry\Models\GrantedPermission;
-use App\Modules\PermissionRegistry\Models\GrantedPermissionFieldValue;
-use App\Modules\PermissionRegistry\Models\Permission;
-use App\Modules\PermissionRegistry\Models\PermissionGroup;
-use App\Modules\PermissionRegistry\Models\Position;
-use App\Modules\PermissionRegistry\Models\UserGroup;
-use App\Modules\PermissionRegistry\Models\UserPosition;
+use ArcheeNic\PermissionRegistry\Events\AfterPermissionGranted;
+use ArcheeNic\PermissionRegistry\Events\BeforePermissionGranted;
+use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
+use ArcheeNic\PermissionRegistry\Models\GrantedPermissionFieldValue;
+use ArcheeNic\PermissionRegistry\Models\Permission;
+use ArcheeNic\PermissionRegistry\Models\PermissionGroup;
+use ArcheeNic\PermissionRegistry\Models\Position;
+use ArcheeNic\PermissionRegistry\Models\UserGroup;
+use ArcheeNic\PermissionRegistry\Models\UserPosition;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Event;
 

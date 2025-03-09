@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Modules\PermissionRegistry\Actions;
+namespace ArcheeNic\PermissionRegistry\Actions;
 
-use App\Modules\PermissionRegistry\Models\GrantedPermissionFieldValue;
-use App\Modules\PermissionRegistry\Models\Permission;
+use ArcheeNic\PermissionRegistry\Models\GrantedPermissionFieldValue;
+use ArcheeNic\PermissionRegistry\Models\Permission;
 
 class CheckPermissionFieldsAction
 {

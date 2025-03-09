@@ -1,20 +1,20 @@
 <?php
 
-namespace App\Modules\PermissionRegistry\Livewire;
+namespace ArcheeNic\PermissionRegistry\Livewire;
 
-use App\Modules\PermissionRegistry\Actions\AssignUserGroupAction;
-use App\Modules\PermissionRegistry\Actions\AssignUserPositionAction;
-use App\Modules\PermissionRegistry\Actions\GrantPermissionAction;
-use App\Modules\PermissionRegistry\Actions\RevokePermissionAction;
-use App\Modules\PermissionRegistry\Models\GrantedPermission;
-use App\Modules\PermissionRegistry\Models\Permission;
-use App\Modules\PermissionRegistry\Models\PermissionGroup;
-use App\Modules\PermissionRegistry\Models\Position;
-use App\Modules\PermissionRegistry\Models\UserGroup;
-use App\Modules\PermissionRegistry\Models\VirtualUser;
+use ArcheeNic\PermissionRegistry\Actions\AssignUserGroupAction;
+use ArcheeNic\PermissionRegistry\Actions\AssignUserPositionAction;
+use ArcheeNic\PermissionRegistry\Actions\GrantPermissionAction;
+use ArcheeNic\PermissionRegistry\Actions\RevokePermissionAction;
+use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
+use ArcheeNic\PermissionRegistry\Models\Permission;
+use ArcheeNic\PermissionRegistry\Models\PermissionGroup;
+use ArcheeNic\PermissionRegistry\Models\Position;
+use ArcheeNic\PermissionRegistry\Models\UserGroup;
+use ArcheeNic\PermissionRegistry\Models\VirtualUser;
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Modules\PermissionRegistry\Models\UserPosition;
+use ArcheeNic\PermissionRegistry\Models\UserPosition;
 
 class UsersManagement extends Component
 {
@@ -193,7 +193,7 @@ class UsersManagement extends Component
         $dependentPermissionIds = $this->dependentPermissions->pluck('id')->toArray();
 
         // Получаем все права, исключая зависимые
-        return \App\Modules\PermissionRegistry\Models\Permission::with('fields')
+        return Permission::with('fields')
             ->whereNotIn('id', $dependentPermissionIds)
             ->when($this->permissionSearch, function ($query) {
                 $query->where(function ($q) {
@@ -303,7 +303,7 @@ class UsersManagement extends Component
         $fields = [];
 
         // Проверяем, есть ли уже выданное разрешение для текущего пользователя
-        $grantedPermission = \App\Modules\PermissionRegistry\Models\GrantedPermission::where('user_id', $this->selectedUserId)
+        $grantedPermission = GrantedPermission::where('user_id', $this->selectedUserId)
             ->where('permission_id', $permission->id)
             ->with('fieldValues.field')
             ->first();
@@ -358,7 +358,7 @@ class UsersManagement extends Component
         $this->dependentPermissionFields = [];
 
         // Загрузка текущих прав пользователя
-        $grantedPermissions = \App\Modules\PermissionRegistry\Models\GrantedPermission::where('user_id', $userId)
+        $grantedPermissions = GrantedPermission::where('user_id', $userId)
             ->with(['permission', 'fieldValues.field'])
             ->get();
 
@@ -393,8 +393,8 @@ class UsersManagement extends Component
             return;
         }
 
-        $grantAction = app(\App\Modules\PermissionRegistry\Actions\GrantPermissionAction::class);
-        $revokeAction = app(\App\Modules\PermissionRegistry\Actions\RevokePermissionAction::class);
+        $grantAction = app(GrantPermissionAction::class);
+        $revokeAction = app(RevokePermissionAction::class);
 
         // Сохраняем статус и поля обычных прав
         // ... существующий код для прямых прав ...

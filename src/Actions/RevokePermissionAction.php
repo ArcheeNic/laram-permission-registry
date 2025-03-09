@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Modules\PermissionRegistry\Actions;
+namespace ArcheeNic\PermissionRegistry\Actions;
 
-use App\Modules\PermissionRegistry\Events\AfterPermissionRevoked;
-use App\Modules\PermissionRegistry\Events\BeforePermissionRevoked;
-use App\Modules\PermissionRegistry\Models\GrantedPermission;
-use App\Modules\PermissionRegistry\Models\Permission;
+use ArcheeNic\PermissionRegistry\Events\AfterPermissionRevoked;
+use ArcheeNic\PermissionRegistry\Events\BeforePermissionRevoked;
+use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
+use ArcheeNic\PermissionRegistry\Models\Permission;
 use Illuminate\Support\Facades\Event;
 
 class RevokePermissionAction
