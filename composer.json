@@ -1,5 +1,5 @@
 {
-    "name": "artprog/permission-registry",
+    "name": "archeenic/laram-permission-registry",
     "description": "Laravel module for managing user permissions registry",
     "type": "library",
     "license": "MIT",
@@ -16,16 +16,16 @@
     },
     "autoload": {
         "psr-4": {
-            "Artprog\\PermissionRegistry\\": "src/"
+            "ArcheeNic\\PermissionRegistry\\": "src/"
         }
     },
     "extra": {
         "laravel": {
             "providers": [
-                "Artprog\\PermissionRegistry\\ServiceProvider"
+                "ArcheeNic\\PermissionRegistry\\ServiceProvider"
             ],
             "aliases": {
-                "PermissionRegistry": "Artprog\\PermissionRegistry\\Facades\\PermissionRegistry"
+                "PermissionRegistry": "ArcheeNic\\PermissionRegistry\\Facades\\PermissionRegistry"
             }
         }
     },

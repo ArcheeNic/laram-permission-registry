@@ -34,7 +34,7 @@ php artisan vendor:publish --tag=permission-registry-views
 ### Проверка доступа
 
 ```php
-use Artprog\PermissionRegistry\Facades\PermissionRegistry;
+use ArcheeNic\PermissionRegistry\Facades\PermissionRegistry;
 
 // Проверка прав доступа
 if (PermissionRegistry::hasPermission($userId, 'service_name', 'permission_name')) {

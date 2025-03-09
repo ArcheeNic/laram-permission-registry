@@ -1,16 +1,22 @@
 <?php
 
-namespace Artprog\PermissionRegistry;
+namespace ArcheeNic\PermissionRegistry;
 
+use ArcheeNic\PermissionRegistry\Livewire\FieldsList;
+use ArcheeNic\PermissionRegistry\Livewire\GroupsList;
+use ArcheeNic\PermissionRegistry\Livewire\PermissionsList;
+use ArcheeNic\PermissionRegistry\Livewire\PositionsList;
+use ArcheeNic\PermissionRegistry\Livewire\UserPermissions;
+use ArcheeNic\PermissionRegistry\Livewire\UsersManagement;
 use Illuminate\Support\ServiceProvider as BaseServiceProvider;
-use Artprog\PermissionRegistry\Actions\CheckPermissionFieldsAction;
-use Artprog\PermissionRegistry\Actions\GetUserPermissionsAction;
-use Artprog\PermissionRegistry\Actions\GrantPermissionAction;
-use Artprog\PermissionRegistry\Actions\PermissionChecker;
-use Artprog\PermissionRegistry\Actions\RevokePermissionAction;
-use Artprog\PermissionRegistry\Actions\SyncUserPermissionsAction;
-use Artprog\PermissionRegistry\Facades\PermissionRegistry;
-use Artprog\PermissionRegistry\Middleware\CheckPermission;
+use ArcheeNic\PermissionRegistry\Actions\CheckPermissionFieldsAction;
+use ArcheeNic\PermissionRegistry\Actions\GetUserPermissionsAction;
+use ArcheeNic\PermissionRegistry\Actions\GrantPermissionAction;
+use ArcheeNic\PermissionRegistry\Actions\PermissionChecker;
+use ArcheeNic\PermissionRegistry\Actions\RevokePermissionAction;
+use ArcheeNic\PermissionRegistry\Actions\SyncUserPermissionsAction;
+use ArcheeNic\PermissionRegistry\Facades\PermissionRegistry;
+use ArcheeNic\PermissionRegistry\Middleware\CheckPermission;
 use Illuminate\Support\Facades\Route;
 use Livewire\Livewire;
 
@@ -85,11 +91,11 @@ class ServiceProvider extends BaseServiceProvider
     protected function registerLivewireComponents(): void
     {
         // Регистрация Livewire компонентов
-        Livewire::component('permission-registry::permissions-list', \Artprog\PermissionRegistry\Livewire\PermissionsList::class);
-        Livewire::component('permission-registry::user-permissions', \Artprog\PermissionRegistry\Livewire\UserPermissions::class);
-        Livewire::component('permission-registry::users-management', \Artprog\PermissionRegistry\Livewire\UsersManagement::class);
-        Livewire::component('permission-registry::fields-list', \Artprog\PermissionRegistry\Livewire\FieldsList::class);
-        Livewire::component('permission-registry::groups-list', \Artprog\PermissionRegistry\Livewire\GroupsList::class);
-        Livewire::component('permission-registry::positions-list', \Artprog\PermissionRegistry\Livewire\PositionsList::class);
+        Livewire::component('permission-registry::permissions-list', PermissionsList::class);
+        Livewire::component('permission-registry::user-permissions', UserPermissions::class);
+        Livewire::component('permission-registry::users-management', UsersManagement::class);
+        Livewire::component('permission-registry::fields-list', FieldsList::class);
+        Livewire::component('permission-registry::groups-list', GroupsList::class);
+        Livewire::component('permission-registry::positions-list', PositionsList::class);
     }
 }

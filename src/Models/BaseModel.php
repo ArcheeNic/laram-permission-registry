@@ -1,6 +1,6 @@
 <?php
 
-namespace Artprog\PermissionRegistry\Models;
+namespace ArcheeNic\PermissionRegistry\Models;
 
 use Illuminate\Database\Eloquent\Model;
 

@@ -6,4 +6,4 @@
 /.vscode/
 /.env
 /build/
-my-*.sh
+/my-*.(sh|txt)

@@ -1,14 +1,14 @@
 <?php
 
-namespace Artprog\PermissionRegistry;
+namespace ArcheeNic\PermissionRegistry;
 
-use Artprog\PermissionRegistry\Actions\CheckPermissionFieldsAction;
-use Artprog\PermissionRegistry\Actions\GetUserPermissionsAction;
-use Artprog\PermissionRegistry\Actions\GrantPermissionAction;
-use Artprog\PermissionRegistry\Actions\PermissionChecker;
-use Artprog\PermissionRegistry\Actions\RevokePermissionAction;
-use Artprog\PermissionRegistry\Actions\SyncUserPermissionsAction;
-use Artprog\PermissionRegistry\Models\Permission;
+use ArcheeNic\PermissionRegistry\Actions\CheckPermissionFieldsAction;
+use ArcheeNic\PermissionRegistry\Actions\GetUserPermissionsAction;
+use ArcheeNic\PermissionRegistry\Actions\GrantPermissionAction;
+use ArcheeNic\PermissionRegistry\Actions\PermissionChecker;
+use ArcheeNic\PermissionRegistry\Actions\RevokePermissionAction;
+use ArcheeNic\PermissionRegistry\Actions\SyncUserPermissionsAction;
+use ArcheeNic\PermissionRegistry\Models\Permission;
 
 class PermissionRegistryManager
 {
