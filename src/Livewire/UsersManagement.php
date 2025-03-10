@@ -5,16 +5,15 @@ namespace ArcheeNic\PermissionRegistry\Livewire;
 use ArcheeNic\PermissionRegistry\Actions\AssignUserGroupAction;
 use ArcheeNic\PermissionRegistry\Actions\AssignUserPositionAction;
 use ArcheeNic\PermissionRegistry\Actions\GrantPermissionAction;
-use ArcheeNic\PermissionRegistry\Actions\RevokePermissionAction;
 use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
 use ArcheeNic\PermissionRegistry\Models\Permission;
 use ArcheeNic\PermissionRegistry\Models\PermissionGroup;
 use ArcheeNic\PermissionRegistry\Models\Position;
 use ArcheeNic\PermissionRegistry\Models\UserGroup;
+use ArcheeNic\PermissionRegistry\Models\UserPosition;
 use ArcheeNic\PermissionRegistry\Models\VirtualUser;
 use Livewire\Component;
 use Livewire\WithPagination;
-use ArcheeNic\PermissionRegistry\Models\UserPosition;
 
 class UsersManagement extends Component
 {
@@ -57,6 +56,10 @@ class UsersManagement extends Component
 
         $this->selectedUser = VirtualUser::with(['positions', 'groups'])->find($this->selectedUserId);
         $this->selectedGroup = null;
+
+        // Перезагружаем данные пользователя после изменения групп
+        $this->selectUser($this->selectedUserId);
+
         $this->dispatch('refreshUsers');
     }
 
@@ -66,6 +69,10 @@ class UsersManagement extends Component
         $action->remove($this->selectedUserId, $groupId);
 
         $this->selectedUser = VirtualUser::with(['positions', 'groups'])->find($this->selectedUserId);
+
+        // Перезагружаем данные пользователя после изменения групп
+        $this->selectUser($this->selectedUserId);
+
         $this->dispatch('refreshUsers');
     }
 
@@ -118,6 +125,7 @@ class UsersManagement extends Component
             ->orderBy('name')
             ->get();
     }
+
     public function render()
     {
         return view('permission-registry::livewire.users-management', [
@@ -143,6 +151,10 @@ class UsersManagement extends Component
 
         $this->selectedUser = VirtualUser::with(['positions', 'groups'])->find($this->selectedUserId);
         $this->selectedPosition = null;
+
+        // Перезагружаем данные пользователя после изменения должности
+        $this->selectUser($this->selectedUserId);
+
         $this->dispatch('refreshUsers');
     }
 
@@ -156,6 +168,10 @@ class UsersManagement extends Component
         $action->remove($this->selectedUserId, $positionId);
 
         $this->selectedUser = VirtualUser::with(['positions', 'groups'])->find($this->selectedUserId);
+
+        // Перезагружаем данные пользователя после изменения должности
+        $this->selectUser($this->selectedUserId);
+
         $this->dispatch('refreshUsers');
     }
 
@@ -207,11 +223,9 @@ class UsersManagement extends Component
             ->get();
     }
 
-    // Добавьте эти свойства в класс UsersManagement.php
     public $expandedDependentPermissionFields = [];
     public $dependentPermissionFields = [];
 
-// Добавьте метод для переключения видимости полей зависимых прав
     public function toggleDependentPermissionFields($permissionId)
     {
         if (isset($this->expandedDependentPermissionFields[$permissionId])) {
@@ -221,7 +235,6 @@ class UsersManagement extends Component
         }
     }
 
-// Модифицируйте метод getDependentPermissionsProperty для включения информации о полях
     public function getDependentPermissionsProperty()
     {
         if (!$this->selectedUserId) {
@@ -297,12 +310,11 @@ class UsersManagement extends Component
         return $result->unique('id')->values();
     }
 
-// Добавьте вспомогательный метод для получения полей разрешения
     protected function getFieldsForPermission($permission)
     {
         $fields = [];
 
-        // Проверяем, есть ли уже выданное разрешение для текущего пользователя
+        // Проверяем, есть ли уже выданное разрешение для текущего пользователя (включая неактивные)
         $grantedPermission = GrantedPermission::where('user_id', $this->selectedUserId)
             ->where('permission_id', $permission->id)
             ->with('fieldValues.field')
@@ -314,7 +326,7 @@ class UsersManagement extends Component
 
             // Если разрешение уже выдано, берем значение из него
             if ($grantedPermission) {
-                $fieldValue = $grantedPermission->fieldValues->first(function($item) use ($field) {
+                $fieldValue = $grantedPermission->fieldValues->first(function ($item) use ($field) {
                     return $item->permission_field_id == $field->id;
                 });
 
@@ -340,10 +352,8 @@ class UsersManagement extends Component
         return $fields;
     }
 
-    // Добавьте это свойство в класс UsersManagement
     public $dependentSelectedPermissions = [];
 
-// Обновите метод selectUser для загрузки статуса зависимых прав
     public function selectUser($userId)
     {
         $this->selectedUserId = $userId;
@@ -357,36 +367,55 @@ class UsersManagement extends Component
         $this->dependentSelectedPermissions = [];
         $this->dependentPermissionFields = [];
 
-        // Загрузка текущих прав пользователя
-        $grantedPermissions = GrantedPermission::where('user_id', $userId)
+        // Загрузка всех прав пользователя (включая неактивные)
+        $allUserPermissions = GrantedPermission::where('user_id', $userId)
             ->with(['permission', 'fieldValues.field'])
             ->get();
 
-        foreach ($grantedPermissions as $granted) {
-            $this->selectedPermissions[$granted->permission_id] = true;
+        // Получаем активные права из всех прав
+        $activePermissions = $allUserPermissions->where('enabled', true);
 
-            // Загрузка значений полей
+        // Отмечаем активные права
+        foreach ($activePermissions as $granted) {
+            $this->selectedPermissions[$granted->permission_id] = true;
+        }
+
+        // Загружаем значения полей для всех прав (включая неактивные)
+        foreach ($allUserPermissions as $granted) {
             foreach ($granted->fieldValues as $fieldValue) {
+                if (!isset($this->permissionFields[$granted->permission_id])) {
+                    $this->permissionFields[$granted->permission_id] = [];
+                }
                 $this->permissionFields[$granted->permission_id][$fieldValue->permission_field_id] = $fieldValue->value;
             }
         }
 
         // Загрузка статуса для зависимых прав
-        // Считаем, что все зависимые права включены по умолчанию
+        // Получаем все доступные зависимые права
         $dependentPermissions = $this->getDependentPermissionsProperty();
-        foreach ($dependentPermissions as $permission) {
-            // По умолчанию зависимые права включены
-            $this->dependentSelectedPermissions[$permission['id']] = true;
 
-            // Но если право явно отключено в базе, учитываем это
-            $grantedPermission = $grantedPermissions->firstWhere('permission_id', $permission['id']);
-            if ($grantedPermission && !$grantedPermission->enabled) {
+        foreach ($dependentPermissions as $permission) {
+            // Проверяем, есть ли это право у пользователя в базе (включая неактивные)
+            $existingPermission = $allUserPermissions->firstWhere('permission_id', $permission['id']);
+
+            if ($existingPermission) {
+                // Если право существует, устанавливаем статус исходя из поля enabled
+                $this->dependentSelectedPermissions[$permission['id']] = $existingPermission->enabled;
+
+                // Загружаем значения полей
+                foreach ($existingPermission->fieldValues as $fieldValue) {
+                    if (!isset($this->dependentPermissionFields[$permission['id']])) {
+                        $this->dependentPermissionFields[$permission['id']] = [];
+                    }
+                    $this->dependentPermissionFields[$permission['id']][$fieldValue->permission_field_id] = $fieldValue->value;
+                }
+            } else {
+                // Если право не существует в базе, устанавливаем статус в false
                 $this->dependentSelectedPermissions[$permission['id']] = false;
             }
         }
     }
 
-// Обновите метод saveUserPermissions для сохранения статуса зависимых прав
     public function saveUserPermissions()
     {
         if (!$this->selectedUserId) {
@@ -394,20 +423,44 @@ class UsersManagement extends Component
         }
 
         $grantAction = app(GrantPermissionAction::class);
-        $revokeAction = app(RevokePermissionAction::class);
 
-        // Сохраняем статус и поля обычных прав
-        // ... существующий код для прямых прав ...
+        // Получаем ID всех доступных прав
+        $availablePermissionIds = $this->availablePermissions->pluck('id')->toArray();
+
+        // Получаем текущие права пользователя
+        $userPermissions = GrantedPermission::where('user_id', $this->selectedUserId)->get();
+
+        foreach ($availablePermissionIds as $permId) {
+            $isSelected = isset($this->selectedPermissions[$permId]) && $this->selectedPermissions[$permId];
+            $existingPermission = $userPermissions->firstWhere('permission_id', $permId);
+
+            if ($isSelected) {
+                // Если право выбрано, выдаем его с полями или обновляем существующее
+                $fieldValues = $this->permissionFields[$permId] ?? [];
+                $meta = $existingPermission ? $existingPermission->meta : [];
+                $expiresAt = $existingPermission ? $existingPermission->expires_at : null;
+
+                $grantAction->handle($this->selectedUserId, $permId, $fieldValues, $meta, $expiresAt);
+            } elseif ($existingPermission) {
+                // Если право не выбрано, но существует - деактивируем его
+                $existingPermission->update(['enabled' => false]);
+            }
+        }
 
         // Сохраняем статус и поля зависимых прав
         foreach ($this->dependentSelectedPermissions as $permId => $isEnabled) {
+            $existingPermission = $userPermissions->firstWhere('permission_id', $permId);
+
             if ($isEnabled) {
-                // Если право включено, сохраняем его с полями
+                // Если право включено, сохраняем его с полями или обновляем существующее
                 $fieldValues = $this->dependentPermissionFields[$permId] ?? [];
-                $grantAction->handle($this->selectedUserId, $permId, $fieldValues);
-            } else {
-                // Если право выключено, отзываем его
-                $revokeAction->handle($this->selectedUserId, $permId);
+                $meta = $existingPermission ? $existingPermission->meta : [];
+                $expiresAt = $existingPermission ? $existingPermission->expires_at : null;
+
+                $grantAction->handle($this->selectedUserId, $permId, $fieldValues, $meta, $expiresAt);
+            } elseif ($existingPermission) {
+                // Если право выключено, но существует - деактивируем его
+                $existingPermission->update(['enabled' => false]);
             }
         }
 

@@ -7,7 +7,7 @@
 Вы можете установить пакет через Composer:
 
 ```bash
-composer require archeenic/laram-permission-registry
+composer require archee-nic/permission-registry
 ```
 
 После установки опубликуйте миграции и запустите их:

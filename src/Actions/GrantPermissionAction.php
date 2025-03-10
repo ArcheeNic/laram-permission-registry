@@ -20,7 +20,6 @@ class GrantPermissionAction
     ): GrantedPermission {
         $permission = Permission::findOrFail($permissionId);
 
-        // Убеждаемся, что виртуальный пользователь существует
         // Диспетчеризация события перед выдачей доступа
         Event::dispatch(new BeforePermissionGranted(
             $userId,
@@ -37,7 +36,7 @@ class GrantPermissionAction
                 'permission_id' => $permissionId,
             ],
             [
-                'enabled' => true,
+                'enabled' => true, // Всегда устанавливаем enabled в true при выдаче доступа
                 'meta' => $meta,
                 'granted_at' => now(),
                 'expires_at' => $expiresAt,

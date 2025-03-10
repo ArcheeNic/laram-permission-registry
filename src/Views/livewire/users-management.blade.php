@@ -171,12 +171,12 @@
                                                         <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-500">
                                                             @if($permission['source_type'] === 'position')
                                                                 <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                                            {{ $permission['source_name'] }} ({{ __('permission-registry::Position') }})
-                                        </span>
+                                        {{ $permission['source_name'] }} ({{ __('permission-registry::Position') }})
+                                    </span>
                                                             @else
                                                                 <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                                            {{ $permission['source_name'] }} ({{ __('permission-registry::Group') }})
-                                        </span>
+                                        {{ $permission['source_name'] }} ({{ __('permission-registry::Group') }})
+                                    </span>
                                                             @endif
                                                         </td>
                                                         <td class="px-3 py-2 whitespace-nowrap">
@@ -221,6 +221,14 @@
                                                 @endforeach
                                                 </tbody>
                                             </table>
+                                        </div>
+
+                                        <!-- Добавляем кнопку сохранения для зависимых прав -->
+                                        <div class="mt-4 flex justify-end">
+                                            <button wire:click="saveUserPermissions"
+                                                    class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700">
+                                                {{ __('permission-registry::Save Permissions') }}
+                                            </button>
                                         </div>
                                     @else
                                         <p class="text-sm text-gray-500">{{ __('permission-registry::No dependent permissions found') }}</p>
