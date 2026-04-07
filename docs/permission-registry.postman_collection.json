@@ -1,0 +1,303 @@
+{
+  "info": {
+    "name": "Permission Registry API",
+    "description": "API для управления пользователями, правами доступа, должностями и группами",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost/api",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "your-sanctum-token",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"global_fields\": {\n    \"1\": \"ivan@example.com\",\n    \"2\": \"+79001234567\",\n    \"3\": \"Иван\",\n    \"4\": \"Иванов\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/permission-registry/users",
+              "host": ["{{base_url}}"],
+              "path": ["permission-registry", "users"]
+            },
+            "description": "Создание нового пользователя с автоматической генерацией имени"
+          },
+          "response": []
+        },
+        {
+          "name": "Create User (Empty)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{base_url}}/permission-registry/users",
+              "host": ["{{base_url}}"],
+              "path": ["permission-registry", "users"]
+            },
+            "description": "Создание пользователя без глобальных полей"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Permissions",
+      "item": [
+        {
+          "name": "Grant Permission (Basic)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"permission_id\": 5,\n  \"field_values\": {\n    \"10\": \"some-value\",\n    \"11\": \"another-value\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/permission-registry/users/{{user_id}}/permissions",
+              "host": ["{{base_url}}"],
+              "path": ["permission-registry", "users", "{{user_id}}", "permissions"]
+            },
+            "description": "Базовая выдача права пользователю"
+          },
+          "response": []
+        },
+        {
+          "name": "Grant Permission (With Expiration)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"permission_id\": 5,\n  \"field_values\": {\n    \"10\": \"some-value\"\n  },\n  \"expires_at\": \"2026-12-31 23:59:59\",\n  \"meta\": {\n    \"reason\": \"Temporary access for project\",\n    \"ticket_id\": \"TASK-123\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/permission-registry/users/{{user_id}}/permissions",
+              "host": ["{{base_url}}"],
+              "path": ["permission-registry", "users", "{{user_id}}", "permissions"]
+            },
+            "description": "Выдача права с указанием срока действия и метаданных"
+          },
+          "response": []
+        },
+        {
+          "name": "Grant Permission (Sync Triggers)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"permission_id\": 5,\n  \"field_values\": {},\n  \"skip_triggers\": false,\n  \"execute_sync\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/permission-registry/users/{{user_id}}/permissions",
+              "host": ["{{base_url}}"],
+              "path": ["permission-registry", "users", "{{user_id}}", "permissions"]
+            },
+            "description": "Выдача права с синхронным выполнением триггеров (ждет завершения)"
+          },
+          "response": []
+        },
+        {
+          "name": "Grant Permission (Skip Triggers)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"permission_id\": 5,\n  \"field_values\": {},\n  \"skip_triggers\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/permission-registry/users/{{user_id}}/permissions",
+              "host": ["{{base_url}}"],
+              "path": ["permission-registry", "users", "{{user_id}}", "permissions"]
+            },
+            "description": "Выдача права без выполнения триггеров"
+          },
+          "response": []
+        },
+        {
+          "name": "Revoke Permission",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/permission-registry/users/{{user_id}}/permissions/:granted_permission_id",
+              "host": ["{{base_url}}"],
+              "path": ["permission-registry", "users", "{{user_id}}", "permissions", ":granted_permission_id"],
+              "variable": [
+                {
+                  "key": "granted_permission_id",
+                  "value": "1",
+                  "description": "ID выданного права (из granted_permissions)"
+                }
+              ]
+            },
+            "description": "Отзыв права у пользователя"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Positions",
+      "item": [
+        {
+          "name": "Assign Position",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"position_id\": 3\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/permission-registry/users/{{user_id}}/positions",
+              "host": ["{{base_url}}"],
+              "path": ["permission-registry", "users", "{{user_id}}", "positions"]
+            },
+            "description": "Назначение должности пользователю. Автоматически выдаются права с флагом auto_grant=true"
+          },
+          "response": []
+        },
+        {
+          "name": "Revoke Position",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/permission-registry/users/{{user_id}}/positions/:position_id",
+              "host": ["{{base_url}}"],
+              "path": ["permission-registry", "users", "{{user_id}}", "positions", ":position_id"],
+              "variable": [
+                {
+                  "key": "position_id",
+                  "value": "3",
+                  "description": "ID должности"
+                }
+              ]
+            },
+            "description": "Отзыв должности у пользователя. Автоматически отзываются права с флагом auto_revoke=true"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Groups",
+      "item": [
+        {
+          "name": "Assign Group",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"group_id\": 2\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/permission-registry/users/{{user_id}}/groups",
+              "host": ["{{base_url}}"],
+              "path": ["permission-registry", "users", "{{user_id}}", "groups"]
+            },
+            "description": "Назначение группы пользователю. Автоматически выдаются права с флагом auto_grant=true"
+          },
+          "response": []
+        },
+        {
+          "name": "Revoke Group",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/permission-registry/users/{{user_id}}/groups/:group_id",
+              "host": ["{{base_url}}"],
+              "path": ["permission-registry", "users", "{{user_id}}", "groups", ":group_id"],
+              "variable": [
+                {
+                  "key": "group_id",
+                  "value": "2",
+                  "description": "ID группы"
+                }
+              ]
+            },
+            "description": "Отзыв группы у пользователя. Автоматически отзываются права с флагом auto_revoke=true"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

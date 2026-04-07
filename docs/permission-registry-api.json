@@ -1,0 +1,858 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Permission Registry API",
+    "description": "API для управления пользователями, правами доступа, должностями и группами в модуле Permission Registry",
+    "version": "1.0.0",
+    "contact": {
+      "name": "API Support"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost/api",
+      "description": "Local Development"
+    },
+    {
+      "url": "https://your-domain.com/api",
+      "description": "Production"
+    }
+  ],
+  "security": [
+    {
+      "sanctum": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Users",
+      "description": "Управление пользователями"
+    },
+    {
+      "name": "Permissions",
+      "description": "Управление правами доступа пользователей"
+    },
+    {
+      "name": "Positions",
+      "description": "Управление должностями пользователей"
+    },
+    {
+      "name": "Groups",
+      "description": "Управление группами пользователей"
+    }
+  ],
+  "paths": {
+    "/permission-registry/users": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Создание нового пользователя",
+        "description": "Создает нового виртуального пользователя с автоматической генерацией имени на основе глобальных полей",
+        "operationId": "createUser",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserRequest"
+              },
+              "examples": {
+                "withGlobalFields": {
+                  "summary": "С глобальными полями",
+                  "value": {
+                    "global_fields": {
+                      "1": "ivan@example.com",
+                      "2": "+79001234567",
+                      "3": "Иван",
+                      "4": "Иванов"
+                    }
+                  }
+                },
+                "empty": {
+                  "summary": "Без полей",
+                  "value": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Пользователь успешно создан",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VirtualUserResource"
+                },
+                "example": {
+                  "data": {
+                    "id": 1,
+                    "name": "Иван Иванов",
+                    "meta": null,
+                    "created_at": "2025-12-10T12:00:00.000000Z",
+                    "updated_at": "2025-12-10T12:00:00.000000Z",
+                    "positions": [],
+                    "groups": [],
+                    "field_values": [
+                      {
+                        "id": 1,
+                        "field_id": 1,
+                        "field_name": "Email",
+                        "value": "ivan@example.com",
+                        "source": "trigger"
+                      },
+                      {
+                        "id": 2,
+                        "field_id": 2,
+                        "field_name": "Phone",
+                        "value": "+79001234567",
+                        "source": "trigger"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/permission-registry/users/{user}/permissions": {
+      "post": {
+        "tags": ["Permissions"],
+        "summary": "Выдача права пользователю",
+        "description": "Выдает право доступа пользователю с возможностью указания полей, срока действия и параметров триггеров",
+        "operationId": "grantPermission",
+        "parameters": [
+          {
+            "name": "user",
+            "in": "path",
+            "required": true,
+            "description": "ID пользователя",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrantPermissionRequest"
+              },
+              "examples": {
+                "basic": {
+                  "summary": "Базовая выдача права",
+                  "value": {
+                    "permission_id": 5,
+                    "field_values": {
+                      "10": "some-value",
+                      "11": "another-value"
+                    }
+                  }
+                },
+                "withExpiration": {
+                  "summary": "С указанием срока действия",
+                  "value": {
+                    "permission_id": 5,
+                    "field_values": {
+                      "10": "some-value"
+                    },
+                    "expires_at": "2026-12-31 23:59:59"
+                  }
+                },
+                "withTriggerOptions": {
+                  "summary": "С параметрами триггеров",
+                  "value": {
+                    "permission_id": 5,
+                    "field_values": {},
+                    "skip_triggers": false,
+                    "execute_sync": true,
+                    "meta": {
+                      "reason": "Requested by admin"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Право успешно выдано",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GrantedPermissionResource"
+                },
+                "example": {
+                  "data": {
+                    "id": 1,
+                    "permission": {
+                      "id": 5,
+                      "service": "gitlab",
+                      "name": "developer_access",
+                      "description": "Access to GitLab as developer",
+                      "created_at": "2025-12-01T10:00:00.000000Z",
+                      "updated_at": "2025-12-01T10:00:00.000000Z"
+                    },
+                    "status": "pending",
+                    "status_message": null,
+                    "enabled": true,
+                    "field_values": [],
+                    "granted_at": "2025-12-10T12:00:00.000000Z",
+                    "expires_at": "2026-12-31T23:59:59.000000Z",
+                    "created_at": "2025-12-10T12:00:00.000000Z",
+                    "updated_at": "2025-12-10T12:00:00.000000Z"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/permission-registry/users/{user}/permissions/{permission}": {
+      "delete": {
+        "tags": ["Permissions"],
+        "summary": "Отзыв права у пользователя",
+        "description": "Отзывает ранее выданное право доступа у пользователя",
+        "operationId": "revokePermission",
+        "parameters": [
+          {
+            "name": "user",
+            "in": "path",
+            "required": true,
+            "description": "ID пользователя",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "permission",
+            "in": "path",
+            "required": true,
+            "description": "ID выданного права (granted_permission_id)",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Право успешно отозвано"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/permission-registry/users/{user}/positions": {
+      "post": {
+        "tags": ["Positions"],
+        "summary": "Назначение должности пользователю",
+        "description": "Назначает должность пользователю. При наличии прав с флагом auto_grant=true в этой должности, они будут автоматически выданы",
+        "operationId": "assignPosition",
+        "parameters": [
+          {
+            "name": "user",
+            "in": "path",
+            "required": true,
+            "description": "ID пользователя",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignPositionRequest"
+              },
+              "example": {
+                "position_id": 3
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Должность успешно назначена",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Position assigned successfully"
+                    },
+                    "user": {
+                      "$ref": "#/components/schemas/VirtualUserResource"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/permission-registry/users/{user}/positions/{position}": {
+      "delete": {
+        "tags": ["Positions"],
+        "summary": "Отзыв должности у пользователя",
+        "description": "Отзывает должность у пользователя. При наличии прав с флагом auto_revoke=true в этой должности, они будут автоматически отозваны",
+        "operationId": "revokePosition",
+        "parameters": [
+          {
+            "name": "user",
+            "in": "path",
+            "required": true,
+            "description": "ID пользователя",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "position",
+            "in": "path",
+            "required": true,
+            "description": "ID должности",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Должность успешно отозвана"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/permission-registry/users/{user}/groups": {
+      "post": {
+        "tags": ["Groups"],
+        "summary": "Назначение группы пользователю",
+        "description": "Назначает группу прав пользователю. При наличии прав с флагом auto_grant=true в этой группе, они будут автоматически выданы",
+        "operationId": "assignGroup",
+        "parameters": [
+          {
+            "name": "user",
+            "in": "path",
+            "required": true,
+            "description": "ID пользователя",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignGroupRequest"
+              },
+              "example": {
+                "group_id": 2
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Группа успешно назначена",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Group assigned successfully"
+                    },
+                    "user": {
+                      "$ref": "#/components/schemas/VirtualUserResource"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/permission-registry/users/{user}/groups/{group}": {
+      "delete": {
+        "tags": ["Groups"],
+        "summary": "Отзыв группы у пользователя",
+        "description": "Отзывает группу прав у пользователя. При наличии прав с флагом auto_revoke=true в этой группе, они будут автоматически отозваны",
+        "operationId": "revokeGroup",
+        "parameters": [
+          {
+            "name": "user",
+            "in": "path",
+            "required": true,
+            "description": "ID пользователя",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "group",
+            "in": "path",
+            "required": true,
+            "description": "ID группы",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Группа успешно отозвана"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "sanctum": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Laravel Sanctum token authentication"
+      }
+    },
+    "schemas": {
+      "CreateUserRequest": {
+        "type": "object",
+        "properties": {
+          "global_fields": {
+            "type": "object",
+            "description": "Глобальные поля пользователя в формате field_id => value",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "example": {
+              "1": "ivan@example.com",
+              "2": "+79001234567"
+            }
+          }
+        }
+      },
+      "GrantPermissionRequest": {
+        "type": "object",
+        "required": ["permission_id"],
+        "properties": {
+          "permission_id": {
+            "type": "integer",
+            "description": "ID права доступа",
+            "example": 5
+          },
+          "field_values": {
+            "type": "object",
+            "description": "Значения полей права доступа в формате field_id => value",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "example": {
+              "10": "ssh-rsa AAAAB3...",
+              "11": "developer"
+            }
+          },
+          "meta": {
+            "type": "object",
+            "description": "Дополнительные метаданные",
+            "additionalProperties": true,
+            "example": {
+              "reason": "Requested by admin",
+              "ticket_id": "TASK-123"
+            }
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Дата и время истечения права",
+            "example": "2026-12-31 23:59:59"
+          },
+          "skip_triggers": {
+            "type": "boolean",
+            "description": "Пропустить выполнение триггеров",
+            "default": false
+          },
+          "execute_sync": {
+            "type": "boolean",
+            "description": "Выполнить триггеры синхронно (ждать завершения)",
+            "default": false
+          }
+        }
+      },
+      "AssignPositionRequest": {
+        "type": "object",
+        "required": ["position_id"],
+        "properties": {
+          "position_id": {
+            "type": "integer",
+            "description": "ID должности",
+            "example": 3
+          }
+        }
+      },
+      "AssignGroupRequest": {
+        "type": "object",
+        "required": ["group_id"],
+        "properties": {
+          "group_id": {
+            "type": "integer",
+            "description": "ID группы",
+            "example": 2
+          }
+        }
+      },
+      "VirtualUserResource": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "example": 1
+              },
+              "name": {
+                "type": "string",
+                "description": "Автоматически сгенерированное имя на основе глобальных полей",
+                "example": "Иван Иванов"
+              },
+              "meta": {
+                "type": "object",
+                "nullable": true,
+                "additionalProperties": true
+              },
+              "created_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "positions": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PositionResource"
+                }
+              },
+              "groups": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/GroupResource"
+                }
+              },
+              "granted_permissions": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/GrantedPermissionSimple"
+                }
+              },
+              "field_values": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/FieldValueResource"
+                }
+              }
+            }
+          }
+        }
+      },
+      "GrantedPermissionResource": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "permission": {
+                "$ref": "#/components/schemas/PermissionResource"
+              },
+              "status": {
+                "type": "string",
+                "enum": ["pending", "granted", "revoking", "failed"],
+                "description": "Статус выдачи права"
+              },
+              "status_message": {
+                "type": "string",
+                "nullable": true,
+                "description": "Сообщение об ошибке при выполнении триггеров"
+              },
+              "enabled": {
+                "type": "boolean"
+              },
+              "field_values": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/FieldValueResource"
+                }
+              },
+              "granted_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "expires_at": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true
+              },
+              "created_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated_at": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        }
+      },
+      "PermissionResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "service": {
+            "type": "string",
+            "description": "Название сервиса"
+          },
+          "name": {
+            "type": "string",
+            "description": "Название права"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PositionResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "GroupResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "FieldValueResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "field_id": {
+            "type": "integer"
+          },
+          "field_name": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "GrantedPermissionSimple": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "permission_id": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "Неавторизован",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "example": "Unauthenticated."
+                }
+              }
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Ресурс не найден",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "example": "Resource not found"
+                }
+              }
+            }
+          }
+        }
+      },
+      "ValidationError": {
+        "description": "Ошибка валидации",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "example": {
+              "message": "The given data was invalid.",
+              "errors": {
+                "permission_id": [
+                  "The permission id field is required."
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

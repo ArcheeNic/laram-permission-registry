@@ -1,0 +1,47 @@
+{
+    "name": "archeenic/laram-permission-registry",
+    "description": "Laravel module for managing user permissions registry",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Arthur",
+            "email": "example@example.com"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "illuminate/database": "^11.0|^12.0",
+        "illuminate/support": "^11.0|^12.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "ArcheeNic\\PermissionRegistry\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "ArcheeNic\\PermissionRegistry\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "ArcheeNic\\PermissionRegistry\\ServiceProvider"
+            ],
+            "aliases": {
+                "PermissionRegistry": "ArcheeNic\\PermissionRegistry\\Facades\\PermissionRegistry"
+            }
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "require-dev": {
+        "pestphp/pest": "^3.7"
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    }
+}
