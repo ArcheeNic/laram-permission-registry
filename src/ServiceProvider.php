@@ -7,6 +7,7 @@ use ArcheeNic\PermissionRegistry\Livewire\ApprovalPolicyManager;
 use ArcheeNic\PermissionRegistry\Livewire\AttestationsList;
 use ArcheeNic\PermissionRegistry\Livewire\FieldsList;
 use ArcheeNic\PermissionRegistry\Livewire\GroupsList;
+use ArcheeNic\PermissionRegistry\Livewire\ImportManager;
 use ArcheeNic\PermissionRegistry\Livewire\ManualTasksList;
 use ArcheeNic\PermissionRegistry\Livewire\MyPermissions;
 use ArcheeNic\PermissionRegistry\Livewire\MyRequests;
@@ -164,6 +165,7 @@ class ServiceProvider extends BaseServiceProvider
         Livewire::component('permission-registry::manual-tasks-list', ManualTasksList::class);
         Livewire::component('permission-registry::attestations-list', AttestationsList::class);
         Livewire::component('permission-registry::pending-revocations-dashboard', PendingRevocationsDashboard::class);
+        Livewire::component('permission-registry::import-manager', ImportManager::class);
     }
 
     protected function registerBladeComponents(): void

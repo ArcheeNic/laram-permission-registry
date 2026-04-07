@@ -117,6 +117,20 @@
                     </a>
                 </div>
 
+                <!-- Раздел импорта -->
+                <div class="bg-white dark:bg-neutral-800 overflow-hidden shadow-xl sm:rounded-lg p-6 hover:shadow-2xl transition-shadow duration-300">
+                    <div class="flex items-center mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-cyan-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        <h3 class="ml-3 text-lg font-medium text-gray-900 dark:text-gray-100">{{ __('permission-registry::messages.import.title') }}</h3>
+                    </div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">{{ __('permission-registry::messages.import.description') }}</p>
+                    <a href="{{ route('permission-registry::imports.index') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-cyan-600 hover:bg-cyan-700 transition-colors">
+                        {{ __('permission-registry::messages.import.manage') }}
+                    </a>
+                </div>
+
                 <div class="bg-white dark:bg-neutral-800 overflow-hidden shadow-xl sm:rounded-lg p-6 hover:shadow-2xl transition-shadow duration-300 border border-orange-200 dark:border-orange-800/40">
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center">

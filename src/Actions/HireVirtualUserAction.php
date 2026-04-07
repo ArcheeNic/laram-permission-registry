@@ -24,7 +24,8 @@ class HireVirtualUserAction
         int $userId,
         array $positionIds = [],
         array $groupIds = [],
-        EmployeeCategory|string $employeeCategory = EmployeeCategory::STAFF
+        EmployeeCategory|string $employeeCategory = EmployeeCategory::STAFF,
+        bool $skipHrTriggers = false
     ): VirtualUser
     {
         $resolvedCategory = $this->resolveCategory($employeeCategory);
@@ -49,7 +50,9 @@ class HireVirtualUserAction
             return $user->fresh();
         });
 
-        $this->hrEventTriggerExecutor->execute($user->id, 'hire');
+        if (!$skipHrTriggers) {
+            $this->hrEventTriggerExecutor->execute($user->id, 'hire');
+        }
 
         return $user;
     }

@@ -16,7 +16,7 @@ class FireVirtualUserAction
     ) {
     }
 
-    public function handle(int $userId): VirtualUser
+    public function handle(int $userId, bool $skipHrTriggers = false): VirtualUser
     {
         $user = DB::transaction(function () use ($userId): VirtualUser {
             $user = VirtualUser::query()->findOrFail($userId);
@@ -33,7 +33,9 @@ class FireVirtualUserAction
             return $user->fresh();
         });
 
-        $this->hrEventTriggerExecutor->execute($user->id, 'fire');
+        if (!$skipHrTriggers) {
+            $this->hrEventTriggerExecutor->execute($user->id, 'fire');
+        }
 
         return $user;
     }

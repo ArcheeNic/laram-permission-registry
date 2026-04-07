@@ -131,6 +131,10 @@ Route::middleware('can:permission-registry.manage')->group(function () {
     Route::get('attestations', function () {
         return view('permission-registry::attestations.index');
     })->name('attestations.index');
+
+    Route::get('imports', function () {
+        return view('permission-registry::imports.index');
+    })->name('imports.index');
 });
 
 // Self-service маршруты
