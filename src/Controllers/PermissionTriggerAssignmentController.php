@@ -5,6 +5,7 @@ namespace ArcheeNic\PermissionRegistry\Controllers;
 use ArcheeNic\PermissionRegistry\Models\Permission;
 use ArcheeNic\PermissionRegistry\Models\PermissionTrigger;
 use ArcheeNic\PermissionRegistry\Models\PermissionTriggerAssignment;
+use ArcheeNic\PermissionRegistry\Services\TriggerOverlapDetectorService;
 use ArcheeNic\PermissionRegistry\Services\TriggerDiscoveryService;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -14,7 +15,8 @@ use Illuminate\Support\Facades\Validator;
 class PermissionTriggerAssignmentController extends Controller
 {
     public function __construct(
-        private TriggerDiscoveryService $triggerDiscoveryService
+        private TriggerDiscoveryService $triggerDiscoveryService,
+        private TriggerOverlapDetectorService $triggerOverlapDetectorService
     ) {}
 
     public function index(Permission $permission)
@@ -25,13 +27,15 @@ class PermissionTriggerAssignmentController extends Controller
         $revokeTriggers = $permission->revokeTriggers()->with('trigger')->get();
         $availableTriggers = PermissionTrigger::where('is_active', true)->get();
         $notConfiguredTriggerIds = $this->getNotConfiguredTriggerIds();
+        $overlaps = $this->triggerOverlapDetectorService->detectOverlaps($permission->id);
 
         return view('permission-registry::permissions.triggers', compact(
             'permission',
             'grantTriggers',
             'revokeTriggers',
             'availableTriggers',
-            'notConfiguredTriggerIds'
+            'notConfiguredTriggerIds',
+            'overlaps'
         ));
     }
 

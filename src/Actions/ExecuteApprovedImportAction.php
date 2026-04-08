@@ -4,11 +4,13 @@ namespace ArcheeNic\PermissionRegistry\Actions;
 
 use ArcheeNic\PermissionRegistry\Enums\ImportExecutionStatus;
 use ArcheeNic\PermissionRegistry\Enums\ImportMatchStatus;
+use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
 use ArcheeNic\PermissionRegistry\Models\ImportExecutionLog;
-use ArcheeNic\PermissionRegistry\Models\ImportFieldMapping;
 use ArcheeNic\PermissionRegistry\Models\ImportStagingRow;
 use ArcheeNic\PermissionRegistry\Models\PermissionImport;
 use ArcheeNic\PermissionRegistry\Services\ImportFieldMappingService;
+use ArcheeNic\PermissionRegistry\Services\ImportTriggerConfigResolver;
+use ArcheeNic\PermissionRegistry\Services\TriggerPermissionMatcherService;
 use Illuminate\Support\Facades\Log;
 
 class ExecuteApprovedImportAction
@@ -21,6 +23,8 @@ class ExecuteApprovedImportAction
         private RevokePermissionAction $revokePermissionAction,
         private UpdateVirtualUserGlobalFieldsAction $updateGlobalFieldsAction,
         private ImportFieldMappingService $fieldMappingService,
+        private ImportTriggerConfigResolver $importTriggerConfigResolver,
+        private TriggerPermissionMatcherService $triggerPermissionMatcherService,
         private CleanupImportRunAction $cleanupAction,
     ) {}
 
@@ -42,7 +46,8 @@ class ExecuteApprovedImportAction
         $permissionImportId = $firstRow->{ImportStagingRow::PERMISSION_IMPORT_ID};
         $import = PermissionImport::query()->findOrFail($permissionImportId);
         $mapping = $this->fieldMappingService->getMapping($permissionImportId);
-        $permissionId = $this->resolvePermissionId($permissionImportId);
+        [$triggerClassPatterns, $departmentFieldName] = $this->importTriggerConfigResolver->resolve($import);
+        $managedPermissionIds = $this->triggerPermissionMatcherService->getAllManagedPermissionIds($triggerClassPatterns);
 
         $stats = ['created' => 0, 'updated' => 0, 'fired' => 0, 'skipped' => 0, 'errors' => 0];
 
@@ -54,9 +59,22 @@ class ExecuteApprovedImportAction
                     : ImportMatchStatus::from($matchStatus);
 
                 match ($status) {
-                    ImportMatchStatus::NEW => $this->processNewRow($row, $mapping, $permissionId, $stats),
-                    ImportMatchStatus::CHANGED => $this->processChangedRow($row, $mapping, $stats),
-                    ImportMatchStatus::MISSING => $this->processMissingRow($row, $permissionId, $stats),
+                    ImportMatchStatus::NEW => $this->processNewRow(
+                        $row,
+                        $mapping,
+                        $triggerClassPatterns,
+                        $departmentFieldName,
+                        $stats
+                    ),
+                    ImportMatchStatus::CHANGED => $this->processChangedRow(
+                        $row,
+                        $mapping,
+                        $triggerClassPatterns,
+                        $departmentFieldName,
+                        $managedPermissionIds,
+                        $stats
+                    ),
+                    ImportMatchStatus::MISSING => $this->processMissingRow($row, $managedPermissionIds, $stats),
                     ImportMatchStatus::EXISTS => $stats['skipped']++,
                 };
             } catch (\Throwable $e) {
@@ -71,7 +89,6 @@ class ExecuteApprovedImportAction
         }
 
         $this->updateExecutionLog($importRunId, $stats);
-        $this->cleanupAction->handle($importRunId);
 
         return $stats;
     }
@@ -80,14 +97,27 @@ class ExecuteApprovedImportAction
      * @param array<string, array{permission_field_id: int, is_internal: bool}> $mapping
      * @param array{created: int, updated: int, fired: int, skipped: int, errors: int} $stats
      */
-    private function processNewRow(ImportStagingRow $row, array $mapping, ?int $permissionId, array &$stats): void
-    {
+    private function processNewRow(
+        ImportStagingRow $row,
+        array $mapping,
+        array $triggerClassPatterns,
+        string $departmentFieldName,
+        array &$stats
+    ): void {
         $globalFields = $this->buildGlobalFields($row, $mapping);
 
         $user = $this->createVirtualUserAction->handle($globalFields);
         $this->hireVirtualUserAction->handle(userId: $user->id, skipHrTriggers: true);
 
-        if ($permissionId !== null) {
+        $permissionIds = $this->resolvePermissionIdsFromRow($row, $triggerClassPatterns, $departmentFieldName);
+        $existingPermissionIds = GrantedPermission::query()
+            ->where(GrantedPermission::VIRTUAL_USER_ID, $user->id)
+            ->whereIn(GrantedPermission::PERMISSION_ID, $permissionIds)
+            ->pluck(GrantedPermission::PERMISSION_ID)
+            ->map(static fn (mixed $id): int => (int) $id)
+            ->all();
+
+        foreach (array_values(array_diff($permissionIds, $existingPermissionIds)) as $permissionId) {
             $this->grantPermissionAction->handle(
                 userId: $user->id,
                 permissionId: $permissionId,
@@ -103,12 +133,48 @@ class ExecuteApprovedImportAction
      * @param array<string, array{permission_field_id: int, is_internal: bool}> $mapping
      * @param array{created: int, updated: int, fired: int, skipped: int, errors: int} $stats
      */
-    private function processChangedRow(ImportStagingRow $row, array $mapping, array &$stats): void
-    {
+    private function processChangedRow(
+        ImportStagingRow $row,
+        array $mapping,
+        array $triggerClassPatterns,
+        string $departmentFieldName,
+        array $managedPermissionIds,
+        array &$stats
+    ): void {
         $virtualUserId = $row->{ImportStagingRow::MATCHED_VIRTUAL_USER_ID};
         $globalFields = $this->buildGlobalFields($row, $mapping);
 
         $this->updateGlobalFieldsAction->execute($virtualUserId, $globalFields);
+
+        if ($virtualUserId !== null && $managedPermissionIds !== []) {
+            $shouldHavePermissionIds = $this->resolvePermissionIdsFromRow($row, $triggerClassPatterns, $departmentFieldName);
+            $currentPermissionIds = GrantedPermission::query()
+                ->where(GrantedPermission::VIRTUAL_USER_ID, $virtualUserId)
+                ->whereIn(GrantedPermission::PERMISSION_ID, $managedPermissionIds)
+                ->pluck(GrantedPermission::PERMISSION_ID)
+                ->map(static fn (mixed $id): int => (int) $id)
+                ->all();
+
+            $toGrant = array_values(array_diff($shouldHavePermissionIds, $currentPermissionIds));
+            $toRevoke = array_values(array_diff($currentPermissionIds, $shouldHavePermissionIds));
+
+            foreach ($toGrant as $permissionId) {
+                $this->grantPermissionAction->handle(
+                    userId: (int) $virtualUserId,
+                    permissionId: $permissionId,
+                    skipTriggers: true,
+                    skipApprovalCheck: true,
+                );
+            }
+
+            foreach ($toRevoke as $permissionId) {
+                $this->revokePermissionAction->handle(
+                    userId: (int) $virtualUserId,
+                    permissionId: $permissionId,
+                    skipTriggers: true,
+                );
+            }
+        }
 
         $stats['updated']++;
     }
@@ -116,19 +182,30 @@ class ExecuteApprovedImportAction
     /**
      * @param array{created: int, updated: int, fired: int, skipped: int, errors: int} $stats
      */
-    private function processMissingRow(ImportStagingRow $row, ?int $permissionId, array &$stats): void
+    private function processMissingRow(ImportStagingRow $row, array $managedPermissionIds, array &$stats): void
     {
         $virtualUserId = $row->{ImportStagingRow::MATCHED_VIRTUAL_USER_ID};
 
-        if ($permissionId !== null) {
-            $this->revokePermissionAction->handle(
-                userId: $virtualUserId,
-                permissionId: $permissionId,
-                skipTriggers: true,
-            );
+        if ($virtualUserId !== null) {
+            $currentManagedPermissionIds = GrantedPermission::query()
+                ->where(GrantedPermission::VIRTUAL_USER_ID, (int) $virtualUserId)
+                ->whereIn(GrantedPermission::PERMISSION_ID, $managedPermissionIds)
+                ->pluck(GrantedPermission::PERMISSION_ID)
+                ->map(static fn (mixed $id): int => (int) $id)
+                ->all();
+
+            foreach ($currentManagedPermissionIds as $permissionId) {
+                $this->revokePermissionAction->handle(
+                    userId: (int) $virtualUserId,
+                    permissionId: (int) $permissionId,
+                    skipTriggers: true,
+                );
+            }
         }
 
-        $this->fireVirtualUserAction->handle(userId: $virtualUserId, skipHrTriggers: true);
+        if ($virtualUserId !== null) {
+            $this->fireVirtualUserAction->handle(userId: (int) $virtualUserId, skipHrTriggers: true);
+        }
 
         $stats['fired']++;
     }
@@ -139,24 +216,47 @@ class ExecuteApprovedImportAction
      */
     private function buildGlobalFields(ImportStagingRow $row, array $mapping): array
     {
-        $fields = $row->{ImportStagingRow::FIELDS};
-        if (!is_array($fields)) {
-            $fields = json_decode($fields, true) ?? [];
-        }
+        $fields = $this->extractRowFields($row);
 
         return $this->fieldMappingService->applyMapping($fields, $mapping);
     }
 
-    private function resolvePermissionId(int $permissionImportId): ?int
+    /**
+     * @param array<int, string> $triggerClassPatterns
+     * @return array<int, int>
+     */
+    private function resolvePermissionIdsFromRow(
+        ImportStagingRow $row,
+        array $triggerClassPatterns,
+        string $departmentFieldName
+    ): array {
+        $fields = $this->extractRowFields($row);
+        $departmentIds = $this->triggerPermissionMatcherService->normalizeDepartmentIds(
+            $fields[$departmentFieldName] ?? null
+        );
+
+        return $this->triggerPermissionMatcherService
+            ->matchByDepartments($departmentIds, $triggerClassPatterns)
+            ->pluck('permission_id')
+            ->map(static fn (mixed $permissionId): int => (int) $permissionId)
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function extractRowFields(ImportStagingRow $row): array
     {
-        $mapping = ImportFieldMapping::query()
-            ->where(ImportFieldMapping::PERMISSION_IMPORT_ID, $permissionImportId)
-            ->with('permissionField.permissions')
-            ->first();
+        $fields = $row->{ImportStagingRow::FIELDS};
+        if (is_array($fields)) {
+            return $fields;
+        }
 
-        $permission = $mapping?->permissionField?->permissions?->first();
+        $decoded = json_decode((string) $fields, true);
 
-        return $permission?->id;
+        return is_array($decoded) ? $decoded : [];
     }
 
     private function updateExecutionLog(string $importRunId, array $stats): void

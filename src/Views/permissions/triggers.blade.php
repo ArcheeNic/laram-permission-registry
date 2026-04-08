@@ -16,6 +16,24 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white dark:bg-neutral-800 overflow-hidden shadow-xl sm:rounded-lg">
+                @if(!empty($overlaps))
+                    <div class="m-4 rounded-md border border-amber-200 bg-amber-50 p-4 dark:border-amber-700 dark:bg-amber-900/20">
+                        <p class="text-sm font-semibold text-amber-900 dark:text-amber-300">
+                            {{ __('permission-registry::messages.triggers_overlap_title') }}
+                        </p>
+                        <div class="mt-2 space-y-1">
+                            @foreach($overlaps as $departmentId => $items)
+                                <p class="text-sm text-amber-800 dark:text-amber-200">
+                                    {{ __('permission-registry::messages.triggers_overlap_warning', [
+                                        'department' => $departmentId,
+                                        'permissions' => collect($items)->pluck('permission_name')->unique()->implode(', ')
+                                    ]) }}
+                                </p>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
                 <!-- Tabs -->
                 <div class="border-b border-gray-200 dark:border-neutral-700">
                     <nav class="flex -mb-px">

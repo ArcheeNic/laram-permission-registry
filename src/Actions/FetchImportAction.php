@@ -48,6 +48,16 @@ class FetchImportAction
 
         $result = $importer->execute($context);
 
+        if ($result->hasErrors() && $result->userCount() === 0) {
+            $log->update([
+                ImportExecutionLog::STATUS => ImportExecutionStatus::FAILED->value,
+                ImportExecutionLog::COMPLETED_AT => now(),
+                ImportExecutionLog::ERROR_MESSAGE => implode('; ', $result->errors),
+            ]);
+
+            throw new \RuntimeException(implode('; ', $result->errors));
+        }
+
         $log->update([
             ImportExecutionLog::STATUS => ImportExecutionStatus::RUNNING->value,
         ]);

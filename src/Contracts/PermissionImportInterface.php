@@ -16,4 +16,18 @@ interface PermissionImportInterface
     public function getRequiredFields(): array;
 
     public function getConfigFields(): array;
+
+    /**
+     * Class patterns of triggers that define permission matching for this import.
+     *
+     * Example: ['App\\Triggers\\Bitrix24%']
+     *
+     * @return array<int, string>
+     */
+    public function getRelatedTriggerClassPatterns(): array;
+
+    /**
+     * External field name containing source department IDs.
+     */
+    public function getDepartmentFieldName(): string;
 }

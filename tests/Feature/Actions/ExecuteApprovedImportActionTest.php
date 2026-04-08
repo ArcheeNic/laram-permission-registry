@@ -3,6 +3,7 @@
 namespace ArcheeNic\PermissionRegistry\Tests\Feature\Actions;
 
 use ArcheeNic\PermissionRegistry\Actions\CreateVirtualUserAction;
+use ArcheeNic\PermissionRegistry\Actions\CleanupImportRunAction;
 use ArcheeNic\PermissionRegistry\Actions\ExecuteApprovedImportAction;
 use ArcheeNic\PermissionRegistry\Actions\FireVirtualUserAction;
 use ArcheeNic\PermissionRegistry\Actions\GrantPermissionAction;
@@ -11,14 +12,17 @@ use ArcheeNic\PermissionRegistry\Actions\RevokePermissionAction;
 use ArcheeNic\PermissionRegistry\Actions\UpdateVirtualUserGlobalFieldsAction;
 use ArcheeNic\PermissionRegistry\Enums\ImportExecutionStatus;
 use ArcheeNic\PermissionRegistry\Enums\VirtualUserStatus;
+use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
 use ArcheeNic\PermissionRegistry\Models\ImportExecutionLog;
 use ArcheeNic\PermissionRegistry\Models\ImportFieldMapping;
 use ArcheeNic\PermissionRegistry\Models\ImportStagingRow;
 use ArcheeNic\PermissionRegistry\Models\Permission;
 use ArcheeNic\PermissionRegistry\Models\PermissionField;
 use ArcheeNic\PermissionRegistry\Models\PermissionImport;
+use ArcheeNic\PermissionRegistry\Services\ImportFieldMappingService;
+use ArcheeNic\PermissionRegistry\Services\ImportTriggerConfigResolver;
+use ArcheeNic\PermissionRegistry\Services\TriggerPermissionMatcherService;
 use ArcheeNic\PermissionRegistry\Models\VirtualUser;
-use ArcheeNic\PermissionRegistry\Models\VirtualUserFieldValue;
 use ArcheeNic\PermissionRegistry\Tests\TestCase;
 use Illuminate\Support\Str;
 use Mockery;
@@ -29,7 +33,9 @@ class ExecuteApprovedImportActionTest extends TestCase
 
     private PermissionImport $import;
 
-    private Permission $permission;
+    private Permission $permissionA;
+
+    private Permission $permissionB;
 
     private PermissionField $emailField;
 
@@ -44,13 +50,20 @@ class ExecuteApprovedImportActionTest extends TestCase
             'is_global' => true,
         ]);
 
-        $this->permission = Permission::create([
+        $this->permissionA = Permission::create([
             'service' => 'test-import',
-            'name' => 'imported-access',
-            'description' => 'Test import permission',
+            'name' => 'imported-access-a',
+            'description' => 'Test import permission A',
         ]);
 
-        $this->emailField->permissions()->attach($this->permission->id);
+        $this->permissionB = Permission::create([
+            'service' => 'test-import',
+            'name' => 'imported-access-b',
+            'description' => 'Test import permission B',
+        ]);
+
+        $this->emailField->permissions()->attach($this->permissionA->id);
+        $this->emailField->permissions()->attach($this->permissionB->id);
 
         $this->import = PermissionImport::create([
             'name' => 'Test Import',
@@ -73,11 +86,12 @@ class ExecuteApprovedImportActionTest extends TestCase
         Mockery::close();
     }
 
-    public function test_execute_new_creates_virtual_user_hires_and_grants_permission(): void
+    public function test_execute_new_creates_virtual_user_hires_and_grants_all_matched_permissions(): void
     {
         $createUserMock = Mockery::mock(CreateVirtualUserAction::class);
         $hireUserMock = Mockery::mock(HireVirtualUserAction::class);
         $grantMock = Mockery::mock(GrantPermissionAction::class);
+        $matcherMock = Mockery::mock(TriggerPermissionMatcherService::class);
 
         $newUser = VirtualUser::create(['name' => 'New User', 'status' => VirtualUserStatus::ACTIVE]);
 
@@ -90,12 +104,22 @@ class ExecuteApprovedImportActionTest extends TestCase
             ->andReturn($newUser);
 
         $grantMock->shouldReceive('handle')
-            ->once()
+            ->twice()
             ->andReturn(Mockery::mock(\ArcheeNic\PermissionRegistry\Models\GrantedPermission::class));
 
-        $this->app->instance(CreateVirtualUserAction::class, $createUserMock);
-        $this->app->instance(HireVirtualUserAction::class, $hireUserMock);
-        $this->app->instance(GrantPermissionAction::class, $grantMock);
+        $matcherMock->shouldReceive('matchByDepartments')
+            ->once()
+            ->andReturn(collect([
+                ['permission_id' => $this->permissionA->id, 'department_id' => '1', 'permission_name' => $this->permissionA->name],
+                ['permission_id' => $this->permissionB->id, 'department_id' => '15', 'permission_name' => $this->permissionB->name],
+            ]));
+        $matcherMock->shouldReceive('normalizeDepartmentIds')
+            ->once()
+            ->andReturn(['1', '15']);
+
+        $matcherMock->shouldReceive('getAllManagedPermissionIds')
+            ->once()
+            ->andReturn([$this->permissionA->id, $this->permissionB->id]);
 
         ImportExecutionLog::create([
             'import_run_id' => $this->importRunId,
@@ -108,13 +132,18 @@ class ExecuteApprovedImportActionTest extends TestCase
             'import_run_id' => $this->importRunId,
             'permission_import_id' => $this->import->id,
             'external_id' => 'ext-new',
-            'fields' => ['email' => 'new@test.com'],
+            'fields' => ['email' => 'new@test.com', 'department_ids' => '1,15'],
             'match_status' => 'new',
             'matched_virtual_user_id' => null,
             'is_approved' => true,
         ]);
 
-        $action = app(ExecuteApprovedImportAction::class);
+        $action = $this->makeAction(
+            createVirtualUserAction: $createUserMock,
+            hireVirtualUserAction: $hireUserMock,
+            grantPermissionAction: $grantMock,
+            triggerPermissionMatcherService: $matcherMock
+        );
         $action->handle($this->importRunId);
 
         $this->assertDatabaseHas('import_execution_logs', [
@@ -122,33 +151,57 @@ class ExecuteApprovedImportActionTest extends TestCase
         ]);
     }
 
-    public function test_execute_changed_updates_virtual_user_global_fields(): void
+    public function test_execute_changed_reconciles_managed_permissions(): void
     {
         $user = VirtualUser::create(['name' => 'Existing', 'status' => VirtualUserStatus::ACTIVE]);
+        GrantedPermission::create(['virtual_user_id' => $user->id, 'permission_id' => $this->permissionA->id, 'enabled' => true]);
 
         $updateFieldsMock = Mockery::mock(UpdateVirtualUserGlobalFieldsAction::class);
         $updateFieldsMock->shouldReceive('execute')
             ->once();
+        $grantMock = Mockery::mock(GrantPermissionAction::class);
+        $revokeMock = Mockery::mock(RevokePermissionAction::class);
+        $matcherMock = Mockery::mock(TriggerPermissionMatcherService::class);
 
-        $this->app->instance(UpdateVirtualUserGlobalFieldsAction::class, $updateFieldsMock);
+        $grantMock->shouldReceive('handle')->once()->andReturn(Mockery::mock(GrantedPermission::class));
+        $revokeMock->shouldReceive('handle')->once()->andReturn(true);
+
+        $matcherMock->shouldReceive('matchByDepartments')
+            ->once()
+            ->andReturn(collect([
+                ['permission_id' => $this->permissionB->id, 'department_id' => '15', 'permission_name' => $this->permissionB->name],
+            ]));
+        $matcherMock->shouldReceive('normalizeDepartmentIds')
+            ->once()
+            ->andReturn(['15']);
+        $matcherMock->shouldReceive('getAllManagedPermissionIds')
+            ->once()
+            ->andReturn([$this->permissionA->id, $this->permissionB->id]);
 
         ImportStagingRow::create([
             'import_run_id' => $this->importRunId,
             'permission_import_id' => $this->import->id,
             'external_id' => 'ext-changed',
-            'fields' => ['email' => 'updated@test.com'],
+            'fields' => ['email' => 'updated@test.com', 'department_ids' => '15'],
             'match_status' => 'changed',
             'matched_virtual_user_id' => $user->id,
             'is_approved' => true,
         ]);
 
-        $action = app(ExecuteApprovedImportAction::class);
+        $action = $this->makeAction(
+            updateVirtualUserGlobalFieldsAction: $updateFieldsMock,
+            grantPermissionAction: $grantMock,
+            revokePermissionAction: $revokeMock,
+            triggerPermissionMatcherService: $matcherMock
+        );
         $action->handle($this->importRunId);
     }
 
-    public function test_execute_missing_revokes_permission_and_fires_user(): void
+    public function test_execute_missing_revokes_all_managed_permissions_and_fires_user(): void
     {
         $user = VirtualUser::create(['name' => 'Leaving', 'status' => VirtualUserStatus::ACTIVE]);
+        GrantedPermission::create(['virtual_user_id' => $user->id, 'permission_id' => $this->permissionA->id, 'enabled' => true]);
+        $matcherMock = Mockery::mock(TriggerPermissionMatcherService::class);
 
         $revokeMock = Mockery::mock(RevokePermissionAction::class);
         $revokeMock->shouldReceive('handle')
@@ -160,8 +213,10 @@ class ExecuteApprovedImportActionTest extends TestCase
             ->once()
             ->andReturn($user);
 
-        $this->app->instance(RevokePermissionAction::class, $revokeMock);
-        $this->app->instance(FireVirtualUserAction::class, $fireMock);
+        $matcherMock->shouldReceive('getAllManagedPermissionIds')
+            ->once()
+            ->andReturn([$this->permissionA->id, $this->permissionB->id]);
+        $matcherMock->shouldReceive('matchByDepartments')->never();
 
         ImportStagingRow::create([
             'import_run_id' => $this->importRunId,
@@ -173,22 +228,28 @@ class ExecuteApprovedImportActionTest extends TestCase
             'is_approved' => true,
         ]);
 
-        $action = app(ExecuteApprovedImportAction::class);
+        $action = $this->makeAction(
+            fireVirtualUserAction: $fireMock,
+            revokePermissionAction: $revokeMock,
+            triggerPermissionMatcherService: $matcherMock
+        );
         $action->handle($this->importRunId);
     }
 
     public function test_execute_exists_does_nothing(): void
     {
         $user = VirtualUser::create(['name' => 'Same', 'status' => VirtualUserStatus::ACTIVE]);
+        $matcherMock = Mockery::mock(TriggerPermissionMatcherService::class);
 
         $createUserMock = Mockery::mock(CreateVirtualUserAction::class);
         $createUserMock->shouldNotReceive('handle');
-        $this->app->instance(CreateVirtualUserAction::class, $createUserMock);
-
         $updateFieldsMock = Mockery::mock(UpdateVirtualUserGlobalFieldsAction::class);
         $updateFieldsMock->shouldNotReceive('execute');
-        $this->app->instance(UpdateVirtualUserGlobalFieldsAction::class, $updateFieldsMock);
 
+        $matcherMock->shouldReceive('getAllManagedPermissionIds')
+            ->once()
+            ->andReturn([$this->permissionA->id, $this->permissionB->id]);
+        $matcherMock->shouldReceive('matchByDepartments')->never();
         ImportStagingRow::create([
             'import_run_id' => $this->importRunId,
             'permission_import_id' => $this->import->id,
@@ -199,7 +260,11 @@ class ExecuteApprovedImportActionTest extends TestCase
             'is_approved' => true,
         ]);
 
-        $action = app(ExecuteApprovedImportAction::class);
+        $action = $this->makeAction(
+            createVirtualUserAction: $createUserMock,
+            updateVirtualUserGlobalFieldsAction: $updateFieldsMock,
+            triggerPermissionMatcherService: $matcherMock
+        );
         $action->handle($this->importRunId);
     }
 
@@ -207,7 +272,8 @@ class ExecuteApprovedImportActionTest extends TestCase
     {
         $createUserMock = Mockery::mock(CreateVirtualUserAction::class);
         $createUserMock->shouldNotReceive('handle');
-        $this->app->instance(CreateVirtualUserAction::class, $createUserMock);
+        $matcherMock = Mockery::mock(TriggerPermissionMatcherService::class);
+        $matcherMock->shouldNotReceive('getAllManagedPermissionIds');
 
         ImportStagingRow::create([
             'import_run_id' => $this->importRunId,
@@ -229,7 +295,10 @@ class ExecuteApprovedImportActionTest extends TestCase
             'is_approved' => false,
         ]);
 
-        $action = app(ExecuteApprovedImportAction::class);
+        $action = $this->makeAction(
+            createVirtualUserAction: $createUserMock,
+            triggerPermissionMatcherService: $matcherMock
+        );
         $action->handle($this->importRunId);
     }
 
@@ -254,7 +323,7 @@ class ExecuteApprovedImportActionTest extends TestCase
             'is_approved' => true,
         ]);
 
-        $action = app(ExecuteApprovedImportAction::class);
+        $action = $this->makeAction();
         $action->handle($this->importRunId);
 
         $this->assertDatabaseHas('import_execution_logs', [
@@ -265,5 +334,28 @@ class ExecuteApprovedImportActionTest extends TestCase
         $log = ImportExecutionLog::where('import_run_id', $this->importRunId)->first();
         $this->assertNotNull($log->started_at);
         $this->assertNotNull($log->completed_at);
+    }
+
+    private function makeAction(
+        ?CreateVirtualUserAction $createVirtualUserAction = null,
+        ?HireVirtualUserAction $hireVirtualUserAction = null,
+        ?FireVirtualUserAction $fireVirtualUserAction = null,
+        ?GrantPermissionAction $grantPermissionAction = null,
+        ?RevokePermissionAction $revokePermissionAction = null,
+        ?UpdateVirtualUserGlobalFieldsAction $updateVirtualUserGlobalFieldsAction = null,
+        ?TriggerPermissionMatcherService $triggerPermissionMatcherService = null
+    ): ExecuteApprovedImportAction {
+        return new ExecuteApprovedImportAction(
+            $createVirtualUserAction ?? app(CreateVirtualUserAction::class),
+            $hireVirtualUserAction ?? app(HireVirtualUserAction::class),
+            $fireVirtualUserAction ?? app(FireVirtualUserAction::class),
+            $grantPermissionAction ?? app(GrantPermissionAction::class),
+            $revokePermissionAction ?? app(RevokePermissionAction::class),
+            $updateVirtualUserGlobalFieldsAction ?? app(UpdateVirtualUserGlobalFieldsAction::class),
+            app(ImportFieldMappingService::class),
+            app(ImportTriggerConfigResolver::class),
+            $triggerPermissionMatcherService ?? app(TriggerPermissionMatcherService::class),
+            app(CleanupImportRunAction::class),
+        );
     }
 }

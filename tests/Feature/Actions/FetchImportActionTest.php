@@ -235,4 +235,14 @@ class FetchImportTestImporter implements PermissionImportInterface
     {
         return [];
     }
+
+    public function getRelatedTriggerClassPatterns(): array
+    {
+        return ['App\\Triggers\\Bitrix24%'];
+    }
+
+    public function getDepartmentFieldName(): string
+    {
+        return 'department_ids';
+    }
 }
