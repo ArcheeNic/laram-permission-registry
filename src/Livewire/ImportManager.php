@@ -46,7 +46,7 @@ class ImportManager extends Component
 
     public ?int $internalFieldId = null;
 
-    public ?string $statusFilter = null;
+    public array $statusFilters = [];
 
     public ?int $grantPermissionFilterId = null;
 
@@ -229,15 +229,24 @@ class ImportManager extends Component
         $this->resetState();
     }
 
-    public function setStatusFilter(string $status): void
+    public function toggleStatusFilter(string $status): void
     {
-        $valid = ImportMatchStatus::tryFrom($status);
-        $this->statusFilter = $valid ? $status : null;
+        if (ImportMatchStatus::tryFrom($status) === null) {
+            return;
+        }
+
+        if (in_array($status, $this->statusFilters, true)) {
+            $this->statusFilters = array_values(array_diff($this->statusFilters, [$status]));
+        } else {
+            $this->statusFilters[] = $status;
+        }
+
+        $this->resetPage();
     }
 
     public function clearStatusFilter(): void
     {
-        $this->statusFilter = null;
+        $this->statusFilters = [];
         $this->resetPage();
     }
 
@@ -248,7 +257,7 @@ class ImportManager extends Component
         $this->resetPage();
     }
 
-    public function updatedStatusFilter(): void
+    public function updatedStatusFilters(): void
     {
         $this->resetPage();
     }
@@ -505,8 +514,8 @@ class ImportManager extends Component
             ->with('matchedVirtualUser')
             ->orderBy(ImportStagingRow::MATCH_STATUS);
 
-        if ($this->statusFilter) {
-            $query->where(ImportStagingRow::MATCH_STATUS, $this->statusFilter);
+        if ($this->statusFilters !== []) {
+            $query->whereIn(ImportStagingRow::MATCH_STATUS, $this->statusFilters);
         }
 
         if ($this->grantPermissionFilterId || $this->revokePermissionFilterId) {
@@ -731,7 +740,7 @@ class ImportManager extends Component
         $this->executionResult = [];
         $this->fieldMapping = [];
         $this->internalFieldId = null;
-        $this->statusFilter = null;
+        $this->statusFilters = [];
         $this->grantPermissionFilterId = null;
         $this->revokePermissionFilterId = null;
         $this->resetPage();
