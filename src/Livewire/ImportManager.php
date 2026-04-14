@@ -459,9 +459,13 @@ class ImportManager extends Component
                         $managedPermissionIds
                     )
                 ),
-                ImportMatchStatus::EXISTS => ['items' => [
-                    ['icon' => 'check', 'text' => __('permission-registry::messages.import.action_detail_no_changes')],
-                ]],
+                ImportMatchStatus::EXISTS => $this->buildExistsAction(
+                    $this->buildPermissionDiff(
+                        $row->{ImportStagingRow::MATCHED_VIRTUAL_USER_ID},
+                        $matchedPermissionIds,
+                        $managedPermissionIds
+                    )
+                ),
                 ImportMatchStatus::MISSING => $this->buildMissingAction(
                     (int) ($row->{ImportStagingRow::MATCHED_VIRTUAL_USER_ID} ?? 0),
                     $managedPermissionIds
@@ -695,6 +699,31 @@ class ImportManager extends Component
         return ['items' => $items];
     }
 
+    private function buildExistsAction(array $permissionDiff): array
+    {
+        $items = [];
+
+        foreach ($permissionDiff['added'] as $name) {
+            $items[] = [
+                'icon' => 'key',
+                'text' => __('permission-registry::messages.import.action_detail_perm_added', ['name' => $name]),
+            ];
+        }
+
+        foreach ($permissionDiff['removed'] as $name) {
+            $items[] = [
+                'icon' => 'key-slash',
+                'text' => __('permission-registry::messages.import.action_detail_perm_removed', ['name' => $name]),
+            ];
+        }
+
+        if ($items === []) {
+            $items[] = ['icon' => 'check', 'text' => __('permission-registry::messages.import.action_detail_no_changes')];
+        }
+
+        return ['items' => $items];
+    }
+
     private function buildMissingAction(int $virtualUserId, array $managedPermissionIds): array
     {
         $items = [];
@@ -854,7 +883,7 @@ class ImportManager extends Component
 
             if ($status === ImportMatchStatus::NEW) {
                 $granted = $matchedPermissionIds;
-            } elseif ($status === ImportMatchStatus::CHANGED) {
+            } elseif ($status === ImportMatchStatus::CHANGED || $status === ImportMatchStatus::EXISTS) {
                 $userId = (int) ($row->{ImportStagingRow::MATCHED_VIRTUAL_USER_ID} ?? 0);
                 $currentIds = $currentPermissionMap[$userId] ?? [];
                 $granted = array_values(array_diff($matchedPermissionIds, $currentIds));
