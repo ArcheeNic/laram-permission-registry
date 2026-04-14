@@ -83,7 +83,7 @@ class FetchImportAction
             ]);
         }
 
-        $this->createMissingStagingRows($importRunId, $permissionImportId, $emailFieldId, $processedEmails);
+        $this->createMissingStagingRows($importRunId, $permissionImportId, $emailFieldId, $processedEmails, $fieldMappingSchema);
 
         $stats = $this->buildStats($importRunId);
         $log->update([
@@ -194,16 +194,20 @@ class FetchImportAction
 
     /**
      * @param string[] $processedEmails
+     * @param array<string, array{permission_field_id: int, is_internal: bool}> $fieldMappingSchema
      */
     private function createMissingStagingRows(
         string $importRunId,
         int $permissionImportId,
         ?int $emailFieldId,
         array $processedEmails,
+        array $fieldMappingSchema,
     ): void {
         if ($emailFieldId === null) {
             return;
         }
+
+        $reverseMap = $this->buildReverseFieldMap($fieldMappingSchema);
 
         $query = VirtualUserFieldValue::query()
             ->where(VirtualUserFieldValue::PERMISSION_FIELD_ID, $emailFieldId)
@@ -213,16 +217,55 @@ class FetchImportAction
             $query->whereNotIn(VirtualUserFieldValue::VALUE, $processedEmails);
         }
 
-        $query->each(function (VirtualUserFieldValue $fieldValue) use ($importRunId, $permissionImportId) {
+        $query->each(function (VirtualUserFieldValue $fieldValue) use ($importRunId, $permissionImportId, $reverseMap) {
+            $virtualUserId = $fieldValue->{VirtualUserFieldValue::VIRTUAL_USER_ID};
+            $fields = $this->buildFieldsFromExistingUser($virtualUserId, $reverseMap);
+
             ImportStagingRow::query()->create([
                 ImportStagingRow::IMPORT_RUN_ID => $importRunId,
                 ImportStagingRow::PERMISSION_IMPORT_ID => $permissionImportId,
-                ImportStagingRow::EXTERNAL_ID => 'missing_' . $fieldValue->{VirtualUserFieldValue::VIRTUAL_USER_ID},
-                ImportStagingRow::FIELDS => [],
+                ImportStagingRow::EXTERNAL_ID => 'missing_' . $virtualUserId,
+                ImportStagingRow::FIELDS => $fields,
                 ImportStagingRow::MATCH_STATUS => ImportMatchStatus::MISSING->value,
-                ImportStagingRow::MATCHED_VIRTUAL_USER_ID => $fieldValue->{VirtualUserFieldValue::VIRTUAL_USER_ID},
+                ImportStagingRow::MATCHED_VIRTUAL_USER_ID => $virtualUserId,
             ]);
         });
+    }
+
+    /**
+     * @param array<string, array{permission_field_id: int, is_internal: bool}> $fieldMappingSchema
+     * @return array<int, string> permission_field_id => import_field_name
+     */
+    private function buildReverseFieldMap(array $fieldMappingSchema): array
+    {
+        $map = [];
+        foreach ($fieldMappingSchema as $importFieldName => $mappingData) {
+            $map[$mappingData['permission_field_id']] = $importFieldName;
+        }
+
+        return $map;
+    }
+
+    /**
+     * @param array<int, string> $reverseMap permission_field_id => import_field_name
+     * @return array<string, string> import_field_name => value
+     */
+    private function buildFieldsFromExistingUser(int $virtualUserId, array $reverseMap): array
+    {
+        $fieldValues = VirtualUserFieldValue::query()
+            ->where(VirtualUserFieldValue::VIRTUAL_USER_ID, $virtualUserId)
+            ->whereIn(VirtualUserFieldValue::PERMISSION_FIELD_ID, array_keys($reverseMap))
+            ->get();
+
+        $fields = [];
+        foreach ($fieldValues as $fv) {
+            $fieldId = $fv->{VirtualUserFieldValue::PERMISSION_FIELD_ID};
+            if (isset($reverseMap[$fieldId])) {
+                $fields[$reverseMap[$fieldId]] = $fv->{VirtualUserFieldValue::VALUE};
+            }
+        }
+
+        return $fields;
     }
 
     private function buildStats(string $importRunId): array

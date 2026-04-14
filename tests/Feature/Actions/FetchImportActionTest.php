@@ -158,6 +158,60 @@ class FetchImportActionTest extends TestCase
         $this->assertSame($absentUser->id, $missingRows->first()->matched_virtual_user_id);
     }
 
+    public function test_missing_rows_contain_current_user_field_values(): void
+    {
+        $firstNameField = PermissionField::create(['name' => 'first_name', 'is_global' => true]);
+        $lastNameField = PermissionField::create(['name' => 'last_name', 'is_global' => true]);
+
+        ImportFieldMapping::create([
+            'permission_import_id' => $this->import->id,
+            'import_field_name' => 'first_name',
+            'permission_field_id' => $firstNameField->id,
+            'is_internal' => false,
+        ]);
+        ImportFieldMapping::create([
+            'permission_import_id' => $this->import->id,
+            'import_field_name' => 'last_name',
+            'permission_field_id' => $lastNameField->id,
+            'is_internal' => false,
+        ]);
+
+        $absentUser = VirtualUser::create(['name' => 'Bob Smith', 'status' => VirtualUserStatus::ACTIVE]);
+        VirtualUserFieldValue::create([
+            'virtual_user_id' => $absentUser->id,
+            'permission_field_id' => $this->emailField->id,
+            'value' => 'bob@test.com',
+        ]);
+        VirtualUserFieldValue::create([
+            'virtual_user_id' => $absentUser->id,
+            'permission_field_id' => $firstNameField->id,
+            'value' => 'Bob',
+        ]);
+        VirtualUserFieldValue::create([
+            'virtual_user_id' => $absentUser->id,
+            'permission_field_id' => $lastNameField->id,
+            'value' => 'Smith',
+        ]);
+
+        $this->registerImporter([
+            ['external_id' => 'ext-1', 'email' => 'other@test.com'],
+        ]);
+
+        $action = app(FetchImportAction::class);
+        $importRunId = $action->handle($this->import->id);
+
+        $missingRow = ImportStagingRow::where('import_run_id', $importRunId)
+            ->where('match_status', ImportMatchStatus::MISSING->value)
+            ->first();
+
+        $this->assertNotNull($missingRow);
+        $fields = $missingRow->fields;
+        $this->assertIsArray($fields);
+        $this->assertSame('bob@test.com', $fields['email']);
+        $this->assertSame('Bob', $fields['first_name']);
+        $this->assertSame('Smith', $fields['last_name']);
+    }
+
     public function test_fetch_does_not_create_missing_rows_for_deactivated_users(): void
     {
         $deactivatedUser = VirtualUser::create([
