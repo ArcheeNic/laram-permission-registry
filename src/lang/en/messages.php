@@ -115,6 +115,8 @@ return [
     'import.status_changed' => 'Changed',
     'import.status_missing' => 'Missing',
     'import.select_all' => 'Select all',
+    'import.select_all_total' => 'Select all :count',
+    'import.selected_of_total' => 'Selected: :selected of :total',
     'import.deselect_all' => 'Deselect all',
     'import.select_new' => 'Select new',
     'import.select_missing' => 'Select missing',

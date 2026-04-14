@@ -406,12 +406,12 @@
             @include('permission-registry::livewire.partials.import-status-filter')
 
             {{-- Selection buttons --}}
-            <div class="p-4 border-b dark:border-neutral-700 flex flex-wrap gap-2">
+            <div class="p-4 border-b dark:border-neutral-700 flex flex-wrap gap-2 items-center">
                 <button wire:click="selectAll"
                         class="px-3 py-1.5 text-xs font-medium rounded-md transition-colors
-                               bg-gray-100 text-gray-700 hover:bg-gray-200
-                               dark:bg-neutral-700 dark:text-gray-300 dark:hover:bg-neutral-600">
-                    {{ __('permission-registry::messages.import.select_all') }}
+                               bg-indigo-100 text-indigo-700 hover:bg-indigo-200
+                               dark:bg-indigo-900/30 dark:text-indigo-300 dark:hover:bg-indigo-900/50">
+                    {{ __('permission-registry::messages.import.select_all_total', ['count' => $stagingStats['total']]) }}
                 </button>
                 <button wire:click="deselectAll"
                         class="px-3 py-1.5 text-xs font-medium rounded-md transition-colors
@@ -421,7 +421,7 @@
                 </button>
 
                 <span class="ml-auto text-sm text-gray-600 dark:text-gray-400 self-center">
-                    {{ __('permission-registry::messages.bulk_selected_count', ['count' => count($selectedRows)]) }}
+                    {{ __('permission-registry::messages.import.selected_of_total', ['selected' => count($selectedRows), 'total' => $stagingStats['total']]) }}
                 </span>
             </div>
 
@@ -430,10 +430,17 @@
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-neutral-700">
                     <thead class="bg-gray-50 dark:bg-neutral-700">
                         <tr>
+                            @php
+                                $pageIds = collect($stagingRows->items())->pluck('id')->map(fn ($id) => (int) $id)->all();
+                                $pageSelectedCount = count(array_intersect($selectedRows, $pageIds));
+                                $allPageSelected = $pageSelectedCount === count($pageIds) && count($pageIds) > 0;
+                                $somePageSelected = $pageSelectedCount > 0 && !$allPageSelected;
+                            @endphp
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase w-10">
                                 <input type="checkbox"
-                                       wire:click="{{ count($selectedRows) === $stagingRows->count() ? 'deselectAll' : 'selectAll' }}"
-                                       {{ count($selectedRows) === $stagingRows->count() && $stagingRows->count() > 0 ? 'checked' : '' }}
+                                       wire:click="{{ $allPageSelected ? 'deselectAllOnPage' : 'selectAllOnPage' }}"
+                                       {{ $allPageSelected ? 'checked' : '' }}
+                                       @if($somePageSelected) x-ref="pageCheckbox" x-init="$refs.pageCheckbox && ($refs.pageCheckbox.indeterminate = true)" @endif
                                        class="rounded border-gray-300 dark:border-gray-600 dark:bg-neutral-700 text-indigo-600 focus:ring-indigo-500">
                             </th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Email</th>

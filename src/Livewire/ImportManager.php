@@ -7,10 +7,10 @@ use ArcheeNic\PermissionRegistry\Actions\CleanupImportRunAction;
 use ArcheeNic\PermissionRegistry\Actions\ExecuteApprovedImportAction;
 use ArcheeNic\PermissionRegistry\Actions\FetchImportAction;
 use ArcheeNic\PermissionRegistry\Enums\ImportMatchStatus;
+use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
 use ArcheeNic\PermissionRegistry\Models\ImportExecutionLog;
 use ArcheeNic\PermissionRegistry\Models\ImportFieldMapping;
 use ArcheeNic\PermissionRegistry\Models\ImportStagingRow;
-use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
 use ArcheeNic\PermissionRegistry\Models\PermissionField;
 use ArcheeNic\PermissionRegistry\Models\PermissionImport;
 use ArcheeNic\PermissionRegistry\Models\VirtualUserFieldValue;
@@ -19,8 +19,8 @@ use ArcheeNic\PermissionRegistry\Services\ImportFieldMappingService;
 use ArcheeNic\PermissionRegistry\Services\ImportTriggerConfigResolver;
 use ArcheeNic\PermissionRegistry\Services\TriggerPermissionMatcherService;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -84,7 +84,7 @@ class ImportManager extends Component
 
     public function saveMapping(): void
     {
-        if (!$this->currentImportId) {
+        if (! $this->currentImportId) {
             return;
         }
 
@@ -141,8 +141,9 @@ class ImportManager extends Component
             ->where(ImportFieldMapping::PERMISSION_IMPORT_ID, $importId)
             ->exists();
 
-        if (!$hasMappings) {
+        if (! $hasMappings) {
             $this->flashError = __('permission-registry::messages.import.no_mapping');
+
             return;
         }
 
@@ -166,12 +167,43 @@ class ImportManager extends Component
 
     public function selectAll(): void
     {
+        if (! $this->currentRunId) {
+            return;
+        }
+
+        $query = ImportStagingRow::query()
+            ->where(ImportStagingRow::IMPORT_RUN_ID, $this->currentRunId);
+
+        if ($this->statusFilters !== []) {
+            $query->whereIn(ImportStagingRow::MATCH_STATUS, $this->statusFilters);
+        }
+
+        $this->selectedRows = $query
+            ->pluck('id')
+            ->map(static fn (mixed $id): int => (int) $id)
+            ->all();
+    }
+
+    public function selectAllOnPage(): void
+    {
         $rows = $this->getStagingRows();
         $items = $rows instanceof LengthAwarePaginator
             ? collect($rows->items())
             : collect($rows);
 
-        $this->selectedRows = $items->pluck('id')->map(static fn (mixed $id): int => (int) $id)->all();
+        $pageIds = $items->pluck('id')->map(static fn (mixed $id): int => (int) $id)->all();
+        $this->selectedRows = array_values(array_unique(array_merge($this->selectedRows, $pageIds)));
+    }
+
+    public function deselectAllOnPage(): void
+    {
+        $rows = $this->getStagingRows();
+        $items = $rows instanceof LengthAwarePaginator
+            ? collect($rows->items())
+            : collect($rows);
+
+        $pageIds = $items->pluck('id')->map(static fn (mixed $id): int => (int) $id)->all();
+        $this->selectedRows = array_values(array_diff($this->selectedRows, $pageIds));
     }
 
     public function deselectAll(): void
@@ -182,25 +214,23 @@ class ImportManager extends Component
     public function selectByStatus(string $status): void
     {
         $validStatus = ImportMatchStatus::tryFrom($status);
-        if ($validStatus === null) {
+        if ($validStatus === null || ! $this->currentRunId) {
             return;
         }
 
-        $rows = $this->getStagingRows();
-        $items = $rows instanceof LengthAwarePaginator
-            ? collect($rows->items())
-            : collect($rows);
-
-        $this->selectedRows = $items
-            ->filter(fn ($row) => $row->{ImportStagingRow::MATCH_STATUS} === $validStatus)
+        $statusIds = ImportStagingRow::query()
+            ->where(ImportStagingRow::IMPORT_RUN_ID, $this->currentRunId)
+            ->where(ImportStagingRow::MATCH_STATUS, $validStatus)
             ->pluck('id')
             ->map(static fn (mixed $id): int => (int) $id)
             ->all();
+
+        $this->selectedRows = array_values(array_unique(array_merge($this->selectedRows, $statusIds)));
     }
 
     public function approveAndExecute(): void
     {
-        if (!$this->currentRunId || empty($this->selectedRows)) {
+        if (! $this->currentRunId || empty($this->selectedRows)) {
             return;
         }
 
@@ -317,7 +347,7 @@ class ImportManager extends Component
 
     public function getManagedPermissionsProperty()
     {
-        if (!$this->currentImportId) {
+        if (! $this->currentImportId) {
             return collect();
         }
 
@@ -365,7 +395,7 @@ class ImportManager extends Component
      */
     public function getResolvedPermissionNamesProperty(): array
     {
-        if (!$this->currentImportId) {
+        if (! $this->currentImportId) {
             return [];
         }
 
@@ -398,6 +428,7 @@ class ImportManager extends Component
             $status = $row->match_status instanceof ImportMatchStatus
                 ? $row->match_status
                 : ImportMatchStatus::tryFrom($row->match_status);
+
             return $status === ImportMatchStatus::CHANGED;
         });
 
@@ -444,7 +475,7 @@ class ImportManager extends Component
 
     public function getAllStatsProperty(): array
     {
-        if (!$this->currentRunId) {
+        if (! $this->currentRunId) {
             return ['total' => 0, 'new' => 0, 'changed' => 0, 'exists' => 0, 'missing' => 0];
         }
 
@@ -471,12 +502,12 @@ class ImportManager extends Component
 
     public function getRequiredFieldsProperty(): array
     {
-        if (!$this->currentImportId) {
+        if (! $this->currentImportId) {
             return [];
         }
 
         $import = PermissionImport::query()->find($this->currentImportId);
-        if (!$import) {
+        if (! $import) {
             return [];
         }
 
@@ -505,7 +536,7 @@ class ImportManager extends Component
 
     private function getFilteredRows()
     {
-        if (!$this->currentRunId) {
+        if (! $this->currentRunId) {
             return $this->emptyPaginator();
         }
 
@@ -540,7 +571,7 @@ class ImportManager extends Component
         $this->fieldMapping = [];
         $this->internalFieldId = null;
 
-        if (!$this->currentImportId) {
+        if (! $this->currentImportId) {
             return;
         }
 
@@ -558,12 +589,12 @@ class ImportManager extends Component
 
     private function resolveEmailImportFieldName(): ?string
     {
-        if (!$this->currentImportId) {
+        if (! $this->currentImportId) {
             return null;
         }
 
         $import = PermissionImport::query()->find($this->currentImportId);
-        if (!$import) {
+        if (! $import) {
             return null;
         }
 
@@ -672,7 +703,7 @@ class ImportManager extends Component
 
     private function computeFieldDiffs($changedRows): array
     {
-        if ($changedRows->isEmpty() || !$this->currentImportId) {
+        if ($changedRows->isEmpty() || ! $this->currentImportId) {
             return [];
         }
 
@@ -692,7 +723,7 @@ class ImportManager extends Component
 
         foreach ($changedRows as $row) {
             $vuId = $row->{ImportStagingRow::MATCHED_VIRTUAL_USER_ID};
-            if (!$vuId) {
+            if (! $vuId) {
                 continue;
             }
 
@@ -747,7 +778,7 @@ class ImportManager extends Component
     }
 
     /**
-     * @param Collection<int, ImportStagingRow> $rows
+     * @param  Collection<int, ImportStagingRow>  $rows
      * @return array<int, int>
      */
     private function resolveActionFilteredRowIds(Collection $rows): array
@@ -808,8 +839,8 @@ class ImportManager extends Component
                 $revoked = $currentPermissionMap[$userId] ?? [];
             }
 
-            $grantOk = !$grantFilterId || in_array($grantFilterId, $granted, true);
-            $revokeOk = !$revokeFilterId || in_array($revokeFilterId, $revoked, true);
+            $grantOk = ! $grantFilterId || in_array($grantFilterId, $granted, true);
+            $revokeOk = ! $revokeFilterId || in_array($revokeFilterId, $revoked, true);
 
             if ($grantOk && $revokeOk) {
                 $ids[] = (int) $row->id;
@@ -829,7 +860,7 @@ class ImportManager extends Component
      */
     private function buildPermissionDiff(?int $virtualUserId, array $shouldHaveIds, array $managedPermissionIds): array
     {
-        if (!$virtualUserId || $managedPermissionIds === []) {
+        if (! $virtualUserId || $managedPermissionIds === []) {
             return ['added' => [], 'removed' => []];
         }
 
@@ -864,7 +895,7 @@ class ImportManager extends Component
      */
     private function resolveMatcherConfig(): array
     {
-        if (!$this->currentImportId) {
+        if (! $this->currentImportId) {
             return app(ImportTriggerConfigResolver::class)->resolve(null);
         }
 

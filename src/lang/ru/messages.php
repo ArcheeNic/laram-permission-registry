@@ -115,6 +115,8 @@ return [
     'import.status_changed' => 'Изменён',
     'import.status_missing' => 'Отсутствует',
     'import.select_all' => 'Выбрать все',
+    'import.select_all_total' => 'Выбрать все :count',
+    'import.selected_of_total' => 'Выбрано: :selected из :total',
     'import.deselect_all' => 'Снять всё',
     'import.select_new' => 'Выбрать новых',
     'import.select_missing' => 'Выбрать отсутствующих',
