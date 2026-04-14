@@ -20,6 +20,7 @@ class FetchImportAction
     public function __construct(
         private ImportFieldMappingService $fieldMappingService,
         private ImportDiscoveryService $discoveryService,
+        private RecalculateImportStatusesAction $recalculateStatuses,
     ) {}
 
     public function handle(int $permissionImportId): string
@@ -84,6 +85,8 @@ class FetchImportAction
         }
 
         $this->createMissingStagingRows($importRunId, $permissionImportId, $emailFieldId, $processedEmails, $fieldMappingSchema);
+
+        $this->recalculateStatuses->handle($importRunId, $permissionImportId);
 
         $stats = $this->buildStats($importRunId);
         $log->update([
