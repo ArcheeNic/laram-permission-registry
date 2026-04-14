@@ -517,6 +517,30 @@ class ImportManager extends Component
         return $metadata['required_fields'] ?? [];
     }
 
+    /**
+     * @return array<string, string> import_field_name => permission_field.name
+     */
+    public function getFieldColumnsProperty(): array
+    {
+        if (! $this->currentImportId) {
+            return [];
+        }
+
+        $mappings = ImportFieldMapping::query()
+            ->where(ImportFieldMapping::PERMISSION_IMPORT_ID, $this->currentImportId)
+            ->with('permissionField')
+            ->orderBy('id')
+            ->get();
+
+        $columns = [];
+        foreach ($mappings as $mapping) {
+            $columns[$mapping->{ImportFieldMapping::IMPORT_FIELD_NAME}] =
+                $mapping->permissionField?->name ?? $mapping->{ImportFieldMapping::IMPORT_FIELD_NAME};
+        }
+
+        return $columns;
+    }
+
     public function render()
     {
         $filteredRows = $this->getFilteredRows();
@@ -531,6 +555,7 @@ class ImportManager extends Component
             'rowActions' => $this->rowActions,
             'resolvedPermissionName' => $this->resolvedPermissionName,
             'managedPermissions' => $this->managedPermissions,
+            'fieldColumns' => $this->fieldColumns,
         ]);
     }
 

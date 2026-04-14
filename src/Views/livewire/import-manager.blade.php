@@ -331,9 +331,9 @@
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-neutral-700">
                     <thead class="bg-gray-50 dark:bg-neutral-700">
                         <tr>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Email</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('permission-registry::messages.import.first_name') }}</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('permission-registry::messages.import.last_name') }}</th>
+                            @foreach($fieldColumns as $colKey => $colName)
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ $colName }}</th>
+                            @endforeach
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('permission-registry::messages.status') }}</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('permission-registry::messages.import.action_column') }}</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('permission-registry::messages.import.approved') }}</th>
@@ -343,9 +343,9 @@
                         @foreach($stagingRows as $row)
                             @php $fields = is_array($row->fields) ? $row->fields : []; @endphp
                             <tr>
-                                <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{{ $fields['email'] ?? ($row->matchedVirtualUser->name ?? '—') }}</td>
-                                <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{{ $fields['first_name'] ?? '—' }}</td>
-                                <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{{ $fields['last_name'] ?? '—' }}</td>
+                                @foreach($fieldColumns as $colKey => $colName)
+                                    <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{{ $fields[$colKey] ?? '—' }}</td>
+                                @endforeach
                                 <td class="px-4 py-3 text-sm">
                                     @include('permission-registry::livewire.partials.import-status-badge', ['row' => $row])
                                 </td>
@@ -373,11 +373,14 @@
                     @php $fields = is_array($row->fields) ? $row->fields : []; @endphp
                     <div class="p-4 space-y-2">
                         <div class="flex justify-between items-start">
-                            <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{{ $fields['email'] ?? $row->external_id }}</p>
+                            @php $firstCol = array_key_first($fieldColumns); @endphp
+                            <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{{ $fields[$firstCol] ?? $row->external_id }}</p>
                             @include('permission-registry::livewire.partials.import-status-badge', ['row' => $row])
                         </div>
                         <p class="text-xs text-gray-500 dark:text-gray-400">
-                            {{ $fields['first_name'] ?? '' }} {{ $fields['last_name'] ?? '' }}
+                            @foreach(array_slice($fieldColumns, 1) as $colKey => $colName)
+                                {{ $fields[$colKey] ?? '' }}{{ !$loop->last ? ' ' : '' }}
+                            @endforeach
                         </p>
                         <div class="pt-1 border-t dark:border-neutral-700">
                             @include('permission-registry::livewire.partials.import-row-action', ['row' => $row, 'rowActions' => $rowActions])
@@ -443,9 +446,9 @@
                                        @if($somePageSelected) x-ref="pageCheckbox" x-init="$refs.pageCheckbox && ($refs.pageCheckbox.indeterminate = true)" @endif
                                        class="rounded border-gray-300 dark:border-gray-600 dark:bg-neutral-700 text-indigo-600 focus:ring-indigo-500">
                             </th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Email</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('permission-registry::messages.import.first_name') }}</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('permission-registry::messages.import.last_name') }}</th>
+                            @foreach($fieldColumns as $colKey => $colName)
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ $colName }}</th>
+                            @endforeach
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('permission-registry::messages.status') }}</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('permission-registry::messages.import.action_column') }}</th>
                         </tr>
@@ -460,15 +463,11 @@
                                            {{ in_array($row->id, $selectedRows) ? 'checked' : '' }}
                                            class="rounded border-gray-300 dark:border-gray-600 dark:bg-neutral-700 text-indigo-600 focus:ring-indigo-500">
                                 </td>
-                                <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                                    {{ $fields['email'] ?? ($row->matchedVirtualUser->name ?? '—') }}
-                                </td>
-                                <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                                    {{ $fields['first_name'] ?? '—' }}
-                                </td>
-                                <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                                    {{ $fields['last_name'] ?? '—' }}
-                                </td>
+                                @foreach($fieldColumns as $colKey => $colName)
+                                    <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                                        {{ $fields[$colKey] ?? '—' }}
+                                    </td>
+                                @endforeach
                                 <td class="px-4 py-3 text-sm">
                                     @include('permission-registry::livewire.partials.import-status-badge', ['row' => $row])
                                 </td>
@@ -494,12 +493,15 @@
                             <div class="flex-1 min-w-0">
                                 <div class="flex justify-between items-start">
                                     <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                                        {{ $fields['email'] ?? $row->external_id }}
+                                        @php $firstCol = array_key_first($fieldColumns); @endphp
+                                        {{ $fields[$firstCol] ?? $row->external_id }}
                                     </p>
                                     @include('permission-registry::livewire.partials.import-status-badge', ['row' => $row])
                                 </div>
                                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                    {{ $fields['first_name'] ?? '' }} {{ $fields['last_name'] ?? '' }}
+                                    @foreach(array_slice($fieldColumns, 1) as $colKey => $colName)
+                                        {{ $fields[$colKey] ?? '' }}{{ !$loop->last ? ' ' : '' }}
+                                    @endforeach
                                 </p>
                                 <div class="pt-1 mt-1 border-t dark:border-neutral-700">
                                     @include('permission-registry::livewire.partials.import-row-action', ['row' => $row, 'rowActions' => $rowActions])
