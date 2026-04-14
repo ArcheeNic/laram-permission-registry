@@ -236,9 +236,11 @@ class ExecuteApprovedImportActionTest extends TestCase
         $action->handle($this->importRunId);
     }
 
-    public function test_execute_exists_does_nothing(): void
+    public function test_execute_exists_syncs_permissions_without_updating_fields(): void
     {
         $user = VirtualUser::create(['name' => 'Same', 'status' => VirtualUserStatus::ACTIVE]);
+        GrantedPermission::create(['virtual_user_id' => $user->id, 'permission_id' => $this->permissionA->id, 'enabled' => true]);
+
         $matcherMock = Mockery::mock(TriggerPermissionMatcherService::class);
 
         $createUserMock = Mockery::mock(CreateVirtualUserAction::class);
@@ -246,15 +248,28 @@ class ExecuteApprovedImportActionTest extends TestCase
         $updateFieldsMock = Mockery::mock(UpdateVirtualUserGlobalFieldsAction::class);
         $updateFieldsMock->shouldNotReceive('execute');
 
+        $grantMock = Mockery::mock(GrantPermissionAction::class);
+        $grantMock->shouldReceive('handle')->once()->andReturn(Mockery::mock(GrantedPermission::class));
+        $revokeMock = Mockery::mock(RevokePermissionAction::class);
+        $revokeMock->shouldReceive('handle')->once()->andReturn(true);
+
         $matcherMock->shouldReceive('getAllManagedPermissionIds')
             ->once()
             ->andReturn([$this->permissionA->id, $this->permissionB->id]);
-        $matcherMock->shouldReceive('matchByDepartments')->never();
+        $matcherMock->shouldReceive('normalizeDepartmentIds')
+            ->once()
+            ->andReturn(['1']);
+        $matcherMock->shouldReceive('matchByDepartments')
+            ->once()
+            ->andReturn(collect([
+                ['permission_id' => $this->permissionB->id, 'department_id' => '1', 'permission_name' => $this->permissionB->name],
+            ]));
+
         ImportStagingRow::create([
             'import_run_id' => $this->importRunId,
             'permission_import_id' => $this->import->id,
             'external_id' => 'ext-exists',
-            'fields' => ['email' => 'same@test.com'],
+            'fields' => ['email' => 'same@test.com', 'department_ids' => '1'],
             'match_status' => 'exists',
             'matched_virtual_user_id' => $user->id,
             'is_approved' => true,
@@ -263,9 +278,40 @@ class ExecuteApprovedImportActionTest extends TestCase
         $action = $this->makeAction(
             createVirtualUserAction: $createUserMock,
             updateVirtualUserGlobalFieldsAction: $updateFieldsMock,
+            grantPermissionAction: $grantMock,
+            revokePermissionAction: $revokeMock,
             triggerPermissionMatcherService: $matcherMock
         );
-        $action->handle($this->importRunId);
+        $stats = $action->handle($this->importRunId);
+
+        $this->assertSame(1, $stats['synced']);
+        $this->assertSame(0, $stats['skipped']);
+    }
+
+    public function test_execute_exists_without_virtual_user_is_skipped(): void
+    {
+        $matcherMock = Mockery::mock(TriggerPermissionMatcherService::class);
+
+        $matcherMock->shouldReceive('getAllManagedPermissionIds')
+            ->once()
+            ->andReturn([$this->permissionA->id]);
+        $matcherMock->shouldReceive('matchByDepartments')->never();
+
+        ImportStagingRow::create([
+            'import_run_id' => $this->importRunId,
+            'permission_import_id' => $this->import->id,
+            'external_id' => 'ext-exists-no-user',
+            'fields' => ['email' => 'nouser@test.com'],
+            'match_status' => 'exists',
+            'matched_virtual_user_id' => null,
+            'is_approved' => true,
+        ]);
+
+        $action = $this->makeAction(triggerPermissionMatcherService: $matcherMock);
+        $stats = $action->handle($this->importRunId);
+
+        $this->assertSame(0, $stats['synced']);
+        $this->assertSame(1, $stats['skipped']);
     }
 
     public function test_unapproved_rows_are_skipped(): void

@@ -29,7 +29,7 @@ class ExecuteApprovedImportAction
     ) {}
 
     /**
-     * @return array{created: int, updated: int, fired: int, skipped: int, errors: int}
+     * @return array{created: int, updated: int, fired: int, synced: int, skipped: int, errors: int}
      */
     public function handle(string $importRunId): array
     {
@@ -49,7 +49,7 @@ class ExecuteApprovedImportAction
         [$triggerClassPatterns, $departmentFieldName] = $this->importTriggerConfigResolver->resolve($import);
         $managedPermissionIds = $this->triggerPermissionMatcherService->getAllManagedPermissionIds($triggerClassPatterns);
 
-        $stats = ['created' => 0, 'updated' => 0, 'fired' => 0, 'skipped' => 0, 'errors' => 0];
+        $stats = ['created' => 0, 'updated' => 0, 'fired' => 0, 'synced' => 0, 'skipped' => 0, 'errors' => 0];
 
         foreach ($rows as $row) {
             try {
@@ -75,7 +75,13 @@ class ExecuteApprovedImportAction
                         $stats
                     ),
                     ImportMatchStatus::MISSING => $this->processMissingRow($row, $managedPermissionIds, $stats),
-                    ImportMatchStatus::EXISTS => $stats['skipped']++,
+                    ImportMatchStatus::EXISTS => $this->processExistsRow(
+                        $row,
+                        $triggerClassPatterns,
+                        $departmentFieldName,
+                        $managedPermissionIds,
+                        $stats
+                    ),
                 };
             } catch (\Throwable $e) {
                 $stats['errors']++;
@@ -95,7 +101,7 @@ class ExecuteApprovedImportAction
 
     /**
      * @param array<string, array{permission_field_id: int, is_internal: bool}> $mapping
-     * @param array{created: int, updated: int, fired: int, skipped: int, errors: int} $stats
+     * @param array{created: int, updated: int, fired: int, synced: int, skipped: int, errors: int} $stats
      */
     private function processNewRow(
         ImportStagingRow $row,
@@ -131,7 +137,7 @@ class ExecuteApprovedImportAction
 
     /**
      * @param array<string, array{permission_field_id: int, is_internal: bool}> $mapping
-     * @param array{created: int, updated: int, fired: int, skipped: int, errors: int} $stats
+     * @param array{created: int, updated: int, fired: int, synced: int, skipped: int, errors: int} $stats
      */
     private function processChangedRow(
         ImportStagingRow $row,
@@ -180,7 +186,56 @@ class ExecuteApprovedImportAction
     }
 
     /**
-     * @param array{created: int, updated: int, fired: int, skipped: int, errors: int} $stats
+     * @param array{created: int, updated: int, fired: int, synced: int, skipped: int, errors: int} $stats
+     */
+    private function processExistsRow(
+        ImportStagingRow $row,
+        array $triggerClassPatterns,
+        string $departmentFieldName,
+        array $managedPermissionIds,
+        array &$stats
+    ): void {
+        $virtualUserId = $row->{ImportStagingRow::MATCHED_VIRTUAL_USER_ID};
+
+        if ($virtualUserId === null || $managedPermissionIds === []) {
+            $stats['skipped']++;
+
+            return;
+        }
+
+        $shouldHavePermissionIds = $this->resolvePermissionIdsFromRow($row, $triggerClassPatterns, $departmentFieldName);
+        $currentPermissionIds = GrantedPermission::query()
+            ->where(GrantedPermission::VIRTUAL_USER_ID, $virtualUserId)
+            ->whereIn(GrantedPermission::PERMISSION_ID, $managedPermissionIds)
+            ->pluck(GrantedPermission::PERMISSION_ID)
+            ->map(static fn (mixed $id): int => (int) $id)
+            ->all();
+
+        $toGrant = array_values(array_diff($shouldHavePermissionIds, $currentPermissionIds));
+        $toRevoke = array_values(array_diff($currentPermissionIds, $shouldHavePermissionIds));
+
+        foreach ($toGrant as $permissionId) {
+            $this->grantPermissionAction->handle(
+                userId: (int) $virtualUserId,
+                permissionId: $permissionId,
+                skipTriggers: true,
+                skipApprovalCheck: true,
+            );
+        }
+
+        foreach ($toRevoke as $permissionId) {
+            $this->revokePermissionAction->handle(
+                userId: (int) $virtualUserId,
+                permissionId: $permissionId,
+                skipTriggers: true,
+            );
+        }
+
+        $stats['synced']++;
+    }
+
+    /**
+     * @param array{created: int, updated: int, fired: int, synced: int, skipped: int, errors: int} $stats
      */
     private function processMissingRow(ImportStagingRow $row, array $managedPermissionIds, array &$stats): void
     {
@@ -273,10 +328,10 @@ class ExecuteApprovedImportAction
     }
 
     /**
-     * @return array{created: int, updated: int, fired: int, skipped: int, errors: int}
+     * @return array{created: int, updated: int, fired: int, synced: int, skipped: int, errors: int}
      */
     private function emptyStats(): array
     {
-        return ['created' => 0, 'updated' => 0, 'fired' => 0, 'skipped' => 0, 'errors' => 0];
+        return ['created' => 0, 'updated' => 0, 'fired' => 0, 'synced' => 0, 'skipped' => 0, 'errors' => 0];
     }
 }
