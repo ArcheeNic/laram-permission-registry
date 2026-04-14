@@ -70,7 +70,7 @@ class FetchImportAction
             $matchResult = $this->matchVirtualUser($email, $emailFieldId, $userData, $fieldMappingSchema);
 
             if ($email !== null) {
-                $processedEmails[] = mb_strtolower($email);
+                $processedEmails[] = $this->normalizeEmail($email);
             }
 
             ImportStagingRow::query()->create([
@@ -144,12 +144,14 @@ class FetchImportAction
             return ['status' => ImportMatchStatus::NEW, 'virtual_user_id' => null];
         }
 
-        $fieldValue = VirtualUserFieldValue::query()
+        $normalizedEmail = $this->normalizeEmail($email);
+
+        $fieldValueQuery = VirtualUserFieldValue::query()
             ->where(VirtualUserFieldValue::PERMISSION_FIELD_ID, $emailFieldId)
-            ->where(VirtualUserFieldValue::VALUE, $email)
             ->whereHas('virtualUser', fn ($q) => $q->where('status', '!=', VirtualUserStatus::DEACTIVATED->value))
-            ->with('virtualUser')
-            ->first();
+            ->with('virtualUser');
+        $this->applyCaseInsensitiveEmailEquals($fieldValueQuery, VirtualUserFieldValue::VALUE, $normalizedEmail);
+        $fieldValue = $fieldValueQuery->first();
 
         if ($fieldValue === null) {
             return ['status' => ImportMatchStatus::NEW, 'virtual_user_id' => null];
@@ -214,7 +216,7 @@ class FetchImportAction
             ->whereHas('virtualUser', fn ($q) => $q->where('status', '!=', VirtualUserStatus::DEACTIVATED->value));
 
         if (!empty($processedEmails)) {
-            $query->whereNotIn(VirtualUserFieldValue::VALUE, $processedEmails);
+            $this->applyCaseInsensitiveEmailNotIn($query, VirtualUserFieldValue::VALUE, $processedEmails);
         }
 
         $query->each(function (VirtualUserFieldValue $fieldValue) use ($importRunId, $permissionImportId, $reverseMap) {
@@ -281,5 +283,33 @@ class FetchImportAction
             'changed' => $rows->where(ImportStagingRow::MATCH_STATUS, ImportMatchStatus::CHANGED)->count(),
             'missing' => $rows->where(ImportStagingRow::MATCH_STATUS, ImportMatchStatus::MISSING)->count(),
         ];
+    }
+
+    private function normalizeEmail(string $email): string
+    {
+        return mb_strtolower(trim($email));
+    }
+
+    private function applyCaseInsensitiveEmailEquals($query, string $column, string $email): void
+    {
+        $query->whereRaw("LOWER({$column}) = ?", [$email]);
+    }
+
+    /**
+     * @param array<int, string> $emails
+     */
+    private function applyCaseInsensitiveEmailNotIn($query, string $column, array $emails): void
+    {
+        $normalizedEmails = array_values(array_unique(array_filter(
+            array_map(fn (string $email): string => $this->normalizeEmail($email), $emails),
+            fn (string $email): bool => $email !== ''
+        )));
+
+        if ($normalizedEmails === []) {
+            return;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($normalizedEmails), '?'));
+        $query->whereRaw("LOWER({$column}) NOT IN ({$placeholders})", $normalizedEmails);
     }
 }
