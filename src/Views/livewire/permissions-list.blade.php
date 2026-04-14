@@ -77,6 +77,9 @@
                         {{ __('permission-registry::governance.risk_level_label') }}
                     </th>
                     <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        {{ __('permission-registry::Users') }}
+                    </th>
+                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         {{ __('permission-registry::Auto') }}
                     </th>
                     <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -127,6 +130,9 @@
                             @else
                                 <span class="text-gray-400 dark:text-gray-500">—</span>
                             @endif
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-700 dark:text-gray-300">
+                            {{ $permission->granted_permissions_count ?? 0 }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-center text-sm">
                             <div class="flex justify-center gap-2">

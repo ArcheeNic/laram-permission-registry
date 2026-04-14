@@ -15,6 +15,7 @@ use ArcheeNic\PermissionRegistry\Livewire\PendingApprovalsList;
 use ArcheeNic\PermissionRegistry\Livewire\PendingRevocationsDashboard;
 use ArcheeNic\PermissionRegistry\Livewire\PermissionDependencies;
 use ArcheeNic\PermissionRegistry\Livewire\PermissionsList;
+use ArcheeNic\PermissionRegistry\Livewire\PermissionUsers;
 use ArcheeNic\PermissionRegistry\Livewire\PositionsList;
 use ArcheeNic\PermissionRegistry\Livewire\UserPermissions;
 use ArcheeNic\PermissionRegistry\Livewire\UsersManagement;
@@ -152,6 +153,7 @@ class ServiceProvider extends BaseServiceProvider
     {
         // Регистрация Livewire компонентов
         Livewire::component('permission-registry::permissions-list', PermissionsList::class);
+        Livewire::component('permission-registry::permission-users', PermissionUsers::class);
         Livewire::component('permission-registry::permission-dependencies', PermissionDependencies::class);
         Livewire::component('permission-registry::user-permissions', UserPermissions::class);
         Livewire::component('permission-registry::users-management', UsersManagement::class);

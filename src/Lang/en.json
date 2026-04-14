@@ -393,5 +393,8 @@
   "permission-registry::messages.manual_revocation_tasks_created": "Manual revocation tasks created: :count",
   "permission-registry::messages.user_must_be_deactivated": "User must be deactivated for this action",
   "permission-registry::messages.not_available": "N/A",
-  "permission-registry::messages.duplicate_users_found": "Found :count match(es)"
+  "permission-registry::messages.duplicate_users_found": "Found :count match(es)",
+
+  "permission-registry::Users with this Permission": "Users with this Permission",
+  "permission-registry::No users have this permission": "No users have this permission"
 }

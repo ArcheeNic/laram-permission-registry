@@ -36,7 +36,7 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
+            <div class="bg-white dark:bg-neutral-800 overflow-hidden shadow-xl sm:rounded-lg p-6">
                 @if (session('error'))
                     <div class="mb-4 rounded-md border-l-4 border-red-500 bg-red-100 p-4 text-red-700 dark:border-red-400 dark:bg-red-900/30 dark:text-red-300" role="alert">
                         <p>{{ session('error') }}</p>
@@ -155,6 +155,11 @@
                             </table>
                         </div>
                     @endif
+                </div>
+
+                {{-- Users with this Permission --}}
+                <div class="mb-8">
+                    @livewire('permission-registry::permission-users', ['permissionId' => $permission->id])
                 </div>
 
                 {{-- Approval Policy --}}

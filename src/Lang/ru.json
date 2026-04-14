@@ -396,5 +396,8 @@
   "permission-registry::messages.manual_revocation_tasks_created": "Создано задач на ручной отзыв: :count",
   "permission-registry::messages.user_must_be_deactivated": "Пользователь должен быть деактивирован для этого действия",
   "permission-registry::messages.not_available": "Н/Д",
-  "permission-registry::messages.duplicate_users_found": "Найдено совпадений: :count"
+  "permission-registry::messages.duplicate_users_found": "Найдено совпадений: :count",
+
+  "permission-registry::Users with this Permission": "Пользователи с этим правом",
+  "permission-registry::No users have this permission": "Ни у одного пользователя нет этого права"
 }

@@ -116,6 +116,7 @@ class PermissionsList extends Component
                 $query->where('risk_level', $this->riskLevel);
             })
             ->with(['fields', 'groups', 'systemOwner'])
+            ->withCount('grantedPermissions')
             ->paginate($this->perPage);
     }
 
