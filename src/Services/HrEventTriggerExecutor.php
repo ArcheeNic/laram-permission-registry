@@ -2,6 +2,7 @@
 
 namespace ArcheeNic\PermissionRegistry\Services;
 
+use ArcheeNic\PermissionRegistry\DataTransferObjects\HrTriggerExecutionResult;
 use ArcheeNic\PermissionRegistry\Enums\EmployeeCategory;
 use ArcheeNic\PermissionRegistry\Enums\HrTriggerExecutionStatus;
 use ArcheeNic\PermissionRegistry\Contracts\PermissionTriggerInterface;
@@ -18,6 +19,8 @@ class HrEventTriggerExecutor
     /** @var array<string, bool>|null */
     private ?array $allowedTriggerClasses = null;
 
+    private ?HrTriggerExecutionResult $lastResult = null;
+
     public function __construct(
         private TriggerFieldMappingService $mappingService,
         private TriggerDiscoveryService $triggerDiscoveryService
@@ -27,6 +30,11 @@ class HrEventTriggerExecutor
     public function execute(int $virtualUserId, string $eventType): bool
     {
         return $this->executeChainFromIndex($virtualUserId, $eventType);
+    }
+
+    public function getLastResult(): ?HrTriggerExecutionResult
+    {
+        return $this->lastResult;
     }
 
     /**
@@ -39,12 +47,19 @@ class HrEventTriggerExecutor
         array $manualGlobalFields = []
     ): bool
     {
+        $this->lastResult = null;
+
         $virtualUser = VirtualUser::query()->find($virtualUserId);
         if (! $virtualUser) {
             Log::error('HR trigger execution aborted: virtual user not found', [
                 'event_type' => $eventType,
                 'virtual_user_id' => $virtualUserId,
             ]);
+
+            $this->lastResult = new HrTriggerExecutionResult(
+                success: false,
+                errorMessage: 'Virtual user not found',
+            );
 
             return false;
         }
@@ -58,16 +73,28 @@ class HrEventTriggerExecutor
                 'employee_category' => $rawCategory,
             ]);
 
+            $this->lastResult = new HrTriggerExecutionResult(
+                success: false,
+                errorMessage: 'Employee category is missing or invalid',
+            );
+
             return false;
         }
 
         $assignments = $this->loadAssignments($eventType, $category);
 
         if ($assignments->isEmpty()) {
+            $this->lastResult = HrTriggerExecutionResult::ok();
+
             return true;
         }
 
         if ($startIndex < 0 || $startIndex >= $assignments->count()) {
+            $this->lastResult = new HrTriggerExecutionResult(
+                success: false,
+                errorMessage: 'Invalid start index for HR trigger chain',
+            );
+
             return false;
         }
 
@@ -130,6 +157,14 @@ class HrEventTriggerExecutor
                         'error' => $result->errorMessage,
                     ]);
 
+                    $this->lastResult = HrTriggerExecutionResult::failed(
+                        logId: $logEntry->id,
+                        errorMessage: $result->errorMessage,
+                        triggerName: $assignment->trigger?->name,
+                        permissionTriggerId: $assignment->permission_trigger_id,
+                        awaitingResolution: (bool) $result->awaitingResolution,
+                    );
+
                     return false;
                 }
 
@@ -154,9 +189,18 @@ class HrEventTriggerExecutor
                     'error' => $e->getMessage(),
                 ]);
 
+                $this->lastResult = HrTriggerExecutionResult::crashed(
+                    logId: $logEntry->id,
+                    errorMessage: $e->getMessage(),
+                    triggerName: $assignment->trigger?->name,
+                    permissionTriggerId: $assignment->permission_trigger_id,
+                );
+
                 return false;
             }
         }
+
+        $this->lastResult = HrTriggerExecutionResult::ok();
 
         return true;
     }

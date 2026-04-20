@@ -41,6 +41,7 @@ use ArcheeNic\PermissionRegistry\Listeners\SendPermissionGrantedNotification;
 use ArcheeNic\PermissionRegistry\Listeners\SendPermissionRevokedNotification;
 use ArcheeNic\PermissionRegistry\Contracts\UserToVirtualUserResolver;
 use ArcheeNic\PermissionRegistry\Middleware\CheckPermission;
+use ArcheeNic\PermissionRegistry\Services\HrEventTriggerExecutor;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
@@ -76,6 +77,8 @@ class ServiceProvider extends BaseServiceProvider
             $resolverClass = config('permission-registry.user_resolver');
             return $app->make($resolverClass);
         });
+
+        $this->app->scoped(HrEventTriggerExecutor::class);
     }
 
     public function boot(): void
