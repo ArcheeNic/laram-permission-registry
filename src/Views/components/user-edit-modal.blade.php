@@ -39,12 +39,19 @@
                 @if($this->selectedUser->isActive())
                     <button
                         wire:click="confirmFire"
+                        wire:target="confirmFire,fireUser"
+                        wire:loading.attr="disabled"
                         data-confirm-message="{{ __('permission-registry::messages.confirm_fire') }}"
                         onclick="return confirm(this.dataset.confirmMessage)"
                         type="button"
-                        class="inline-flex items-center px-3 py-1.5 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition-colors"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                     >
-                        {{ __('permission-registry::messages.fire') }}
+                        <svg wire:loading wire:target="confirmFire,fireUser" class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" opacity="0.25"></circle>
+                            <path d="M4 12a8 8 0 018-8" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round"></path>
+                        </svg>
+                        <span wire:loading.remove wire:target="confirmFire,fireUser">{{ __('permission-registry::messages.fire') }}</span>
+                        <span wire:loading wire:target="confirmFire,fireUser">{{ __('permission-registry::messages.firing_in_progress') }}</span>
                     </button>
                 @else
                     <div class="flex items-center gap-2">
@@ -58,7 +65,9 @@
                         <select
                             id="hire-category"
                             wire:model.live="selectedHireCategory"
-                            class="rounded-lg border border-white/30 bg-white/15 text-sm text-white focus:border-white/60 focus:ring-0"
+                            wire:loading.attr="disabled"
+                            wire:target="hireUser"
+                            class="rounded-lg border border-white/30 bg-white/15 text-sm text-white focus:border-white/60 focus:ring-0 disabled:opacity-60 disabled:cursor-not-allowed"
                         >
                             @foreach($this->employeeCategoryOptions as $categoryValue => $categoryLabel)
                                 <option value="{{ $categoryValue }}" class="text-gray-900">{{ $categoryLabel }}</option>
@@ -67,10 +76,17 @@
                     </div>
                     <button
                         wire:click="hireUser"
+                        wire:target="hireUser"
+                        wire:loading.attr="disabled"
                         type="button"
-                        class="inline-flex items-center px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 transition-colors"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                     >
-                        {{ __('permission-registry::messages.hire') }}
+                        <svg wire:loading wire:target="hireUser" class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" opacity="0.25"></circle>
+                            <path d="M4 12a8 8 0 018-8" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round"></path>
+                        </svg>
+                        <span wire:loading.remove wire:target="hireUser">{{ __('permission-registry::messages.hire') }}</span>
+                        <span wire:loading wire:target="hireUser">{{ __('permission-registry::messages.hiring_in_progress') }}</span>
                     </button>
                 @endif
 

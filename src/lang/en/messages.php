@@ -56,6 +56,8 @@ return [
     'confirm_fire' => 'Fire this user and revoke all auto-granted permissions?',
     'user_hired' => 'User hired',
     'user_fired' => 'User fired',
+    'hiring_in_progress' => 'Hiring...',
+    'firing_in_progress' => 'Firing...',
     'hr_trigger_failed_on_hire' => 'HR trigger failed on hire',
     'hr_trigger_failed_on_fire' => 'HR trigger failed on fire',
     'hr_trigger_unnamed' => 'unnamed',

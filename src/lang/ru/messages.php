@@ -56,6 +56,8 @@ return [
     'confirm_fire' => 'Уволить пользователя и отозвать все автоматически выданные права?',
     'user_hired' => 'Пользователь нанят',
     'user_fired' => 'Пользователь уволен',
+    'hiring_in_progress' => 'Найм...',
+    'firing_in_progress' => 'Увольнение...',
     'hr_trigger_failed_on_hire' => 'Ошибка HR-триггера при найме',
     'hr_trigger_failed_on_fire' => 'Ошибка HR-триггера при увольнении',
     'hr_trigger_unnamed' => 'без названия',
