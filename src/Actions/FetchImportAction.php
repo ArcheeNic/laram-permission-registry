@@ -151,7 +151,6 @@ class FetchImportAction
 
         $fieldValueQuery = VirtualUserFieldValue::query()
             ->where(VirtualUserFieldValue::PERMISSION_FIELD_ID, $emailFieldId)
-            ->whereHas('virtualUser', fn ($q) => $q->where('status', '!=', VirtualUserStatus::DEACTIVATED->value))
             ->with('virtualUser');
         $this->applyCaseInsensitiveEmailEquals($fieldValueQuery, VirtualUserFieldValue::VALUE, $normalizedEmail);
         $fieldValue = $fieldValueQuery->first();

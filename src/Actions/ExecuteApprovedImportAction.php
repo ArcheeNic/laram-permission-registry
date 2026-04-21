@@ -4,7 +4,9 @@ namespace ArcheeNic\PermissionRegistry\Actions;
 
 use ArcheeNic\PermissionRegistry\Enums\ImportExecutionStatus;
 use ArcheeNic\PermissionRegistry\Enums\ImportMatchStatus;
+use ArcheeNic\PermissionRegistry\Enums\VirtualUserStatus;
 use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
+use ArcheeNic\PermissionRegistry\Models\VirtualUser;
 use ArcheeNic\PermissionRegistry\Models\ImportExecutionLog;
 use ArcheeNic\PermissionRegistry\Models\ImportStagingRow;
 use ArcheeNic\PermissionRegistry\Models\PermissionImport;
@@ -158,6 +160,7 @@ class ExecuteApprovedImportAction
         $globalFields = $this->buildGlobalFields($row, $mapping);
 
         $this->updateGlobalFieldsAction->execute($virtualUserId, $globalFields);
+        $this->rehireIfDeactivated($virtualUserId);
 
         if ($virtualUserId !== null && $managedPermissionIds !== []) {
             $shouldHavePermissionIds = $this->resolvePermissionIdsFromRow($row, $triggerClassPatterns, $departmentFieldName, $fallbackPermissionIds);
@@ -204,6 +207,8 @@ class ExecuteApprovedImportAction
         array &$stats
     ): void {
         $virtualUserId = $row->{ImportStagingRow::MATCHED_VIRTUAL_USER_ID};
+
+        $this->rehireIfDeactivated($virtualUserId);
 
         if ($virtualUserId === null || $managedPermissionIds === []) {
             $stats['skipped']++;
@@ -271,6 +276,28 @@ class ExecuteApprovedImportAction
         }
 
         $stats['fired']++;
+    }
+
+    private function rehireIfDeactivated(?int $virtualUserId): void
+    {
+        if ($virtualUserId === null) {
+            return;
+        }
+
+        $user = VirtualUser::query()->find($virtualUserId);
+        if ($user === null) {
+            return;
+        }
+
+        $status = $user->status instanceof VirtualUserStatus
+            ? $user->status
+            : VirtualUserStatus::tryFrom((string) $user->status);
+
+        if ($status !== VirtualUserStatus::DEACTIVATED) {
+            return;
+        }
+
+        $this->hireVirtualUserAction->handle(userId: $virtualUserId, skipHrTriggers: true);
     }
 
     /**
