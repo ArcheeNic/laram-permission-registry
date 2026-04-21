@@ -869,8 +869,10 @@ class ImportManager extends Component
     private function resolveActionFilteredRowIds(Collection $rows): array
     {
         $matcher = app(TriggerPermissionMatcherService::class);
-        [$patterns, $departmentFieldName] = $this->resolveMatcherConfig();
+        [$patterns, $departmentFieldName, $fallbackTriggerClass] = $this->resolveMatcherConfig();
         $managedPermissionIds = $matcher->getAllManagedPermissionIds($patterns);
+        $fallbackPermissionIds = $matcher->getFallbackPermissionIds($fallbackTriggerClass);
+        $managedPermissionIds = array_values(array_unique(array_merge($managedPermissionIds, $fallbackPermissionIds)));
         $grantFilterId = $this->grantPermissionFilterId ? (int) $this->grantPermissionFilterId : null;
         $revokeFilterId = $this->revokePermissionFilterId ? (int) $this->revokePermissionFilterId : null;
 
@@ -904,6 +906,12 @@ class ImportManager extends Component
                 ->unique()
                 ->values()
                 ->all();
+
+            $matchedPermissionIds = array_values(array_diff($matchedPermissionIds, $fallbackPermissionIds));
+
+            if ($matchedPermissionIds === []) {
+                $matchedPermissionIds = $fallbackPermissionIds;
+            }
 
             $status = $row->match_status instanceof ImportMatchStatus
                 ? $row->match_status
