@@ -17,6 +17,8 @@ trait ManagesBulkSelection
 
     public string $bulkPositionId = '';
 
+    public string $bulkAction = '';
+
     public bool $showBulkResultModal = false;
 
     /** @var array<int> */
@@ -44,7 +46,7 @@ trait ManagesBulkSelection
     }
 
     /**
-     * @param array<int> $currentPageIds
+     * @param  array<int>  $currentPageIds
      */
     public function toggleBulkSelectAll(array $currentPageIds): void
     {
@@ -56,6 +58,7 @@ trait ManagesBulkSelection
         $allSelected = count(array_intersect($currentPageIds, $this->bulkSelectedIds)) === count($currentPageIds);
         if ($allSelected) {
             $this->bulkSelectedIds = array_values(array_diff($this->bulkSelectedIds, $currentPageIds));
+
             return;
         }
 
@@ -66,6 +69,14 @@ trait ManagesBulkSelection
     {
         $this->bulkSelectedIds = [];
         $this->bulkSelectAll = false;
+        $this->bulkAction = '';
+    }
+
+    public function setBulkAction(string $action): void
+    {
+        $this->bulkAction = in_array($action, ['hire', 'group', 'position', 'fire'], true)
+            ? $action
+            : '';
     }
 
     public function closeBulkResultModal(): void
@@ -87,6 +98,18 @@ trait ManagesBulkSelection
         return VirtualUser::query()
             ->whereIn('id', $this->bulkSelectedIds)
             ->where('status', VirtualUserStatus::DEACTIVATED)
+            ->count();
+    }
+
+    public function getBulkFireEligibleCountProperty(): int
+    {
+        if ($this->bulkSelectedIds === []) {
+            return 0;
+        }
+
+        return VirtualUser::query()
+            ->whereIn('id', $this->bulkSelectedIds)
+            ->where('status', VirtualUserStatus::ACTIVE)
             ->count();
     }
 

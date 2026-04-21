@@ -104,6 +104,11 @@ return [
     'assign_position' => 'Assign position',
     'clear_selection' => 'Clear selection',
     'select_user' => 'Select user',
+    'bulk_action_choose' => 'Choose an action for :count user(s)',
+    'bulk_confirm_fire' => 'Fire the selected users and revoke all auto-granted permissions?',
+    'bulk_no_eligible_hire' => 'No deactivated users among the selection',
+    'bulk_no_eligible_fire' => 'No active users among the selection',
+    'apply' => 'Apply',
 
     'import.title' => 'Imports',
     'import.name' => 'Name',

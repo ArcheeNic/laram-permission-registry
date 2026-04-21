@@ -2,8 +2,9 @@
 
 namespace ArcheeNic\PermissionRegistry\Livewire\Concerns;
 
-use ArcheeNic\PermissionRegistry\Actions\FireVirtualUserAction;
+use ArcheeNic\PermissionRegistry\Actions\BulkFireVirtualUsersAction;
 use ArcheeNic\PermissionRegistry\Actions\BulkHireVirtualUsersAction;
+use ArcheeNic\PermissionRegistry\Actions\FireVirtualUserAction;
 use ArcheeNic\PermissionRegistry\Actions\HireVirtualUserAction;
 use ArcheeNic\PermissionRegistry\DataTransferObjects\HrTriggerExecutionResult;
 use ArcheeNic\PermissionRegistry\Enums\EmployeeCategory;
@@ -18,12 +19,12 @@ trait ManagesHiring
     {
         $this->authorize('permission-registry.manage');
 
-        if (!$this->selectedUserId) {
+        if (! $this->selectedUserId) {
             return;
         }
 
         $validated = $this->validate([
-            'selectedHireCategory' => 'required|in:' . implode(',', array_column(EmployeeCategory::cases(), 'value')),
+            'selectedHireCategory' => 'required|in:'.implode(',', array_column(EmployeeCategory::cases(), 'value')),
         ]);
 
         app(HireVirtualUserAction::class)->handle(
@@ -39,6 +40,7 @@ trait ManagesHiring
         $failure = app(HrEventTriggerExecutor::class)->getLastResult();
         if ($failure !== null && ! $failure->success) {
             $this->setFlashError($this->formatHrTriggerFailure($failure, 'hire'));
+
             return;
         }
 
@@ -49,7 +51,7 @@ trait ManagesHiring
     {
         $this->authorize('permission-registry.manage');
 
-        if (!$this->selectedUserId) {
+        if (! $this->selectedUserId) {
             return;
         }
 
@@ -61,6 +63,7 @@ trait ManagesHiring
         $failure = app(HrEventTriggerExecutor::class)->getLastResult();
         if ($failure !== null && ! $failure->success) {
             $this->setFlashError($this->formatHrTriggerFailure($failure, 'fire'));
+
             return;
         }
 
@@ -88,7 +91,7 @@ trait ManagesHiring
         $validated = $this->validate([
             'bulkSelectedIds' => 'required|array|min:1|max:50',
             'bulkSelectedIds.*' => 'required|integer|distinct|exists:virtual_users,id',
-            'selectedHireCategory' => 'required|in:' . implode(',', array_column(EmployeeCategory::cases(), 'value')),
+            'selectedHireCategory' => 'required|in:'.implode(',', array_column(EmployeeCategory::cases(), 'value')),
         ]);
 
         $result = app(BulkHireVirtualUsersAction::class)->handle(
@@ -106,6 +109,22 @@ trait ManagesHiring
     public function confirmFire(): void
     {
         $this->fireUser();
+    }
+
+    public function bulkFireUsers(): void
+    {
+        $this->authorize('permission-registry.manage');
+
+        $validated = $this->validate([
+            'bulkSelectedIds' => 'required|array|min:1|max:50',
+            'bulkSelectedIds.*' => 'required|integer|distinct|exists:virtual_users,id',
+        ]);
+
+        $result = app(BulkFireVirtualUsersAction::class)->handle($validated['bulkSelectedIds']);
+
+        $this->applyBulkOperationResult($result, __('permission-registry::messages.fire'));
+        $this->clearBulkSelection();
+        $this->dispatch('refreshUsers');
     }
 
     public function getSelectedUserStatusLabelProperty(): string

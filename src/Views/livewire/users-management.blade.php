@@ -268,79 +268,10 @@
     </div>
 
     @if($this->bulkSelectedCount > 0)
-        <div class="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white/95 backdrop-blur dark:border-neutral-700 dark:bg-neutral-800/95">
-            <div class="mx-auto flex w-full max-w-7xl flex-col gap-3 px-4 py-3 md:flex-row md:items-end md:justify-between">
-                <div class="text-sm font-medium text-gray-700 dark:text-gray-200">
-                    {{ __('permission-registry::messages.bulk_selected_count', ['count' => $this->bulkSelectedCount]) }}
-                </div>
-                <div class="grid grid-cols-1 gap-2 md:grid-cols-4 md:items-end">
-                    <div>
-                        <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
-                            {{ __('permission-registry::messages.employee_category') }}
-                        </label>
-                        <select wire:model="selectedHireCategory"
-                                class="mb-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-800 dark:text-gray-100">
-                            @foreach($this->employeeCategoryOptions as $value => $label)
-                                <option value="{{ $value }}">{{ $label }}</option>
-                            @endforeach
-                        </select>
-                        <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
-                            {{ __('permission-registry::messages.hire') }}
-                        </label>
-                        <button type="button"
-                                wire:click="bulkHireUsers"
-                                @disabled($this->bulkHireEligibleCount === 0)
-                                class="w-full rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50">
-                            {{ __('permission-registry::messages.hire') }}
-                            <span class="ml-1 text-xs">({{ $this->bulkHireEligibleCount }}/{{ $this->bulkSelectedCount }})</span>
-                        </button>
-                    </div>
-                    <div>
-                        <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
-                            {{ __('permission-registry::Group') }}
-                        </label>
-                        <select wire:model="bulkGroupId"
-                                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-800 dark:text-gray-100">
-                            <option value="">{{ __('permission-registry::Select a group') }}</option>
-                            @foreach($availableGroups as $group)
-                                <option value="{{ $group->id }}">{{ $group->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div>
-                        <button type="button"
-                                wire:click="bulkAssignGroup"
-                                @disabled($bulkGroupId === '')
-                                class="w-full rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-50">
-                            {{ __('permission-registry::messages.assign_group') }}
-                        </button>
-                    </div>
-                    <div>
-                        <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
-                            {{ __('permission-registry::Position') }}
-                        </label>
-                        <select wire:model="bulkPositionId"
-                                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-800 dark:text-gray-100">
-                            <option value="">{{ __('permission-registry::Select a position') }}</option>
-                            @foreach($availablePositions as $position)
-                                <option value="{{ $position->id }}">{{ $position->name }}</option>
-                            @endforeach
-                        </select>
-                        <button type="button"
-                                wire:click="bulkAssignPosition"
-                                @disabled($bulkPositionId === '')
-                                class="mt-2 w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">
-                            {{ __('permission-registry::messages.assign_position') }}
-                        </button>
-                    </div>
-                </div>
-                <button type="button"
-                        wire:click="clearBulkSelection"
-                        class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-neutral-600 dark:text-gray-200 dark:hover:bg-neutral-700">
-                    {{ __('permission-registry::messages.clear_selection') }}
-                </button>
-            </div>
-        </div>
+        @include('permission-registry::components.bulk-actions-bar', [
+            'availableGroups' => $availableGroups,
+            'availablePositions' => $availablePositions,
+        ])
     @endif
 
     <!-- Модальное окно редактирования -->
