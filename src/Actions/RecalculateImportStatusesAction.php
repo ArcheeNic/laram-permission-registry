@@ -19,8 +19,10 @@ class RecalculateImportStatusesAction
     public function handle(string $importRunId, int $permissionImportId): void
     {
         $import = PermissionImport::query()->find($permissionImportId);
-        [$patterns, $departmentFieldName] = $this->triggerConfigResolver->resolve($import);
+        [$patterns, $departmentFieldName, $fallbackTriggerClass] = $this->triggerConfigResolver->resolve($import);
         $managedPermissionIds = $this->matcher->getAllManagedPermissionIds($patterns);
+        $fallbackPermissionIds = $this->matcher->getFallbackPermissionIds($fallbackTriggerClass);
+        $managedPermissionIds = array_values(array_unique(array_merge($managedPermissionIds, $fallbackPermissionIds)));
 
         if ($managedPermissionIds === []) {
             return;
@@ -66,6 +68,12 @@ class RecalculateImportStatusesAction
                 ->unique()
                 ->values()
                 ->all();
+
+            $shouldHaveIds = array_values(array_diff($shouldHaveIds, $fallbackPermissionIds));
+
+            if ($shouldHaveIds === []) {
+                $shouldHaveIds = $fallbackPermissionIds;
+            }
 
             $userId = (int) $row->{ImportStagingRow::MATCHED_VIRTUAL_USER_ID};
             $currentIds = $currentPermissionMap[$userId] ?? [];

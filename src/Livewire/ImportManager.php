@@ -421,8 +421,11 @@ class ImportManager extends Component
             : collect($rows);
         $actions = [];
         $matcher = app(TriggerPermissionMatcherService::class);
-        [$patterns, $departmentFieldName] = $this->resolveMatcherConfig();
+        [$patterns, $departmentFieldName, $fallbackTriggerClass] = $this->resolveMatcherConfig();
         $managedPermissionIds = $matcher->getAllManagedPermissionIds($patterns);
+        $fallbackPermissionIds = $matcher->getFallbackPermissionIds($fallbackTriggerClass);
+        $managedPermissionIds = array_values(array_unique(array_merge($managedPermissionIds, $fallbackPermissionIds)));
+        $fallbackMatches = $this->buildFallbackMatches($fallbackPermissionIds);
 
         $changedRows = $rowsCollection->filter(function ($row) {
             $status = $row->match_status instanceof ImportMatchStatus
@@ -437,13 +440,20 @@ class ImportManager extends Component
         foreach ($rowsCollection as $row) {
             $fields = is_array($row->fields) ? $row->fields : [];
             $departmentIds = $matcher->normalizeDepartmentIds($fields[$departmentFieldName] ?? null);
-            $matchedPermissions = $matcher->matchByDepartments($departmentIds, $patterns);
+            $matchedPermissions = $matcher->matchByDepartments($departmentIds, $patterns)
+                ->reject(fn (array $item): bool => in_array((int) $item['permission_id'], $fallbackPermissionIds, true))
+                ->values();
             $matchedPermissionIds = $matchedPermissions
                 ->pluck('permission_id')
                 ->map(static fn (mixed $id): int => (int) $id)
                 ->unique()
                 ->values()
                 ->all();
+
+            if ($matchedPermissionIds === [] && $fallbackPermissionIds !== []) {
+                $matchedPermissions = $fallbackMatches;
+                $matchedPermissionIds = $fallbackPermissionIds;
+            }
 
             $status = $row->match_status instanceof ImportMatchStatus
                 ? $row->match_status
@@ -639,6 +649,27 @@ class ImportManager extends Component
         }
 
         return $fields[0]['name'] ?? null;
+    }
+
+    /**
+     * @param array<int, int> $fallbackPermissionIds
+     * @return \Illuminate\Support\Collection<int, array{permission_id: int, permission_name: string, department_id: string}>
+     */
+    private function buildFallbackMatches(array $fallbackPermissionIds): \Illuminate\Support\Collection
+    {
+        if ($fallbackPermissionIds === []) {
+            return collect();
+        }
+
+        return \ArcheeNic\PermissionRegistry\Models\Permission::query()
+            ->whereIn('id', $fallbackPermissionIds)
+            ->get()
+            ->map(static fn ($permission): array => [
+                'permission_id' => (int) $permission->id,
+                'permission_name' => (string) $permission->name,
+                'department_id' => '',
+            ])
+            ->values();
     }
 
     private function buildNewAction($matchedPermissions): array

@@ -308,6 +308,8 @@ class ExecuteApprovedImportAction
             ->values()
             ->all();
 
+        $permissionIds = array_values(array_diff($permissionIds, $fallbackPermissionIds));
+
         if ($permissionIds === []) {
             return array_values(array_unique($fallbackPermissionIds));
         }
