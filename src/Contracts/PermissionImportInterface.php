@@ -30,4 +30,11 @@ interface PermissionImportInterface
      * External field name containing source department IDs.
      */
     public function getDepartmentFieldName(): string;
+
+    /**
+     * Class of the fallback grant trigger used when no departments matched.
+     *
+     * Return null if the import has no fallback.
+     */
+    public function getFallbackTriggerClass(): ?string;
 }

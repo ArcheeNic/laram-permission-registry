@@ -46,8 +46,10 @@ class ExecuteApprovedImportAction
         $permissionImportId = $firstRow->{ImportStagingRow::PERMISSION_IMPORT_ID};
         $import = PermissionImport::query()->findOrFail($permissionImportId);
         $mapping = $this->fieldMappingService->getMapping($permissionImportId);
-        [$triggerClassPatterns, $departmentFieldName] = $this->importTriggerConfigResolver->resolve($import);
+        [$triggerClassPatterns, $departmentFieldName, $fallbackTriggerClass] = $this->importTriggerConfigResolver->resolve($import);
         $managedPermissionIds = $this->triggerPermissionMatcherService->getAllManagedPermissionIds($triggerClassPatterns);
+        $fallbackPermissionIds = $this->triggerPermissionMatcherService->getFallbackPermissionIds($fallbackTriggerClass);
+        $managedPermissionIds = array_values(array_unique(array_merge($managedPermissionIds, $fallbackPermissionIds)));
 
         $stats = ['created' => 0, 'updated' => 0, 'fired' => 0, 'synced' => 0, 'skipped' => 0, 'errors' => 0];
 
@@ -64,6 +66,7 @@ class ExecuteApprovedImportAction
                         $mapping,
                         $triggerClassPatterns,
                         $departmentFieldName,
+                        $fallbackPermissionIds,
                         $stats
                     ),
                     ImportMatchStatus::CHANGED => $this->processChangedRow(
@@ -72,6 +75,7 @@ class ExecuteApprovedImportAction
                         $triggerClassPatterns,
                         $departmentFieldName,
                         $managedPermissionIds,
+                        $fallbackPermissionIds,
                         $stats
                     ),
                     ImportMatchStatus::MISSING => $this->processMissingRow($row, $managedPermissionIds, $stats),
@@ -80,6 +84,7 @@ class ExecuteApprovedImportAction
                         $triggerClassPatterns,
                         $departmentFieldName,
                         $managedPermissionIds,
+                        $fallbackPermissionIds,
                         $stats
                     ),
                 };
@@ -108,6 +113,7 @@ class ExecuteApprovedImportAction
         array $mapping,
         array $triggerClassPatterns,
         string $departmentFieldName,
+        array $fallbackPermissionIds,
         array &$stats
     ): void {
         $globalFields = $this->buildGlobalFields($row, $mapping);
@@ -115,7 +121,7 @@ class ExecuteApprovedImportAction
         $user = $this->createVirtualUserAction->handle($globalFields);
         $this->hireVirtualUserAction->handle(userId: $user->id, skipHrTriggers: true);
 
-        $permissionIds = $this->resolvePermissionIdsFromRow($row, $triggerClassPatterns, $departmentFieldName);
+        $permissionIds = $this->resolvePermissionIdsFromRow($row, $triggerClassPatterns, $departmentFieldName, $fallbackPermissionIds);
         $existingPermissionIds = GrantedPermission::query()
             ->where(GrantedPermission::VIRTUAL_USER_ID, $user->id)
             ->whereIn(GrantedPermission::PERMISSION_ID, $permissionIds)
@@ -145,6 +151,7 @@ class ExecuteApprovedImportAction
         array $triggerClassPatterns,
         string $departmentFieldName,
         array $managedPermissionIds,
+        array $fallbackPermissionIds,
         array &$stats
     ): void {
         $virtualUserId = $row->{ImportStagingRow::MATCHED_VIRTUAL_USER_ID};
@@ -153,7 +160,7 @@ class ExecuteApprovedImportAction
         $this->updateGlobalFieldsAction->execute($virtualUserId, $globalFields);
 
         if ($virtualUserId !== null && $managedPermissionIds !== []) {
-            $shouldHavePermissionIds = $this->resolvePermissionIdsFromRow($row, $triggerClassPatterns, $departmentFieldName);
+            $shouldHavePermissionIds = $this->resolvePermissionIdsFromRow($row, $triggerClassPatterns, $departmentFieldName, $fallbackPermissionIds);
             $currentPermissionIds = GrantedPermission::query()
                 ->where(GrantedPermission::VIRTUAL_USER_ID, $virtualUserId)
                 ->whereIn(GrantedPermission::PERMISSION_ID, $managedPermissionIds)
@@ -193,6 +200,7 @@ class ExecuteApprovedImportAction
         array $triggerClassPatterns,
         string $departmentFieldName,
         array $managedPermissionIds,
+        array $fallbackPermissionIds,
         array &$stats
     ): void {
         $virtualUserId = $row->{ImportStagingRow::MATCHED_VIRTUAL_USER_ID};
@@ -203,7 +211,7 @@ class ExecuteApprovedImportAction
             return;
         }
 
-        $shouldHavePermissionIds = $this->resolvePermissionIdsFromRow($row, $triggerClassPatterns, $departmentFieldName);
+        $shouldHavePermissionIds = $this->resolvePermissionIdsFromRow($row, $triggerClassPatterns, $departmentFieldName, $fallbackPermissionIds);
         $currentPermissionIds = GrantedPermission::query()
             ->where(GrantedPermission::VIRTUAL_USER_ID, $virtualUserId)
             ->whereIn(GrantedPermission::PERMISSION_ID, $managedPermissionIds)
@@ -278,25 +286,33 @@ class ExecuteApprovedImportAction
 
     /**
      * @param array<int, string> $triggerClassPatterns
+     * @param array<int, int> $fallbackPermissionIds
      * @return array<int, int>
      */
     private function resolvePermissionIdsFromRow(
         ImportStagingRow $row,
         array $triggerClassPatterns,
-        string $departmentFieldName
+        string $departmentFieldName,
+        array $fallbackPermissionIds = []
     ): array {
         $fields = $this->extractRowFields($row);
         $departmentIds = $this->triggerPermissionMatcherService->normalizeDepartmentIds(
             $fields[$departmentFieldName] ?? null
         );
 
-        return $this->triggerPermissionMatcherService
+        $permissionIds = $this->triggerPermissionMatcherService
             ->matchByDepartments($departmentIds, $triggerClassPatterns)
             ->pluck('permission_id')
             ->map(static fn (mixed $permissionId): int => (int) $permissionId)
             ->unique()
             ->values()
             ->all();
+
+        if ($permissionIds === []) {
+            return array_values(array_unique($fallbackPermissionIds));
+        }
+
+        return $permissionIds;
     }
 
     /**

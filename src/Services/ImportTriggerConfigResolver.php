@@ -7,15 +7,16 @@ use ArcheeNic\PermissionRegistry\Models\PermissionImport;
 class ImportTriggerConfigResolver
 {
     /**
-     * @return array{0: array<int, string>, 1: string}
+     * @return array{0: array<int, string>, 1: string, 2: ?string}
      */
     public function resolve(?PermissionImport $import): array
     {
         $defaultPatterns = ['App\\Triggers\\Bitrix24%'];
         $defaultDepartmentField = 'department_ids';
+        $defaultFallback = null;
 
         if (!$import || !class_exists($import->{PermissionImport::CLASS_NAME})) {
-            return [$defaultPatterns, $defaultDepartmentField];
+            return [$defaultPatterns, $defaultDepartmentField, $defaultFallback];
         }
 
         try {
@@ -23,7 +24,7 @@ class ImportTriggerConfigResolver
             $importer = app($import->{PermissionImport::CLASS_NAME});
             if (!method_exists($importer, 'getRelatedTriggerClassPatterns')
                 || !method_exists($importer, 'getDepartmentFieldName')) {
-                return [$defaultPatterns, $defaultDepartmentField];
+                return [$defaultPatterns, $defaultDepartmentField, $defaultFallback];
             }
 
             $patterns = $this->sanitizePatterns($importer->getRelatedTriggerClassPatterns(), $defaultPatterns);
@@ -31,11 +32,28 @@ class ImportTriggerConfigResolver
                 $importer->getDepartmentFieldName(),
                 $defaultDepartmentField
             );
+            $fallbackTriggerClass = method_exists($importer, 'getFallbackTriggerClass')
+                ? $this->sanitizeFallbackTriggerClass($importer->getFallbackTriggerClass())
+                : $defaultFallback;
 
-            return [$patterns, $departmentFieldName];
+            return [$patterns, $departmentFieldName, $fallbackTriggerClass];
         } catch (\Throwable) {
-            return [$defaultPatterns, $defaultDepartmentField];
+            return [$defaultPatterns, $defaultDepartmentField, $defaultFallback];
         }
+    }
+
+    private function sanitizeFallbackTriggerClass(mixed $value): ?string
+    {
+        if (!is_string($value)) {
+            return null;
+        }
+
+        $normalized = trim($value);
+        if ($normalized === '' || !str_starts_with($normalized, 'App\\Triggers\\')) {
+            return null;
+        }
+
+        return $normalized;
     }
 
     /**

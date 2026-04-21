@@ -50,6 +50,27 @@ class TriggerPermissionMatcherService
     }
 
     /**
+     * @return array<int, int>
+     */
+    public function getFallbackPermissionIds(?string $fallbackTriggerClass): array
+    {
+        if ($fallbackTriggerClass === null || $fallbackTriggerClass === '') {
+            return [];
+        }
+
+        return PermissionTriggerAssignment::query()
+            ->with('trigger')
+            ->where(PermissionTriggerAssignment::EVENT_TYPE, 'grant')
+            ->where(PermissionTriggerAssignment::IS_ENABLED, true)
+            ->get()
+            ->filter(fn (PermissionTriggerAssignment $assignment): bool => (string) ($assignment->trigger?->class_name ?? '') === $fallbackTriggerClass)
+            ->map(fn (PermissionTriggerAssignment $assignment): int => (int) $assignment->permission_id)
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /**
      * @param array<int, string> $triggerClassPatterns
      * @return Collection<int, PermissionTriggerAssignment>
      */

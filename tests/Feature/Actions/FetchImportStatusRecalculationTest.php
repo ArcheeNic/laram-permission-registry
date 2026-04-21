@@ -315,4 +315,9 @@ class StatusRecalcTestImporter implements PermissionImportInterface
     {
         return 'department_ids';
     }
+
+    public function getFallbackTriggerClass(): ?string
+    {
+        return null;
+    }
 }

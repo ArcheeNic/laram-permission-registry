@@ -75,6 +75,7 @@ class {$className} implements PermissionImportInterface
     public function getConfigFields(): array { return ['api_key']; }
     public function getRelatedTriggerClassPatterns(): array { return ['App\\\\Triggers\\\\Bitrix24%']; }
     public function getDepartmentFieldName(): string { return 'department_ids'; }
+    public function getFallbackTriggerClass(): ?string { return null; }
 }
 PHP;
 
