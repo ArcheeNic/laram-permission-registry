@@ -134,6 +134,13 @@
             <!-- Привязка к пользователю приложения -->
             @include('permission-registry::components.app-user-link-section')
 
+            <!-- Слот виджетов: действия в карточке пользователя -->
+            <x-pr::widget-slot
+                name="user.card.actions"
+                :context="['user' => $this->selectedUser]"
+            />
+
+
             <!-- Глобальные поля -->
             @if($this->globalFieldDefinitions && $this->globalFieldDefinitions->count() > 0)
                 @include('permission-registry::components.global-fields-section')

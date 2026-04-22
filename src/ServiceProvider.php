@@ -42,6 +42,7 @@ use ArcheeNic\PermissionRegistry\Listeners\SendPermissionRevokedNotification;
 use ArcheeNic\PermissionRegistry\Contracts\UserToVirtualUserResolver;
 use ArcheeNic\PermissionRegistry\Middleware\CheckPermission;
 use ArcheeNic\PermissionRegistry\Services\HrEventTriggerExecutor;
+use ArcheeNic\PermissionRegistry\Widgets\WidgetRegistry;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
@@ -79,6 +80,10 @@ class ServiceProvider extends BaseServiceProvider
         });
 
         $this->app->scoped(HrEventTriggerExecutor::class);
+
+        $this->app->singleton(WidgetRegistry::class, function ($app) {
+            return new WidgetRegistry($app);
+        });
     }
 
     public function boot(): void
@@ -134,6 +139,22 @@ class ServiceProvider extends BaseServiceProvider
 
         // Регистрация Gate'ов
         $this->registerGates();
+
+        // Регистрация виджетов из конфига
+        $this->registerConfiguredWidgets();
+    }
+
+    protected function registerConfiguredWidgets(): void
+    {
+        $widgets = (array) config('permission-registry.widgets', []);
+        if (empty($widgets)) {
+            return;
+        }
+
+        $registry = $this->app->make(WidgetRegistry::class);
+        foreach ($widgets as $widgetClass) {
+            $registry->register($widgetClass);
+        }
     }
 
     protected function loadRoutes(): void
@@ -191,6 +212,7 @@ class ServiceProvider extends BaseServiceProvider
         Blade::component('permission-registry::components.approval-status-badge', 'pr::approval-status-badge');
         Blade::component('permission-registry::components.field-hint', 'pr::field-hint');
         Blade::component('permission-registry::components.field-hint', 'perm::field-hint');
+        Blade::component('permission-registry::components.widget-slot', 'pr::widget-slot');
     }
 
     protected function registerGates(): void
