@@ -20,7 +20,7 @@
                     </div>
                 @endif
 
-                <div class="p-6">
+                <div class="p-6 overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200 dark:divide-neutral-700">
                         <thead>
                             <tr>
@@ -82,7 +82,7 @@
                                             @endif
                                         </td>
                                         <td class="px-6 py-4">
-                                            <div class="text-sm text-gray-500 dark:text-gray-400 font-mono">
+                                            <div class="text-sm text-gray-500 dark:text-gray-400 font-mono break-all">
                                                 {{ $trigger->class_name }}
                                             </div>
                                             @if($trigger->description)
@@ -137,7 +137,7 @@
                                             </div>
                                         </td>
                                         <td class="px-6 py-4">
-                                            <div class="text-sm text-gray-500 dark:text-gray-400 font-mono">
+                                            <div class="text-sm text-gray-500 dark:text-gray-400 font-mono break-all">
                                                 {{ $available['class_name'] }}
                                             </div>
                                             @if(!empty($available['description']))
