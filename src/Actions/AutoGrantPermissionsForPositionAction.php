@@ -5,56 +5,42 @@ namespace ArcheeNic\PermissionRegistry\Actions;
 use ArcheeNic\PermissionRegistry\Enums\PermissionScope;
 use ArcheeNic\PermissionRegistry\Jobs\GrantMultiplePermissionsJob;
 use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
-use ArcheeNic\PermissionRegistry\Models\Permission;
+use ArcheeNic\PermissionRegistry\Models\PermissionGroup;
 use ArcheeNic\PermissionRegistry\Models\Position;
-use Illuminate\Support\Facades\Log;
 
 class AutoGrantPermissionsForPositionAction
 {
     /**
-     * Автоматическая выдача прав с флагом auto_grant при назначении должности.
-     * Делегирует в GrantMultiplePermissionsJob — джоба сортирует по зависимостям
-     * и выполняет триггеры последовательно.
+     * Автовыдача прав с флагом auto_grant при назначении должности.
+     * Учитывает прямые права должности, права её групп и parent-должности.
+     * Для resource-scoped прав ресурсы берутся из position_permission_resources
+     * (для прямых прав должности) и permission_group_resources (для прав групп).
      */
     public function handle(int $userId, int $positionId): void
     {
-        $permissionIds = [];
-        $this->collectPositionPermissionsForAutoGrant($positionId, $permissionIds);
+        $pairs = [];
+        $this->collect($positionId, $pairs);
 
-        $uniqueIds = array_values(array_unique($permissionIds));
-
-        if (empty($uniqueIds)) {
-            return;
+        $unique = [];
+        foreach ($pairs as $pair) {
+            $key = $pair['permission_id'].'|'.($pair['resource_id'] ?? '');
+            $unique[$key] = $pair;
         }
-
-        $permissions = Permission::whereIn('id', $uniqueIds)->get();
 
         $permissionsData = [];
 
-        foreach ($permissions as $permission) {
-            if (($permission->scope ?? PermissionScope::Service) === PermissionScope::Resource) {
-                Log::warning('Skipping resource-scoped permission in auto-grant via position', [
-                    'permission_id' => $permission->id,
-                    'position_id' => $positionId,
-                    'virtual_user_id' => $userId,
-                ]);
+        foreach ($unique as $pair) {
+            if ($this->grantExists($userId, $pair['permission_id'], $pair['resource_id'])) {
                 continue;
             }
 
-            $exists = GrantedPermission::where('virtual_user_id', $userId)
-                ->where('permission_id', $permission->id)
-                ->whereNull('resource_id')
-                ->exists();
-
-            if (!$exists) {
-                $permissionsData[] = [
-                    'permissionId' => $permission->id,
-                    'resourceId' => null,
-                    'fieldValues' => [],
-                    'meta' => ['auto_granted' => true, 'auto_grant_source' => 'position'],
-                    'expiresAt' => null,
-                ];
-            }
+            $permissionsData[] = [
+                'permissionId' => $pair['permission_id'],
+                'resourceId' => $pair['resource_id'],
+                'fieldValues' => [],
+                'meta' => ['auto_granted' => true, 'auto_grant_source' => 'position'],
+                'expiresAt' => null,
+            ];
         }
 
         if (!empty($permissionsData)) {
@@ -62,39 +48,103 @@ class AutoGrantPermissionsForPositionAction
         }
     }
 
-    private function collectPositionPermissionsForAutoGrant(
-        int $positionId,
-        array &$permissionIds,
-        array $processedPositions = []
-    ): void {
-        if (in_array($positionId, $processedPositions)) {
+    /**
+     * @param array<int, array{permission_id:int, resource_id:?int}> $pairs
+     */
+    private function collect(int $positionId, array &$pairs, array $processed = []): void
+    {
+        if (in_array($positionId, $processed, true)) {
             return;
         }
+        $processed[] = $positionId;
 
-        $processedPositions[] = $positionId;
-
-        $position = Position::with(['permissions' => function ($query) {
-            $query->where('auto_grant', true);
-        }, 'groups.permissions' => function ($query) {
-            $query->where('auto_grant', true);
-        }, 'parent'])->find($positionId);
+        $position = Position::query()
+            ->with([
+                'permissions' => fn ($q) => $q->where('auto_grant', true),
+                'permissionResources',
+                'groups',
+                'parent',
+            ])
+            ->find($positionId);
 
         if (!$position) {
             return;
         }
 
+        $resourcesByPermission = [];
+        foreach ($position->permissionResources as $row) {
+            $resourcesByPermission[$row->permission_id][] = $row->resource_id;
+        }
+
         foreach ($position->permissions as $permission) {
-            $permissionIds[] = $permission->id;
+            $this->appendPermissionPairs($permission, $resourcesByPermission, $pairs);
         }
 
         foreach ($position->groups as $group) {
-            foreach ($group->permissions as $permission) {
-                $permissionIds[] = $permission->id;
-            }
+            $this->collectFromGroup($group->id, $pairs);
         }
 
         if ($position->parent) {
-            $this->collectPositionPermissionsForAutoGrant($position->parent->id, $permissionIds, $processedPositions);
+            $this->collect($position->parent->id, $pairs, $processed);
         }
+    }
+
+    /**
+     * @param array<int, array{permission_id:int, resource_id:?int}> $pairs
+     */
+    private function collectFromGroup(int $groupId, array &$pairs): void
+    {
+        $group = PermissionGroup::query()
+            ->with([
+                'permissions' => fn ($q) => $q->where('auto_grant', true),
+                'permissionResources',
+            ])
+            ->find($groupId);
+
+        if (!$group) {
+            return;
+        }
+
+        $resourcesByPermission = [];
+        foreach ($group->permissionResources as $row) {
+            $resourcesByPermission[$row->permission_id][] = $row->resource_id;
+        }
+
+        foreach ($group->permissions as $permission) {
+            $this->appendPermissionPairs($permission, $resourcesByPermission, $pairs);
+        }
+    }
+
+    /**
+     * @param array<int, array<int>> $resourcesByPermission
+     * @param array<int, array{permission_id:int, resource_id:?int}> $pairs
+     */
+    private function appendPermissionPairs($permission, array $resourcesByPermission, array &$pairs): void
+    {
+        $scope = $permission->scope ?? PermissionScope::Service;
+
+        if ($scope === PermissionScope::Resource) {
+            foreach ($resourcesByPermission[$permission->id] ?? [] as $resourceId) {
+                $pairs[] = ['permission_id' => $permission->id, 'resource_id' => $resourceId];
+            }
+            return;
+        }
+
+        $pairs[] = ['permission_id' => $permission->id, 'resource_id' => null];
+    }
+
+    private function grantExists(int $userId, int $permissionId, ?int $resourceId): bool
+    {
+        $query = GrantedPermission::query()
+            ->where('virtual_user_id', $userId)
+            ->where('permission_id', $permissionId);
+
+        if ($resourceId === null) {
+            $query->whereNull('resource_id');
+        } else {
+            $query->where('resource_id', $resourceId);
+        }
+
+        return $query->exists();
     }
 }

@@ -6,55 +6,82 @@ use ArcheeNic\PermissionRegistry\Enums\PermissionScope;
 use ArcheeNic\PermissionRegistry\Jobs\GrantMultiplePermissionsJob;
 use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
 use ArcheeNic\PermissionRegistry\Models\PermissionGroup;
-use Illuminate\Support\Facades\Log;
 
 class AutoGrantPermissionsForGroupAction
 {
     /**
      * Автоматическая выдача прав с флагом auto_grant при назначении группы.
-     * Делегирует в GrantMultiplePermissionsJob — джоба сортирует по зависимостям
-     * и выполняет триггеры последовательно.
+     * Для resource-scoped прав ресурсы берутся из permission_group_resources.
      */
     public function handle(int $userId, int $groupId): void
     {
-        $group = PermissionGroup::with(['permissions' => function ($query) {
-            $query->where('auto_grant', true);
-        }])->find($groupId);
+        $group = PermissionGroup::query()
+            ->with([
+                'permissions' => fn ($q) => $q->where('auto_grant', true),
+                'permissionResources',
+            ])
+            ->find($groupId);
 
         if (!$group) {
             return;
         }
 
+        $resourcesByPermission = [];
+        foreach ($group->permissionResources as $row) {
+            $resourcesByPermission[$row->permission_id][] = $row->resource_id;
+        }
+
         $permissionsData = [];
 
         foreach ($group->permissions as $permission) {
-            if (($permission->scope ?? PermissionScope::Service) === PermissionScope::Resource) {
-                Log::warning('Skipping resource-scoped permission in auto-grant via group', [
-                    'permission_id' => $permission->id,
-                    'group_id' => $groupId,
-                    'virtual_user_id' => $userId,
-                ]);
+            $scope = $permission->scope ?? PermissionScope::Service;
+
+            if ($scope === PermissionScope::Resource) {
+                foreach ($resourcesByPermission[$permission->id] ?? [] as $resourceId) {
+                    if ($this->grantExists($userId, $permission->id, $resourceId)) {
+                        continue;
+                    }
+                    $permissionsData[] = [
+                        'permissionId' => $permission->id,
+                        'resourceId' => $resourceId,
+                        'fieldValues' => [],
+                        'meta' => ['auto_granted' => true, 'auto_grant_source' => 'group'],
+                        'expiresAt' => null,
+                    ];
+                }
                 continue;
             }
 
-            $exists = GrantedPermission::where('virtual_user_id', $userId)
-                ->where('permission_id', $permission->id)
-                ->whereNull('resource_id')
-                ->exists();
-
-            if (!$exists) {
-                $permissionsData[] = [
-                    'permissionId' => $permission->id,
-                    'resourceId' => null,
-                    'fieldValues' => [],
-                    'meta' => ['auto_granted' => true, 'auto_grant_source' => 'group'],
-                    'expiresAt' => null,
-                ];
+            if ($this->grantExists($userId, $permission->id, null)) {
+                continue;
             }
+
+            $permissionsData[] = [
+                'permissionId' => $permission->id,
+                'resourceId' => null,
+                'fieldValues' => [],
+                'meta' => ['auto_granted' => true, 'auto_grant_source' => 'group'],
+                'expiresAt' => null,
+            ];
         }
 
         if (!empty($permissionsData)) {
             GrantMultiplePermissionsJob::dispatch($userId, $permissionsData);
         }
+    }
+
+    private function grantExists(int $userId, int $permissionId, ?int $resourceId): bool
+    {
+        $query = GrantedPermission::query()
+            ->where('virtual_user_id', $userId)
+            ->where('permission_id', $permissionId);
+
+        if ($resourceId === null) {
+            $query->whereNull('resource_id');
+        } else {
+            $query->where('resource_id', $resourceId);
+        }
+
+        return $query->exists();
     }
 }

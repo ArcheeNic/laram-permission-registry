@@ -2,101 +2,158 @@
 
 namespace ArcheeNic\PermissionRegistry\Actions;
 
+use ArcheeNic\PermissionRegistry\Enums\PermissionScope;
 use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
+use ArcheeNic\PermissionRegistry\Models\PermissionGroup;
 use ArcheeNic\PermissionRegistry\Models\Position;
+use ArcheeNic\PermissionRegistry\Services\UserAutoGrantPairsCollector;
 use Illuminate\Support\Facades\Log;
 
 class AutoRevokePermissionsForPositionAction
 {
     public function __construct(
-        private RevokePermissionAction $revokePermissionAction
+        private RevokePermissionAction $revokePermissionAction,
+        private UserAutoGrantPairsCollector $pairsCollector,
     ) {
     }
 
     /**
-     * Автоматический отзыв прав с флагом auto_revoke при отзыве должности
-     *
-     * @param int $userId
-     * @param int $positionId
-     * @return void
+     * Автоотзыв прав с флагом auto_revoke при отзыве должности.
+     * Учитывает прямые права должности, права её групп и parent-должности.
+     * Для resource-scoped прав ресурсы берутся из position_permission_resources
+     * (для прямых прав) и permission_group_resources (для прав групп).
      */
     public function handle(int $userId, int $positionId): void
     {
-        $permissionIds = [];
-        $this->collectPositionPermissionsForAutoRevoke($positionId, $permissionIds);
+        $pairs = [];
+        $this->collect($positionId, $pairs);
 
-        $uniqueIds = array_values(array_unique($permissionIds));
-        if (empty($uniqueIds)) {
-            return;
+        $unique = [];
+        foreach ($pairs as $pair) {
+            $key = UserAutoGrantPairsCollector::key($pair['permission_id'], $pair['resource_id']);
+            $unique[$key] = $pair;
         }
 
-        $grants = GrantedPermission::query()
-            ->where('virtual_user_id', $userId)
-            ->whereIn('permission_id', $uniqueIds)
-            ->where('enabled', true)
-            ->get(['permission_id', 'resource_id']);
+        $remainingPairs = $this->pairsCollector->collect($userId, excludePositionId: $positionId);
 
-        foreach ($grants as $grant) {
+        foreach ($unique as $key => $pair) {
+            if (isset($remainingPairs[$key])) {
+                continue;
+            }
+
+            $exists = GrantedPermission::query()
+                ->where('virtual_user_id', $userId)
+                ->where('permission_id', $pair['permission_id'])
+                ->when($pair['resource_id'] === null, fn ($q) => $q->whereNull('resource_id'))
+                ->when($pair['resource_id'] !== null, fn ($q) => $q->where('resource_id', $pair['resource_id']))
+                ->where('enabled', true)
+                ->exists();
+
+            if (!$exists) {
+                continue;
+            }
+
             try {
                 $this->revokePermissionAction->handle(
                     userId: $userId,
-                    permissionId: $grant->permission_id,
+                    permissionId: $pair['permission_id'],
                     skipTriggers: false,
-                    resourceId: $grant->resource_id,
+                    resourceId: $pair['resource_id'],
                 );
             } catch (\Exception $e) {
                 Log::warning(sprintf(
                     'Failed to auto-revoke permission %d (resource=%s) from user %d: %s',
-                    $grant->permission_id, $grant->resource_id ?? 'null', $userId, $e->getMessage()
+                    $pair['permission_id'],
+                    $pair['resource_id'] ?? 'null',
+                    $userId,
+                    $e->getMessage(),
                 ));
             }
         }
     }
 
     /**
-     * Рекурсивный сбор прав для автоотзыва из должности, её групп и родительских должностей
-     *
-     * @param int $positionId
-     * @param array $permissionIds
-     * @param array $processedPositions
-     * @return void
+     * @param array<int, array{permission_id:int, resource_id:?int}> $pairs
      */
-    private function collectPositionPermissionsForAutoRevoke(
-        int $positionId,
-        array &$permissionIds,
-        array $processedPositions = []
-    ): void {
-        if (in_array($positionId, $processedPositions)) {
+    private function collect(int $positionId, array &$pairs, array $processed = []): void
+    {
+        if (in_array($positionId, $processed, true)) {
             return;
         }
+        $processed[] = $positionId;
 
-        $processedPositions[] = $positionId;
-
-        $position = Position::with(['permissions' => function ($query) {
-            $query->where('auto_revoke', true);
-        }, 'groups.permissions' => function ($query) {
-            $query->where('auto_revoke', true);
-        }, 'parent'])->find($positionId);
+        $position = Position::query()
+            ->with([
+                'permissions' => fn ($q) => $q->where('auto_revoke', true),
+                'permissionResources',
+                'groups',
+                'parent',
+            ])
+            ->find($positionId);
 
         if (!$position) {
             return;
         }
 
-        // Добавляем прямые права из должности
+        $resourcesByPermission = [];
+        foreach ($position->permissionResources as $row) {
+            $resourcesByPermission[$row->permission_id][] = $row->resource_id;
+        }
+
         foreach ($position->permissions as $permission) {
-            $permissionIds[] = $permission->id;
+            $this->appendPermissionPairs($permission, $resourcesByPermission, $pairs);
         }
 
-        // Добавляем права из групп должности
         foreach ($position->groups as $group) {
-            foreach ($group->permissions as $permission) {
-                $permissionIds[] = $permission->id;
-            }
+            $this->collectFromGroup($group->id, $pairs);
         }
 
-        // Рекурсивно обрабатываем родительскую должность
         if ($position->parent) {
-            $this->collectPositionPermissionsForAutoRevoke($position->parent->id, $permissionIds, $processedPositions);
+            $this->collect($position->parent->id, $pairs, $processed);
         }
+    }
+
+    /**
+     * @param array<int, array{permission_id:int, resource_id:?int}> $pairs
+     */
+    private function collectFromGroup(int $groupId, array &$pairs): void
+    {
+        $group = PermissionGroup::query()
+            ->with([
+                'permissions' => fn ($q) => $q->where('auto_revoke', true),
+                'permissionResources',
+            ])
+            ->find($groupId);
+
+        if (!$group) {
+            return;
+        }
+
+        $resourcesByPermission = [];
+        foreach ($group->permissionResources as $row) {
+            $resourcesByPermission[$row->permission_id][] = $row->resource_id;
+        }
+
+        foreach ($group->permissions as $permission) {
+            $this->appendPermissionPairs($permission, $resourcesByPermission, $pairs);
+        }
+    }
+
+    /**
+     * @param array<int, array<int>> $resourcesByPermission
+     * @param array<int, array{permission_id:int, resource_id:?int}> $pairs
+     */
+    private function appendPermissionPairs($permission, array $resourcesByPermission, array &$pairs): void
+    {
+        $scope = $permission->scope ?? PermissionScope::Service;
+
+        if ($scope === PermissionScope::Resource) {
+            foreach ($resourcesByPermission[$permission->id] ?? [] as $resourceId) {
+                $pairs[] = ['permission_id' => $permission->id, 'resource_id' => $resourceId];
+            }
+            return;
+        }
+
+        $pairs[] = ['permission_id' => $permission->id, 'resource_id' => null];
     }
 }

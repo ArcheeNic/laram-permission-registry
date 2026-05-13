@@ -42,6 +42,11 @@ class Position extends BasePosition
         return $this->belongsToMany(VirtualUser::class, 'virtual_user_positions', 'position_id', 'virtual_user_id');
     }
 
+    public function permissionResources(): HasMany
+    {
+        return $this->hasMany(PositionPermissionResource::class, 'position_id');
+    }
+
     /**
      * Full hierarchy path for display: "Root -> Child -> Leaf". Root alone returns its name only.
      */

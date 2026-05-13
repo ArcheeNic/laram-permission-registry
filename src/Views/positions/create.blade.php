@@ -94,21 +94,60 @@
 
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="permissionsList">
                                     @foreach($permissions as $permission)
-                                        <div class="flex items-start permission-item" data-name="{{ strtolower($permission->name) }}" data-service="{{ strtolower($permission->service) }}">
-                                            <div class="flex items-center h-5">
-                                                <input type="checkbox" id="permission_{{ $permission->id }}" name="permissions[]" value="{{ $permission->id }}"
-                                                       class="h-4 w-4 text-blue-600 dark:text-blue-300 border-gray-300 dark:border-neutral-600 rounded focus:ring-blue-500 permission-checkbox"
-                                                    {{ in_array($permission->id, old('permissions', [])) ? 'checked' : '' }}>
+                                        @php
+                                            $isResourceScoped = ($permission->scope ?? \ArcheeNic\PermissionRegistry\Enums\PermissionScope::Service) === \ArcheeNic\PermissionRegistry\Enums\PermissionScope::Resource;
+                                            $permissionChecked = in_array($permission->id, old('permissions', []));
+                                            $selectedForPermission = old("permission_resources.{$permission->id}", []);
+                                        @endphp
+                                        <div class="flex flex-col permission-item" data-name="{{ strtolower($permission->name) }}" data-service="{{ strtolower($permission->service) }}">
+                                            <div class="flex items-start">
+                                                <div class="flex items-center h-5">
+                                                    <input type="checkbox" id="permission_{{ $permission->id }}" name="permissions[]" value="{{ $permission->id }}"
+                                                           class="h-4 w-4 text-blue-600 dark:text-blue-300 border-gray-300 dark:border-neutral-600 rounded focus:ring-blue-500 permission-checkbox"
+                                                           data-permission-id="{{ $permission->id }}"
+                                                        {{ $permissionChecked ? 'checked' : '' }}>
+                                                </div>
+                                                <div class="ml-3 text-sm">
+                                                    <label for="permission_{{ $permission->id }}" class="font-medium text-gray-700 dark:text-gray-300">
+                                                        {{ $permission->name }}
+                                                    </label>
+                                                    <p class="text-gray-500 dark:text-gray-400">{{ $permission->service }}</p>
+                                                    @if($permission->description)
+                                                        <p class="text-gray-500 dark:text-gray-400 text-xs">{{ Str::limit($permission->description, 100) }}</p>
+                                                    @endif
+                                                </div>
                                             </div>
-                                            <div class="ml-3 text-sm">
-                                                <label for="permission_{{ $permission->id }}" class="font-medium text-gray-700 dark:text-gray-300">
-                                                    {{ $permission->name }}
-                                                </label>
-                                                <p class="text-gray-500 dark:text-gray-400">{{ $permission->service }}</p>
-                                                @if($permission->description)
-                                                    <p class="text-gray-500 dark:text-gray-400 text-xs">{{ Str::limit($permission->description, 100) }}</p>
-                                                @endif
-                                            </div>
+
+                                            @if($isResourceScoped)
+                                                <div class="ml-7 mt-2 resource-block" data-permission-id="{{ $permission->id }}" style="{{ $permissionChecked ? '' : 'display:none' }}">
+                                                    <p class="text-xs text-gray-700 dark:text-gray-300 mb-1">
+                                                        {{ __('permission-registry::Resources') }}
+                                                        @if($permission->resource_kind)
+                                                            <span class="text-gray-400 dark:text-gray-500">({{ $permission->resource_kind }})</span>
+                                                        @endif
+                                                    </p>
+                                                    @php $resources = $resourceCatalog[$permission->id] ?? collect(); @endphp
+                                                    @if($resources->isEmpty())
+                                                        <p class="text-xs text-amber-600 dark:text-amber-400">
+                                                            {{ __('permission-registry::No resources discovered yet — run sync first') }}
+                                                        </p>
+                                                    @else
+                                                        <div class="max-h-48 overflow-y-auto border border-gray-200 dark:border-neutral-600 rounded p-2 bg-white dark:bg-neutral-800">
+                                                            @foreach($resources as $resource)
+                                                                <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
+                                                                    <input type="checkbox"
+                                                                           name="permission_resources[{{ $permission->id }}][]"
+                                                                           value="{{ $resource->id }}"
+                                                                           class="h-4 w-4 text-blue-600 dark:text-blue-300 border-gray-300 dark:border-neutral-500 rounded focus:ring-blue-500"
+                                                                        {{ in_array($resource->id, $selectedForPermission) ? 'checked' : '' }}>
+                                                                    <span>{{ $resource->name }}</span>
+                                                                    <span class="ml-auto text-xs font-mono text-gray-400 dark:text-gray-500">{{ $resource->external_id }}</span>
+                                                                </label>
+                                                            @endforeach
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            @endif
                                         </div>
                                     @endforeach
                                 </div>
@@ -176,7 +215,20 @@
             const deselectAllBtn = document.getElementById('deselectAll');
             const checkboxes = document.querySelectorAll('.permission-checkbox');
 
-            // Поиск разрешений
+            function toggleResourceBlock(checkbox) {
+                const permissionId = checkbox.getAttribute('data-permission-id');
+                const block = document.querySelector('.resource-block[data-permission-id="' + permissionId + '"]');
+                if (!block) return;
+                block.style.display = checkbox.checked ? '' : 'none';
+                if (!checkbox.checked) {
+                    block.querySelectorAll('input[type="checkbox"]').forEach(function (cb) { cb.checked = false; });
+                }
+            }
+
+            checkboxes.forEach(function (cb) {
+                cb.addEventListener('change', function () { toggleResourceBlock(cb); });
+            });
+
             permissionSearch.addEventListener('input', function() {
                 const searchText = this.value.toLowerCase();
 
@@ -192,20 +244,20 @@
                 });
             });
 
-            // Выбрать все
             selectAllBtn.addEventListener('click', function() {
                 checkboxes.forEach(function(checkbox) {
                     if (checkbox.closest('.permission-item').style.display !== 'none') {
                         checkbox.checked = true;
+                        toggleResourceBlock(checkbox);
                     }
                 });
             });
 
-            // Снять все
             deselectAllBtn.addEventListener('click', function() {
                 checkboxes.forEach(function(checkbox) {
                     if (checkbox.closest('.permission-item').style.display !== 'none') {
                         checkbox.checked = false;
+                        toggleResourceBlock(checkbox);
                     }
                 });
             });
