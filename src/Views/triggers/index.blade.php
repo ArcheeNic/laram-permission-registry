@@ -42,60 +42,68 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200 dark:divide-neutral-700">
-                            @forelse($triggers as $trigger)
-                                <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                            {{ $trigger->name }}
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <div class="text-sm text-gray-500 dark:text-gray-400 font-mono">
-                                            {{ $trigger->class_name }}
-                                        </div>
-                                        @if($trigger->description)
-                                            <div class="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                                                {{ $trigger->description }}
-                                            </div>
-                                        @endif
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
-                                            @if($trigger->type === 'grant') bg-green-100 text-green-800
-                                            @elseif($trigger->type === 'revoke') bg-red-100 text-red-800
-                                            @else bg-blue-100 text-blue-800
-                                            @endif">
-                                            {{ $trigger->type }}
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        @if($trigger->is_active)
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                                Активен
-                                            </span>
-                                        @else
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
-                                                Неактивен
-                                            </span>
-                                        @endif
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <a href="{{ route('permission-registry::triggers.edit', $trigger) }}"
-                                           class="text-blue-600 hover:text-blue-900 dark:text-blue-400 mr-3">
-                                            Редактировать
-                                        </a>
-                                        <form action="{{ route('permission-registry::triggers.destroy', $trigger) }}"
-                                              method="POST"
-                                              class="inline"
-                                              onsubmit="return confirm('Удалить триггер?');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="text-red-600 hover:text-red-900 dark:text-red-400">
-                                                Удалить
-                                            </button>
-                                        </form>
+                            @forelse($triggersByService as $service => $triggers)
+                                <tr class="bg-gray-50 dark:bg-neutral-900/40">
+                                    <td colspan="5" class="px-6 py-2 text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+                                        {{ $service }}
+                                        <span class="ml-2 text-gray-400 dark:text-gray-500 normal-case">({{ $triggers->count() }})</span>
                                     </td>
                                 </tr>
+                                @foreach($triggers as $trigger)
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                {{ $trigger->name }}
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <div class="text-sm text-gray-500 dark:text-gray-400 font-mono">
+                                                {{ $trigger->class_name }}
+                                            </div>
+                                            @if($trigger->description)
+                                                <div class="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                                                    {{ $trigger->description }}
+                                                </div>
+                                            @endif
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                                                @if($trigger->type === 'grant') bg-green-100 text-green-800
+                                                @elseif($trigger->type === 'revoke') bg-red-100 text-red-800
+                                                @else bg-blue-100 text-blue-800
+                                                @endif">
+                                                {{ $trigger->type }}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            @if($trigger->is_active)
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                                    Активен
+                                                </span>
+                                            @else
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                                    Неактивен
+                                                </span>
+                                            @endif
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <a href="{{ route('permission-registry::triggers.edit', $trigger) }}"
+                                               class="text-blue-600 hover:text-blue-900 dark:text-blue-400 mr-3">
+                                                Редактировать
+                                            </a>
+                                            <form action="{{ route('permission-registry::triggers.destroy', $trigger) }}"
+                                                  method="POST"
+                                                  class="inline"
+                                                  onsubmit="return confirm('Удалить триггер?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="text-red-600 hover:text-red-900 dark:text-red-400">
+                                                    Удалить
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                @endforeach
                             @empty
                                 <tr>
                                     <td colspan="5" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
@@ -105,12 +113,6 @@
                             @endforelse
                         </tbody>
                     </table>
-
-                    @if($triggers->hasPages())
-                        <div class="mt-4">
-                            {{ $triggers->links() }}
-                        </div>
-                    @endif
                 </div>
             </div>
         </div>

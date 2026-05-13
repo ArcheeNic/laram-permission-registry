@@ -21,9 +21,14 @@ class PermissionTriggerController extends Controller
     }
     public function index()
     {
-        $triggers = PermissionTrigger::orderBy('name')->paginate(20);
-        
-        return view('permission-registry::triggers.index', compact('triggers'));
+        $lookup = $this->discoveryService->getServiceLookup();
+        $fallback = __('permission-registry::messages.other_service');
+
+        $triggersByService = PermissionTrigger::orderBy('name')->get()
+            ->groupBy(fn (PermissionTrigger $trigger) => $lookup[$trigger->class_name] ?? $fallback)
+            ->sortKeys();
+
+        return view('permission-registry::triggers.index', compact('triggersByService'));
     }
 
     public function create()
