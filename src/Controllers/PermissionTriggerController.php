@@ -25,12 +25,22 @@ class PermissionTriggerController extends Controller
         $discovered = $this->discoveryService->discover();
 
         $lookup = [];
+        $metadataByClass = [];
         foreach ($discovered as $item) {
             $lookup[$item['class_name']] = $item['service_name'] ?? $fallback;
+            $metadataByClass[$item['class_name']] = $item;
         }
 
         $configured = PermissionTrigger::orderBy('name')->get();
         $configuredClassNames = $configured->pluck('class_name')->filter()->unique()->all();
+
+        $missingFieldsByTrigger = [];
+        foreach ($configured as $trigger) {
+            $missingFieldsByTrigger[$trigger->id] = $this->resolveMissingRequiredFields(
+                $trigger,
+                $metadataByClass[$trigger->class_name] ?? null
+            );
+        }
 
         $configuredByService = $configured
             ->groupBy(fn (PermissionTrigger $trigger) => $lookup[$trigger->class_name] ?? $fallback);
@@ -49,8 +59,38 @@ class PermissionTriggerController extends Controller
         return view('permission-registry::triggers.index', compact(
             'services',
             'configuredByService',
-            'unconfiguredByService'
+            'unconfiguredByService',
+            'missingFieldsByTrigger'
         ));
+    }
+
+    /**
+     * @return array{class_missing: bool, fields: list<string>}
+     */
+    private function resolveMissingRequiredFields(PermissionTrigger $trigger, ?array $metadata): array
+    {
+        if ($metadata === null) {
+            return ['class_missing' => true, 'fields' => []];
+        }
+
+        $required = collect($metadata['required_fields'] ?? [])
+            ->filter(fn (array $field) => (bool) ($field['required'] ?? false))
+            ->pluck('name')
+            ->filter()
+            ->values();
+
+        if ($required->isEmpty()) {
+            return ['class_missing' => false, 'fields' => []];
+        }
+
+        $mappedNames = array_keys($this->mappingService->getMapping($trigger->id));
+
+        $missing = $required
+            ->reject(fn (string $name) => in_array($name, $mappedNames, true))
+            ->values()
+            ->all();
+
+        return ['class_missing' => false, 'fields' => $missing];
     }
 
     public function create(Request $request)

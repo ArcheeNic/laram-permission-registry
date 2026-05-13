@@ -54,11 +54,32 @@
                                     </td>
                                 </tr>
                                 @foreach($configured as $trigger)
-                                    <tr>
+                                    @php
+                                        $missing = $missingFieldsByTrigger[$trigger->id] ?? ['class_missing' => false, 'fields' => []];
+                                        $hasMissingFields = ! empty($missing['fields']);
+                                        $classMissing = $missing['class_missing'] ?? false;
+                                    @endphp
+                                    <tr @class(['bg-amber-50 dark:bg-amber-900/20' => $hasMissingFields || $classMissing])>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                                {{ $trigger->name }}
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                                                <span>{{ $trigger->name }}</span>
+                                                @if($classMissing)
+                                                    <span title="Класс триггера не найден в коде"
+                                                          class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200">
+                                                        Класс отсутствует
+                                                    </span>
+                                                @elseif($hasMissingFields)
+                                                    <span title="Не настроены обязательные поля: {{ implode(', ', $missing['fields']) }}"
+                                                          class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
+                                                        ⚠ Поля без маппинга: {{ count($missing['fields']) }}
+                                                    </span>
+                                                @endif
                                             </div>
+                                            @if($hasMissingFields)
+                                                <div class="text-xs text-amber-700 dark:text-amber-300 mt-1 font-mono">
+                                                    {{ implode(', ', $missing['fields']) }}
+                                                </div>
+                                            @endif
                                         </td>
                                         <td class="px-6 py-4">
                                             <div class="text-sm text-gray-500 dark:text-gray-400 font-mono">
