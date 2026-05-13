@@ -68,17 +68,19 @@
                                                           class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200">
                                                         Класс отсутствует
                                                     </span>
-                                                @elseif($hasMissingFields)
-                                                    <span title="Не настроены обязательные поля: {{ implode(', ', $missing['fields']) }}"
-                                                          class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
-                                                        ⚠ Поля без маппинга: {{ count($missing['fields']) }}
-                                                    </span>
                                                 @endif
                                             </div>
                                             @if($hasMissingFields)
-                                                <div class="text-xs text-amber-700 dark:text-amber-300 mt-1 font-mono">
-                                                    {{ implode(', ', $missing['fields']) }}
+                                                <div class="mt-1">
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
+                                                        ⚠ Поля без маппинга: {{ count($missing['fields']) }}
+                                                    </span>
                                                 </div>
+                                                <ul class="text-xs text-amber-700 dark:text-amber-300 mt-1 font-mono list-disc list-inside">
+                                                    @foreach($missing['fields'] as $field)
+                                                        <li>{{ $field }}</li>
+                                                    @endforeach
+                                                </ul>
                                             @endif
                                         </td>
                                         <td class="px-6 py-4">
