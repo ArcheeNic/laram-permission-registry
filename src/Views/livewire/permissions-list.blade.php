@@ -280,7 +280,7 @@
     </div>
 
     @if($confirmingDelete)
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-gray-500 bg-opacity-75">
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-gray-500 dark:bg-gray-700 bg-opacity-75">
             <div class="w-full max-w-md overflow-hidden rounded-lg bg-white shadow-xl dark:bg-neutral-800">
                 <div class="px-6 py-4">
                     <div class="text-lg font-medium text-gray-900 dark:text-gray-100">

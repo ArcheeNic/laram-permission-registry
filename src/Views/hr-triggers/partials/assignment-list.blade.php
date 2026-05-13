@@ -37,17 +37,17 @@
                 </div>
             </div>
             <div class="flex items-center space-x-2">
-                <span class="text-sm text-gray-500">{{ __('permission-registry::messages.order') }}: {{ $assignment->order }}</span>
+                <span class="text-sm text-gray-500 dark:text-gray-400">{{ __('permission-registry::messages.order') }}: {{ $assignment->order }}</span>
                 <label class="inline-flex items-center">
                     <input type="checkbox"
-                           class="toggle-trigger rounded text-purple-600"
+                           class="toggle-trigger rounded text-purple-600 dark:text-purple-300"
                            data-id="{{ $assignment->id }}"
                            {{ $assignment->is_enabled ? 'checked' : '' }}>
                     <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ __('permission-registry::messages.enabled') }}</span>
                 </label>
                 <button type="button"
                         data-id="{{ $assignment->id }}"
-                        class="remove-trigger-btn text-red-600 hover:text-red-800">
+                        class="remove-trigger-btn text-red-600 dark:text-red-300 hover:text-red-800">
                     🗑️
                 </button>
             </div>

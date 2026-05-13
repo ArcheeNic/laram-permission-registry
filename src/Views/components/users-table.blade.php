@@ -22,7 +22,7 @@
                            @checked($currentPageAllSelected)
                            wire:click.stop="toggleBulkSelectAll([{{ implode(',', $users->pluck('id')->all()) }}])"
                            aria-label="{{ __('permission-registry::Select All') }}"
-                           class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                           class="h-4 w-4 rounded border-gray-300 dark:border-neutral-600 text-blue-600 dark:text-blue-300 focus:ring-blue-500" />
                 </th>
                 @foreach($sortableColumns as $field => $label)
                     <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider group hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors"
@@ -91,7 +91,7 @@
                                @checked(in_array($user->id, $bulkSelectedIds, true))
                                wire:click.stop="toggleBulkSelect({{ $user->id }})"
                                aria-label="{{ __('permission-registry::messages.select_user') }} #{{ $user->id }}"
-                               class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                               class="h-4 w-4 rounded border-gray-300 dark:border-neutral-600 text-blue-600 dark:text-blue-300 focus:ring-blue-500" />
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500 dark:text-gray-400">
                         {{ $user->id }}

@@ -30,7 +30,7 @@
                             <option value="">Загрузка...</option>
                         </select>
                         @error('class_name')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-300">{{ $message }}</p>
                         @enderror
                     </div>
 
@@ -45,7 +45,7 @@
                         <input type="text" name="name" id="name" value="{{ old('name') }}" required readonly
                                class="mt-1 block w-full rounded-md border-gray-300 dark:bg-neutral-700 dark:border-neutral-600 dark:text-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 bg-gray-50 dark:bg-neutral-900">
                         @error('name')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-300">{{ $message }}</p>
                         @enderror
                     </div>
 
@@ -60,7 +60,7 @@
                         <textarea name="description" id="description" rows="3" readonly
                                   class="mt-1 block w-full rounded-md border-gray-300 dark:bg-neutral-700 dark:border-neutral-600 dark:text-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 bg-gray-50 dark:bg-neutral-900">{{ old('description') }}</textarea>
                         @error('description')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-300">{{ $message }}</p>
                         @enderror
                     </div>
 
@@ -79,14 +79,14 @@
                             <option value="both" {{ old('type', 'both') === 'both' ? 'selected' : '' }}>Both (оба)</option>
                         </select>
                         @error('type')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-300">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <div class="mb-6">
                         <label class="inline-flex items-center">
                             <input type="checkbox" name="is_active" value="1" {{ old('is_active', true) ? 'checked' : '' }}
-                                   class="rounded text-purple-600 shadow-sm focus:border-purple-500 focus:ring-purple-500">
+                                   class="rounded text-purple-600 dark:text-purple-300 shadow-sm focus:border-purple-500 focus:ring-purple-500">
                             <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">
                                 Активен
                                 <x-perm::field-hint

@@ -96,7 +96,7 @@
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
                             {{ __('permission-registry::messages.request_permission') }}
                         </h3>
-                        <button wire:click="closeRequestModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xl">&times;</button>
+                        <button wire:click="closeRequestModal" class="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 text-xl">&times;</button>
                     </div>
 
                     @if(!$selectedPermissionId)
@@ -135,7 +135,7 @@
                                         <div>
                                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                                 {{ $field->name }}
-                                                @if($field->is_required) <span class="text-red-500">*</span> @endif
+                                                @if($field->is_required) <span class="text-red-500 dark:text-red-300">*</span> @endif
                                             </label>
                                             <input type="text"
                                                    wire:model="fieldValues.{{ $field->id }}"

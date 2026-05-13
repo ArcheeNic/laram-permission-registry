@@ -22,11 +22,11 @@
             <div class="mb-4 last:mb-0 bg-white dark:bg-neutral-800 p-3 rounded border border-red-200 dark:border-red-800">
                 <p class="text-sm font-medium text-gray-800 dark:text-gray-200 mb-2">
                     {{ $status['permission_name'] ?? 'Unknown permission' }}
-                    <span class="text-xs text-gray-500">(ID: {{ $permId }})</span>
+                    <span class="text-xs text-gray-500 dark:text-gray-400">(ID: {{ $permId }})</span>
                 </p>
                 @if(config('app.debug'))
                     {{-- Debug: show all data (only in development) --}}
-                    <div class="text-xs text-gray-500 mb-2">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-2">
                         Status: {{ $status['status'] ?? 'N/A' }} | 
                         Triggers: {{ isset($status['triggers']) ? count($status['triggers']) : 0 }}
                     </div>

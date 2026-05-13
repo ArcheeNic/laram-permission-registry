@@ -2,28 +2,28 @@
 <div class="mt-6">
     <h4 class="text-md font-semibold mb-3">{{ __('permission-registry::Permissions Management') }}</h4>
 
-    <div class="bg-gray-50 p-4 rounded-md">
+    <div class="bg-gray-50 dark:bg-neutral-800 p-4 rounded-md">
         @if($this->availablePermissions && $this->availablePermissions->count() > 0)
             <div class="mb-4">
                 <input type="text" wire:model.live="permissionSearch" placeholder="{{ __('permission-registry::Search permissions') }}"
-                       class="text-sm rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 w-full">
+                       class="text-sm rounded-md border-gray-300 dark:border-neutral-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 w-full">
             </div>
 
             <div class="max-h-96 overflow-y-auto">
                 @foreach($this->availablePermissions as $permission)
-                    <div class="mb-4 p-3 border border-gray-200 rounded-md bg-white permission-item" data-name="{{ strtolower($permission->name) }}" data-service="{{ strtolower($permission->service) }}">
+                    <div class="mb-4 p-3 border border-gray-200 dark:border-neutral-700 rounded-md bg-white dark:bg-neutral-800 permission-item" data-name="{{ strtolower($permission->name) }}" data-service="{{ strtolower($permission->service) }}">
                         <div class="flex items-start">
                             <div class="flex items-center h-5 mt-1">
                                 <input type="checkbox" id="permission_{{ $permission->id }}"
                                        wire:model.live="selectedPermissions.{{ $permission->id }}"
-                                       class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                       class="h-4 w-4 text-blue-600 dark:text-blue-300 border-gray-300 dark:border-neutral-600 rounded focus:ring-blue-500">
                             </div>
                             <div class="ml-3 flex-grow">
-                                <label for="permission_{{ $permission->id }}" class="font-medium text-gray-700">
+                                <label for="permission_{{ $permission->id }}" class="font-medium text-gray-700 dark:text-gray-300">
                                     {{ $permission->name }}
                                 </label>
-                                <p class="text-xs text-gray-500">{{ $permission->service }}</p>
-                                <p class="text-xs text-gray-500">{{ $permission->description }}</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">{{ $permission->service }}</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">{{ $permission->description }}</p>
 
                                 @php
                                     $isResourceScoped = ($permission->scope ?? \ArcheeNic\PermissionRegistry\Enums\PermissionScope::Service) === \ArcheeNic\PermissionRegistry\Enums\PermissionScope::Resource;
@@ -49,7 +49,7 @@
                                                         <input type="checkbox"
                                                                value="{{ $resource->id }}"
                                                                wire:model.live="permissionResources.{{ $permission->id }}"
-                                                               class="h-4 w-4 text-blue-600 border-gray-300 dark:border-neutral-500 rounded focus:ring-blue-500 dark:bg-neutral-800">
+                                                               class="h-4 w-4 text-blue-600 dark:text-blue-300 border-gray-300 dark:border-neutral-500 rounded focus:ring-blue-500 dark:bg-neutral-800">
                                                         <span>{{ $resource->name }}</span>
                                                         <span class="ml-auto text-xs font-mono text-gray-400 dark:text-gray-500">{{ $resource->external_id }}</span>
                                                     </label>
@@ -60,17 +60,17 @@
                                 @endif
 
                                 @if($permission->fields->count() > 0 && isset($selectedPermissions[$permission->id]) && $selectedPermissions[$permission->id])
-                                    <div class="mt-2 border-t border-gray-100 pt-2">
-                                        <p class="text-xs text-gray-700 mb-1">{{ __('permission-registry::Permission fields') }}:</p>
+                                    <div class="mt-2 border-t border-gray-100 dark:border-neutral-800 pt-2">
+                                        <p class="text-xs text-gray-700 dark:text-gray-300 mb-1">{{ __('permission-registry::Permission fields') }}:</p>
                                         <div class="grid grid-cols-1 gap-2">
                                             @foreach($permission->fields as $field)
                                                 <div class="flex flex-col">
-                                                    <label for="field_{{ $permission->id }}_{{ $field->id }}" class="text-xs text-gray-600">
+                                                    <label for="field_{{ $permission->id }}_{{ $field->id }}" class="text-xs text-gray-600 dark:text-gray-400">
                                                         {{ $field->name }}:
                                                     </label>
                                                     <input type="text" id="field_{{ $permission->id }}_{{ $field->id }}"
                                                            wire:model="permissionFields.{{ $permission->id }}.{{ $field->id }}"
-                                                           class="mt-1 text-sm rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                                           class="mt-1 text-sm rounded-md border-gray-300 dark:border-neutral-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                                            placeholder="{{ $field->default_value }}">
                                                 </div>
                                             @endforeach
@@ -90,7 +90,7 @@
                 </button>
             </div>
         @else
-            <p class="text-gray-500">{{ __('permission-registry::No permissions available') }}</p>
+            <p class="text-gray-500 dark:text-gray-400">{{ __('permission-registry::No permissions available') }}</p>
         @endif
     </div>
 </div>

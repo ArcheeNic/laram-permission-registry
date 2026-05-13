@@ -358,7 +358,7 @@
                                     @elseif($row->is_approved === false)
                                         <span class="text-red-500 dark:text-red-400">&#10007;</span>
                                     @else
-                                        <span class="text-gray-400">—</span>
+                                        <span class="text-gray-400 dark:text-gray-500">—</span>
                                     @endif
                                 </td>
                             </tr>
@@ -444,7 +444,7 @@
                                        wire:click="{{ $allPageSelected ? 'deselectAllOnPage' : 'selectAllOnPage' }}"
                                        {{ $allPageSelected ? 'checked' : '' }}
                                        @if($somePageSelected) x-ref="pageCheckbox" x-init="$refs.pageCheckbox && ($refs.pageCheckbox.indeterminate = true)" @endif
-                                       class="rounded border-gray-300 dark:border-gray-600 dark:bg-neutral-700 text-indigo-600 focus:ring-indigo-500">
+                                       class="rounded border-gray-300 dark:border-gray-600 dark:bg-neutral-700 text-indigo-600 dark:text-indigo-300 focus:ring-indigo-500">
                             </th>
                             @foreach($fieldColumns as $colKey => $colName)
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ $colName }}</th>
@@ -461,7 +461,7 @@
                                     <input type="checkbox"
                                            wire:click="toggleRow({{ $row->id }})"
                                            {{ in_array($row->id, $selectedRows) ? 'checked' : '' }}
-                                           class="rounded border-gray-300 dark:border-gray-600 dark:bg-neutral-700 text-indigo-600 focus:ring-indigo-500">
+                                           class="rounded border-gray-300 dark:border-gray-600 dark:bg-neutral-700 text-indigo-600 dark:text-indigo-300 focus:ring-indigo-500">
                                 </td>
                                 @foreach($fieldColumns as $colKey => $colName)
                                     <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
@@ -489,7 +489,7 @@
                             <input type="checkbox"
                                    wire:click="toggleRow({{ $row->id }})"
                                    {{ in_array($row->id, $selectedRows) ? 'checked' : '' }}
-                                   class="mt-1 rounded border-gray-300 dark:border-gray-600 dark:bg-neutral-700 text-indigo-600 focus:ring-indigo-500">
+                                   class="mt-1 rounded border-gray-300 dark:border-gray-600 dark:bg-neutral-700 text-indigo-600 dark:text-indigo-300 focus:ring-indigo-500">
                             <div class="flex-1 min-w-0">
                                 <div class="flex justify-between items-start">
                                     <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
@@ -546,7 +546,7 @@
     @if($step === 'executing')
         <div class="bg-white dark:bg-neutral-800 rounded-lg shadow p-8">
             <div class="flex flex-col items-center justify-center space-y-4">
-                <svg class="animate-spin h-12 w-12 text-indigo-500" fill="none" viewBox="0 0 24 24">
+                <svg class="animate-spin h-12 w-12 text-indigo-500 dark:text-indigo-300" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                 </svg>

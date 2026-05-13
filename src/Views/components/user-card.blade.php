@@ -58,7 +58,7 @@
                @checked($isSelected)
                wire:click.stop="toggleBulkSelect({{ $user->id }})"
                aria-label="{{ __('permission-registry::messages.select_user') }} #{{ $user->id }}"
-               class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+               class="h-4 w-4 rounded border-gray-300 dark:border-neutral-600 text-blue-600 dark:text-blue-300 focus:ring-blue-500" />
     </div>
     
     <!-- Градиентная полоса сверху -->

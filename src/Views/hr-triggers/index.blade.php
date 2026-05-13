@@ -25,7 +25,7 @@
                     <nav class="flex -mb-px">
                         @foreach($categories as $category)
                             <button onclick="switchCategory('{{ $category->value }}')" id="category-tab-{{ $category->value }}"
-                                    class="category-tab-button px-6 py-4 text-sm font-medium border-b-2 {{ $loop->first ? 'border-purple-600 text-purple-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
+                                    class="category-tab-button px-6 py-4 text-sm font-medium border-b-2 {{ $loop->first ? 'border-purple-600 text-purple-600' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300' }}">
                                 {{ __($category->labelKey()) }}
                             </button>
                         @endforeach
@@ -39,7 +39,7 @@
                                 <button
                                     onclick="switchEvent('{{ $category->value }}', 'hire')"
                                     id="event-tab-{{ $category->value }}-hire"
-                                    class="event-tab-button-{{ $category->value }} px-6 py-4 text-sm font-medium border-b-2 border-purple-600 text-purple-600"
+                                    class="event-tab-button-{{ $category->value }} px-6 py-4 text-sm font-medium border-b-2 border-purple-600 text-purple-600 dark:text-purple-300"
                                 >
                                     {{ __('permission-registry::messages.on_hire') }}
                                     ({{ $triggersByCategory[$category->value]['hire']->count() }})
@@ -47,7 +47,7 @@
                                 <button
                                     onclick="switchEvent('{{ $category->value }}', 'fire')"
                                     id="event-tab-{{ $category->value }}-fire"
-                                    class="event-tab-button-{{ $category->value }} px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                                    class="event-tab-button-{{ $category->value }} px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-neutral-600"
                                 >
                                     {{ __('permission-registry::messages.on_fire') }}
                                     ({{ $triggersByCategory[$category->value]['fire']->count() }})

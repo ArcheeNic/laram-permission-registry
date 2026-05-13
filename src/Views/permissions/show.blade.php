@@ -44,28 +44,28 @@
                 @endif
 
                 <div class="mb-8">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">{{ __('permission-registry::Permission Information') }}</h3>
-                    <div class="bg-gray-50 p-4 rounded-md">
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">{{ __('permission-registry::Permission Information') }}</h3>
+                    <div class="bg-gray-50 dark:bg-neutral-800 p-4 rounded-md">
                         <dl class="grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2">
                             <div>
-                                <dt class="text-sm font-medium text-gray-500">{{ __('permission-registry::Service') }}</dt>
-                                <dd class="mt-1 text-sm text-gray-900">{{ $permission->service }}</dd>
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ __('permission-registry::Service') }}</dt>
+                                <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ $permission->service }}</dd>
                             </div>
                             <div>
-                                <dt class="text-sm font-medium text-gray-500">{{ __('permission-registry::Name') }}</dt>
-                                <dd class="mt-1 text-sm text-gray-900">{{ $permission->name }}</dd>
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ __('permission-registry::Name') }}</dt>
+                                <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ $permission->name }}</dd>
                             </div>
                             <div class="sm:col-span-2">
-                                <dt class="text-sm font-medium text-gray-500">{{ __('permission-registry::Description') }}</dt>
-                                <dd class="mt-1 text-sm text-gray-900">{{ $permission->description ?: '—' }}</dd>
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ __('permission-registry::Description') }}</dt>
+                                <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ $permission->description ?: '—' }}</dd>
                             </div>
                             <div class="sm:col-span-2">
-                                <dt class="text-sm font-medium text-gray-500">{{ __('permission-registry::Tags') }}</dt>
-                                <dd class="mt-1 text-sm text-gray-900">
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ __('permission-registry::Tags') }}</dt>
+                                <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">
                                     @if(!empty($permission->tags))
                                         <div class="flex flex-wrap gap-1">
                                             @foreach($permission->tags as $tag)
-                                                <span class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">{{ $tag }}</span>
+                                                <span class="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded-full">{{ $tag }}</span>
                                             @endforeach
                                         </div>
                                     @else
@@ -74,22 +74,22 @@
                                 </dd>
                             </div>
                             <div>
-                                <dt class="text-sm font-medium text-gray-500">{{ __('permission-registry::Auto Grant') }}</dt>
-                                <dd class="mt-1 text-sm text-gray-900">
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ __('permission-registry::Auto Grant') }}</dt>
+                                <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">
                                     @if($permission->auto_grant)
-                                        <span class="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">{{ __('permission-registry::Yes') }}</span>
+                                        <span class="px-2 py-1 text-xs bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 rounded-full">{{ __('permission-registry::Yes') }}</span>
                                     @else
-                                        <span class="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full">{{ __('permission-registry::No') }}</span>
+                                        <span class="px-2 py-1 text-xs bg-gray-100 dark:bg-neutral-900 text-gray-800 dark:text-gray-200 rounded-full">{{ __('permission-registry::No') }}</span>
                                     @endif
                                 </dd>
                             </div>
                             <div>
-                                <dt class="text-sm font-medium text-gray-500">{{ __('permission-registry::Auto Revoke') }}</dt>
-                                <dd class="mt-1 text-sm text-gray-900">
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ __('permission-registry::Auto Revoke') }}</dt>
+                                <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">
                                     @if($permission->auto_revoke)
-                                        <span class="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">{{ __('permission-registry::Yes') }}</span>
+                                        <span class="px-2 py-1 text-xs bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 rounded-full">{{ __('permission-registry::Yes') }}</span>
                                     @else
-                                        <span class="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full">{{ __('permission-registry::No') }}</span>
+                                        <span class="px-2 py-1 text-xs bg-gray-100 dark:bg-neutral-900 text-gray-800 dark:text-gray-200 rounded-full">{{ __('permission-registry::No') }}</span>
                                     @endif
                                 </dd>
                             </div>
@@ -98,20 +98,20 @@
                 </div>
 
                 <div class="mb-8">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">{{ __('permission-registry::Permission Fields') }}</h3>
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">{{ __('permission-registry::Permission Fields') }}</h3>
 
                     @if($permission->fields->isEmpty())
-                        <p class="text-sm text-gray-500">{{ __('permission-registry::No fields defined for this permission') }}</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('permission-registry::No fields defined for this permission') }}</p>
                     @else
-                        <div class="bg-gray-50 p-4 rounded-md">
-                            <ul class="divide-y divide-gray-200">
+                        <div class="bg-gray-50 dark:bg-neutral-800 p-4 rounded-md">
+                            <ul class="divide-y divide-gray-200 dark:divide-neutral-700">
                                 @foreach($permission->fields as $field)
                                     <li class="py-3 flex justify-between">
                                         <div>
-                                            <span class="text-sm font-medium text-gray-900">{{ $field->name }}</span>
+                                            <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $field->name }}</span>
                                         </div>
                                         <div>
-                                            <span class="text-sm text-gray-500">{{ __('permission-registry::Default') }}: {{ $field->default_value ?: '—' }}</span>
+                                            <span class="text-sm text-gray-500 dark:text-gray-400">{{ __('permission-registry::Default') }}: {{ $field->default_value ?: '—' }}</span>
                                         </div>
                                     </li>
                                 @endforeach
@@ -121,32 +121,32 @@
                 </div>
 
                 <div class="mb-8">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">{{ __('permission-registry::Groups Using This Permission') }}</h3>
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">{{ __('permission-registry::Groups Using This Permission') }}</h3>
 
                     @if($permission->groups->isEmpty())
-                        <p class="text-sm text-gray-500">{{ __('permission-registry::This permission is not included in any groups') }}</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('permission-registry::This permission is not included in any groups') }}</p>
                     @else
                         <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
+                            <table class="min-w-full divide-y divide-gray-200 dark:divide-neutral-700">
+                                <thead class="bg-gray-50 dark:bg-neutral-800">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                         {{ __('permission-registry::Name') }}
                                     </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                         {{ __('permission-registry::Description') }}
                                     </th>
                                 </tr>
                                 </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
+                                <tbody class="bg-white dark:bg-neutral-800 divide-y divide-gray-200 dark:divide-neutral-700">
                                 @foreach($permission->groups as $group)
                                     <tr>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                            <a href="{{ route('permission-registry::groups.show', $group) }}" class="text-blue-600 hover:text-blue-900">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
+                                            <a href="{{ route('permission-registry::groups.show', $group) }}" class="text-blue-600 dark:text-blue-300 hover:text-blue-900">
                                                 {{ $group->name }}
                                             </a>
                                         </td>
-                                        <td class="px-6 py-4 text-sm text-gray-500">
+                                        <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                                             {{ Str::limit($group->description, 100) ?: '—' }}
                                         </td>
                                     </tr>

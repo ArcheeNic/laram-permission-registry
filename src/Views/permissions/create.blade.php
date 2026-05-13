@@ -1,11 +1,11 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
                 {{ __('permission-registry::Create Permission') }}
             </h2>
             <a href="{{ route('permission-registry::permissions.index') }}"
-               class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+               class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-600 rounded-md hover:bg-gray-50 dark:hover:bg-neutral-800">
                 {{ __('permission-registry::Back to Permissions') }}
             </a>
         </div>
@@ -13,13 +13,13 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
+            <div class="bg-white dark:bg-neutral-800 overflow-hidden shadow-xl sm:rounded-lg p-6">
                 <form action="{{ route('permission-registry::permissions.store') }}" method="POST">
                     @csrf
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         <div>
-                            <label for="service" class="block text-sm font-medium text-gray-700">
+                            <label for="service" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                 {{ __('permission-registry::Service') }} *
                                 <x-perm::field-hint
                                     :title="__('permission-registry::hints.permissions_service_title')"
@@ -27,14 +27,14 @@
                                 />
                             </label>
                             <input type="text" name="service" id="service" value="{{ old('service') }}" required
-                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                   class="mt-1 block w-full rounded-md border-gray-300 dark:border-neutral-600 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                             @error('service')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-1 text-sm text-red-600 dark:text-red-300">{{ $message }}</p>
                             @enderror
                         </div>
 
                         <div>
-                            <label for="name" class="block text-sm font-medium text-gray-700">
+                            <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                 {{ __('permission-registry::Name') }} *
                                 <x-perm::field-hint
                                     :title="__('permission-registry::hints.permissions_name_title')"
@@ -42,16 +42,16 @@
                                 />
                             </label>
                             <input type="text" name="name" id="name" value="{{ old('name') }}" required
-                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                   class="mt-1 block w-full rounded-md border-gray-300 dark:border-neutral-600 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                             @error('name')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-1 text-sm text-red-600 dark:text-red-300">{{ $message }}</p>
                             @enderror
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                         <div>
-                            <label for="scope" class="block text-sm font-medium text-gray-700">
+                            <label for="scope" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                 {{ __('permission-registry::Scope') }} *
                                 <x-perm::field-hint
                                     :title="__('permission-registry::hints.permissions_scope_title')"
@@ -59,7 +59,7 @@
                                 />
                             </label>
                             <select name="scope" id="scope" required
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-neutral-600 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                 <option value="service" {{ old('scope', 'service') === 'service' ? 'selected' : '' }}>
                                     {{ __('permission-registry::Service-wide') }}
                                 </option>
@@ -68,12 +68,12 @@
                                 </option>
                             </select>
                             @error('scope')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-1 text-sm text-red-600 dark:text-red-300">{{ $message }}</p>
                             @enderror
                         </div>
 
                         <div>
-                            <label for="resource_kind" class="block text-sm font-medium text-gray-700">
+                            <label for="resource_kind" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                 {{ __('permission-registry::Kind') }}
                                 <x-perm::field-hint
                                     :title="__('permission-registry::hints.permissions_resource_kind_title')"
@@ -83,14 +83,14 @@
                             <input type="text" name="resource_kind" id="resource_kind"
                                    value="{{ old('resource_kind') }}"
                                    placeholder="department / chat / repo / …"
-                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                   class="mt-1 block w-full rounded-md border-gray-300 dark:border-neutral-600 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                             @error('resource_kind')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-1 text-sm text-red-600 dark:text-red-300">{{ $message }}</p>
                             @enderror
                         </div>
 
                         <div>
-                            <label for="display_name" class="block text-sm font-medium text-gray-700">
+                            <label for="display_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                 {{ __('permission-registry::Display name') }}
                                 <x-perm::field-hint
                                     :title="__('permission-registry::hints.permissions_display_name_title')"
@@ -99,15 +99,15 @@
                             </label>
                             <input type="text" name="display_name" id="display_name"
                                    value="{{ old('display_name') }}"
-                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                   class="mt-1 block w-full rounded-md border-gray-300 dark:border-neutral-600 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                             @error('display_name')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-1 text-sm text-red-600 dark:text-red-300">{{ $message }}</p>
                             @enderror
                         </div>
                     </div>
 
                     <div class="mb-6">
-                        <label for="description" class="block text-sm font-medium text-gray-700">
+                        <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                             {{ __('permission-registry::Description') }}
                             <x-perm::field-hint
                                 :title="__('permission-registry::hints.permissions_description_title')"
@@ -115,53 +115,53 @@
                             />
                         </label>
                         <textarea name="description" id="description" rows="3"
-                                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">{{ old('description') }}</textarea>
+                                  class="mt-1 block w-full rounded-md border-gray-300 dark:border-neutral-600 shadow-sm focus:border-blue-500 focus:ring-blue-500">{{ old('description') }}</textarea>
                         @error('description')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-300">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <div class="mb-6">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             {{ __('permission-registry::Tags') }}
                             <x-perm::field-hint
                                 :title="__('permission-registry::hints.permissions_tags_title')"
                                 :description="__('permission-registry::hints.permissions_tags_desc')"
                             />
                         </label>
-                        <div class="flex flex-wrap gap-2 p-3 bg-gray-50 rounded-md" id="tags-container">
+                        <div class="flex flex-wrap gap-2 p-3 bg-gray-50 dark:bg-neutral-800 rounded-md" id="tags-container">
                             <input type="text" id="tag-input"
-                                   class="p-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                   class="p-1 text-sm border border-gray-300 dark:border-neutral-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                                    placeholder="{{ __('permission-registry::Enter tag and press Enter') }}">
                         </div>
                         <div id="tags-hidden-inputs"></div>
                         @error('tags')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-300">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <div class="mb-6">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             {{ __('permission-registry::Fields') }}
                             <x-perm::field-hint
                                 :title="__('permission-registry::hints.permissions_fields_title')"
                                 :description="__('permission-registry::hints.permissions_fields_desc')"
                             />
                         </label>
-                        <div class="bg-gray-50 p-3 rounded-md">
+                        <div class="bg-gray-50 dark:bg-neutral-800 p-3 rounded-md">
                             @if($fields->isEmpty())
-                                <p class="text-sm text-gray-500">{{ __('permission-registry::No fields available. Create fields first.') }}</p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('permission-registry::No fields available. Create fields first.') }}</p>
                             @else
                                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                     @foreach($fields as $field)
                                         <div class="flex items-center">
                                             <input type="checkbox" id="field_{{ $field->id }}" name="fields[]" value="{{ $field->id }}"
-                                                   class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                                   class="h-4 w-4 text-blue-600 dark:text-blue-300 border-gray-300 dark:border-neutral-600 rounded focus:ring-blue-500"
                                                 {{ in_array($field->id, old('fields', [])) ? 'checked' : '' }}>
-                                            <label for="field_{{ $field->id }}" class="ml-2 block text-sm text-gray-900">
+                                            <label for="field_{{ $field->id }}" class="ml-2 block text-sm text-gray-900 dark:text-gray-100">
                                                 {{ $field->name }}
                                                 @if($field->default_value)
-                                                    <span class="text-gray-500">({{ __('permission-registry::Default') }}: {{ $field->default_value }})</span>
+                                                    <span class="text-gray-500 dark:text-gray-400">({{ __('permission-registry::Default') }}: {{ $field->default_value }})</span>
                                                 @endif
                                             </label>
                                         </div>
@@ -170,7 +170,7 @@
                             @endif
                         </div>
                         @error('fields')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-300">{{ $message }}</p>
                         @enderror
                     </div>
 
@@ -181,7 +181,7 @@
                         <div class="bg-gray-50 dark:bg-neutral-800 p-4 rounded-md space-y-3">
                             <div class="flex items-start">
                                 <input type="checkbox" id="auto_grant" name="auto_grant" value="1"
-                                       class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                       class="h-4 w-4 text-blue-600 dark:text-blue-300 border-gray-300 dark:border-neutral-600 rounded focus:ring-blue-500"
                                        {{ old('auto_grant', false) ? 'checked' : '' }}>
                                 <label for="auto_grant" class="ml-2 block text-sm text-gray-900 dark:text-gray-100">
                                     {{ __('permission-registry::Automatically grant permission when assigning position/group') }}
@@ -196,7 +196,7 @@
                             </div>
                             <div class="flex items-start">
                                 <input type="checkbox" id="auto_revoke" name="auto_revoke" value="1"
-                                       class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                       class="h-4 w-4 text-blue-600 dark:text-blue-300 border-gray-300 dark:border-neutral-600 rounded focus:ring-blue-500"
                                        {{ old('auto_revoke', false) ? 'checked' : '' }}>
                                 <label for="auto_revoke" class="ml-2 block text-sm text-gray-900 dark:text-gray-100">
                                     {{ __('permission-registry::Automatically revoke permission when removing position/group') }}
@@ -211,10 +211,10 @@
                             </div>
                         </div>
                         @error('auto_grant')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-300">{{ $message }}</p>
                         @enderror
                         @error('auto_revoke')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-300">{{ $message }}</p>
                         @enderror
                     </div>
 
@@ -269,9 +269,9 @@
 
                 // Обновление отображения тегов
                 const tagElements = tags.map(tag => {
-                    return `<div class="bg-blue-100 text-blue-800 rounded px-2 py-1 text-sm flex items-center">
+                    return `<div class="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded px-2 py-1 text-sm flex items-center">
                         <span>${tag}</span>
-                        <button type="button" class="ml-1 text-blue-500 hover:text-blue-700"
+                        <button type="button" class="ml-1 text-blue-500 dark:text-blue-300 hover:text-blue-700"
                                 onclick="removeTag('${tag}')">×</button>
                     </div>`;
                 }).join('');

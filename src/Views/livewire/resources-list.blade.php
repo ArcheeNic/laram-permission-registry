@@ -147,25 +147,25 @@
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('permission-registry::Service') }}</label>
                             <input wire:model="formService" type="text" placeholder="b24 / telegram / gsheet"
                                    class="mt-1 w-full rounded-md shadow-sm border-gray-300 dark:border-gray-600 dark:bg-neutral-700 dark:text-gray-200">
-                            @error('formService') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                            @error('formService') <p class="text-xs text-red-500 dark:text-red-300 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('permission-registry::Kind') }}</label>
                             <input wire:model="formKind" type="text" placeholder="department / chat / sheet"
                                    class="mt-1 w-full rounded-md shadow-sm border-gray-300 dark:border-gray-600 dark:bg-neutral-700 dark:text-gray-200">
-                            @error('formKind') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                            @error('formKind') <p class="text-xs text-red-500 dark:text-red-300 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('permission-registry::External ID') }}</label>
                             <input wire:model="formExternalId" type="text"
                                    class="mt-1 w-full rounded-md shadow-sm border-gray-300 dark:border-gray-600 dark:bg-neutral-700 dark:text-gray-200 font-mono">
-                            @error('formExternalId') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                            @error('formExternalId') <p class="text-xs text-red-500 dark:text-red-300 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('permission-registry::Name') }}</label>
                             <input wire:model="formName" type="text"
                                    class="mt-1 w-full rounded-md shadow-sm border-gray-300 dark:border-gray-600 dark:bg-neutral-700 dark:text-gray-200">
-                            @error('formName') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                            @error('formName') <p class="text-xs text-red-500 dark:text-red-300 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -175,7 +175,7 @@
                             <textarea wire:model="formMetadata" rows="3"
                                       placeholder="parent_external_id=12&#10;space_id=abc"
                                       class="mt-1 w-full rounded-md shadow-sm border-gray-300 dark:border-gray-600 dark:bg-neutral-700 dark:text-gray-200 font-mono text-xs"></textarea>
-                            @error('formMetadata') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                            @error('formMetadata') <p class="text-xs text-red-500 dark:text-red-300 mt-1">{{ $message }}</p> @enderror
                         </div>
                     </div>
 

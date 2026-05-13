@@ -64,7 +64,7 @@
                 <div class="flex items-end">
                     <label class="inline-flex items-center gap-2">
                         <input type="checkbox" wire:model.live="isActive"
-                               class="rounded border-gray-300 dark:border-gray-600 text-indigo-600">
+                               class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 dark:text-indigo-300">
                         <span class="text-sm text-gray-700 dark:text-gray-300">{{ __('permission-registry::Policy is active') }}</span>
                         <x-perm::field-hint
                             :title="__('permission-registry::hints.approval_policy_is_active_title')"

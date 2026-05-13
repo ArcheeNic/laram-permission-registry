@@ -70,7 +70,7 @@
                             class="rounded-lg border border-white/30 bg-white/15 text-sm text-white focus:border-white/60 focus:ring-0 disabled:opacity-60 disabled:cursor-not-allowed"
                         >
                             @foreach($this->employeeCategoryOptions as $categoryValue => $categoryLabel)
-                                <option value="{{ $categoryValue }}" class="text-gray-900">{{ $categoryLabel }}</option>
+                                <option value="{{ $categoryValue }}" class="text-gray-900 dark:text-gray-100">{{ $categoryLabel }}</option>
                             @endforeach
                         </select>
                     </div>

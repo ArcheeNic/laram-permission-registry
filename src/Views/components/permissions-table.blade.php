@@ -11,19 +11,19 @@
 ])
 
 <div class="max-h-64 overflow-y-auto">
-    <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
+    <table class="min-w-full divide-y divide-gray-200 dark:divide-neutral-700">
+        <thead class="bg-gray-50 dark:bg-neutral-800">
         <tr>
-            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-10">{{ __('permission-registry::Active') }}</th>
-            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('permission-registry::Service') }}</th>
-            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('permission-registry::Name') }}</th>
+            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-10">{{ __('permission-registry::Active') }}</th>
+            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('permission-registry::Service') }}</th>
+            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('permission-registry::Name') }}</th>
             @if($showSource)
-                <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('permission-registry::Source') }}</th>
+                <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('permission-registry::Source') }}</th>
             @endif
-            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-10">{{ __('permission-registry::Fields') }}</th>
+            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-10">{{ __('permission-registry::Fields') }}</th>
         </tr>
         </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
+        <tbody class="bg-white dark:bg-neutral-800 divide-y divide-gray-200 dark:divide-neutral-700">
         @foreach($permissions as $permission)
             @php
                 $permId = is_array($permission) ? $permission['id'] : $permission->id;
@@ -50,7 +50,7 @@
                 <td class="px-3 py-2 whitespace-nowrap">
                     <input type="checkbox" id="{{ $inputPrefix }}_{{ $permId }}"
                            wire:model.live="{{ $permissionType === 'dependent' ? 'dependentSelectedPermissions' : 'selectedPermissions' }}.{{ $permId }}"
-                           class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                           class="h-4 w-4 text-blue-600 dark:text-blue-300 border-gray-300 dark:border-neutral-600 rounded focus:ring-blue-500">
                 </td>
                 <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-500 dark:text-gray-400">{{ $permService }}</td>
                 <td class="px-3 py-2 text-xs">
@@ -95,13 +95,13 @@
                     @endif
                 </td>
                 @if($showSource && is_array($permission))
-                    <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-500">
+                    <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-500 dark:text-gray-400">
                         @if($permission['source_type'] === 'position')
-                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200">
                                 {{ $permission['source_name'] }} ({{ __('permission-registry::Position') }})
                             </span>
                         @else
-                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200">
                                 {{ $permission['source_name'] }} ({{ __('permission-registry::Group') }})
                             </span>
                         @endif
@@ -110,7 +110,7 @@
                 <td class="px-3 py-2 whitespace-nowrap">
                     @if($hasFields && isset($selectedPermissions[$permId]) && $selectedPermissions[$permId])
                         <button wire:click="{{ $permissionType === 'dependent' ? 'toggleDependentPermissionFields' : 'togglePermissionFields' }}({{ $permId }})"
-                                class="text-blue-600 hover:text-blue-800 text-xs focus:outline-none">
+                                class="text-blue-600 dark:text-blue-300 hover:text-blue-800 text-xs focus:outline-none">
                             @if(isset($expandedPermissionFields[$permId]))
                                 {{ __('permission-registry::Hide') }}
                             @else
@@ -152,7 +152,7 @@
                 isset($selectedPermissions[$permId]) && 
                 $selectedPermissions[$permId] &&
                 isset($expandedPermissionFields[$permId]))
-                <tr class="bg-blue-50">
+                <tr class="bg-blue-50 dark:bg-blue-900/20">
                     <td colspan="{{ $showSource ? 5 : 4 }}" class="px-3 py-2">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-2">
                             @foreach($permFields as $field)

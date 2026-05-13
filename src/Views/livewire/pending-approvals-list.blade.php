@@ -19,7 +19,7 @@
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
                     {{ __('permission-registry::Approval Policy') }} #{{ $req->id }}
                 </h3>
-                <button wire:click="closeDetail" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xl">&times;</button>
+                <button wire:click="closeDetail" class="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 text-xl">&times;</button>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">

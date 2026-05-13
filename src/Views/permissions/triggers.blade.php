@@ -6,7 +6,7 @@
             </h2>
             <div class="flex space-x-2">
                 <a href="{{ route('permission-registry::permissions.edit', $permission) }}"
-                   class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                   class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-600 rounded-md hover:bg-gray-50 dark:hover:bg-neutral-800">
                     {{ __('permission-registry::Back to Edit') }}
                 </a>
             </div>
@@ -38,11 +38,11 @@
                 <div class="border-b border-gray-200 dark:border-neutral-700">
                     <nav class="flex -mb-px">
                         <button onclick="switchTab('grant')" id="tab-grant"
-                                class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-purple-600 text-purple-600">
+                                class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-purple-600 text-purple-600 dark:text-purple-300">
                             При выдаче ({{ $grantTriggers->count() }})
                         </button>
                         <button onclick="switchTab('revoke')" id="tab-revoke"
-                                class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                                class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-neutral-600">
                             При отзыве ({{ $revokeTriggers->count() }})
                         </button>
                     </nav>
@@ -60,7 +60,7 @@
                             <div class="trigger-item bg-gray-50 dark:bg-neutral-700 p-4 rounded-md flex items-center justify-between cursor-move border border-gray-200 dark:border-neutral-600"
                                  data-id="{{ $assignment->id }}">
                                 <div class="flex items-center flex-1">
-                                    <span class="text-gray-400 mr-3">☰</span>
+                                    <span class="text-gray-400 dark:text-gray-500 mr-3">☰</span>
                                     <div>
                                         <div class="font-medium text-gray-900 dark:text-gray-100">
                                             {{ $assignment->trigger->name }}
@@ -84,9 +84,9 @@
                                     </div>
                                 </div>
                                 <div class="flex items-center space-x-2">
-                                    <span class="text-sm text-gray-500">Порядок: {{ $assignment->order }}</span>
+                                    <span class="text-sm text-gray-500 dark:text-gray-400">Порядок: {{ $assignment->order }}</span>
                                     <label class="inline-flex items-center">
-                                        <input type="checkbox" class="toggle-trigger rounded text-purple-600"
+                                        <input type="checkbox" class="toggle-trigger rounded text-purple-600 dark:text-purple-300"
                                                data-id="{{ $assignment->id }}"
                                                {{ $assignment->is_enabled ? 'checked' : '' }}>
                                         <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Включен</span>
@@ -95,7 +95,7 @@
                                             class="text-sm px-2 py-1 text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300"
                                             title="{{ __('permission-registry::Trigger settings') }}">⚙️</button>
                                     <button onclick="removeTrigger({{ $assignment->id }})"
-                                            class="text-red-600 hover:text-red-800">
+                                            class="text-red-600 dark:text-red-300 hover:text-red-800">
                                         🗑️
                                     </button>
                                 </div>
@@ -147,7 +147,7 @@
                             <div class="trigger-item bg-gray-50 dark:bg-neutral-700 p-4 rounded-md flex items-center justify-between cursor-move border border-gray-200 dark:border-neutral-600"
                                  data-id="{{ $assignment->id }}">
                                 <div class="flex items-center flex-1">
-                                    <span class="text-gray-400 mr-3">☰</span>
+                                    <span class="text-gray-400 dark:text-gray-500 mr-3">☰</span>
                                     <div>
                                         <div class="font-medium text-gray-900 dark:text-gray-100">
                                             {{ $assignment->trigger->name }}
@@ -171,9 +171,9 @@
                                     </div>
                                 </div>
                                 <div class="flex items-center space-x-2">
-                                    <span class="text-sm text-gray-500">Порядок: {{ $assignment->order }}</span>
+                                    <span class="text-sm text-gray-500 dark:text-gray-400">Порядок: {{ $assignment->order }}</span>
                                     <label class="inline-flex items-center">
-                                        <input type="checkbox" class="toggle-trigger rounded text-purple-600"
+                                        <input type="checkbox" class="toggle-trigger rounded text-purple-600 dark:text-purple-300"
                                                data-id="{{ $assignment->id }}"
                                                {{ $assignment->is_enabled ? 'checked' : '' }}>
                                         <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Включен</span>
@@ -182,7 +182,7 @@
                                             class="text-sm px-2 py-1 text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300"
                                             title="{{ __('permission-registry::Trigger settings') }}">⚙️</button>
                                     <button onclick="removeTrigger({{ $assignment->id }})"
-                                            class="text-red-600 hover:text-red-800">
+                                            class="text-red-600 dark:text-red-300 hover:text-red-800">
                                         🗑️
                                     </button>
                                 </div>

@@ -5,7 +5,7 @@
                 Редактировать триггер: {{ $permissionTrigger->name }}
             </h2>
             <a href="{{ route('permission-registry::triggers.index') }}"
-               class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+               class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-600 rounded-md hover:bg-gray-50 dark:hover:bg-neutral-800">
                 Назад к триггерам
             </a>
         </div>
@@ -30,7 +30,7 @@
                         <input type="text" name="name" id="name" value="{{ old('name', $permissionTrigger->name) }}" required
                                class="mt-1 block w-full rounded-md border-gray-300 dark:bg-neutral-700 dark:border-neutral-600 dark:text-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500">
                         @error('name')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-300">{{ $message }}</p>
                         @enderror
                     </div>
 
@@ -46,7 +46,7 @@
                                placeholder="App\Triggers\ExampleTrigger"
                                class="mt-1 block w-full rounded-md border-gray-300 dark:bg-neutral-700 dark:border-neutral-600 dark:text-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 font-mono text-sm bg-gray-50 dark:bg-neutral-900">
                         @error('class_name')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-300">{{ $message }}</p>
                         @enderror
                     </div>
 
@@ -61,7 +61,7 @@
                         <textarea name="description" id="description" rows="3"
                                   class="mt-1 block w-full rounded-md border-gray-300 dark:bg-neutral-700 dark:border-neutral-600 dark:text-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500">{{ old('description', $permissionTrigger->description) }}</textarea>
                         @error('description')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-300">{{ $message }}</p>
                         @enderror
                     </div>
 
@@ -80,14 +80,14 @@
                             <option value="both" {{ old('type', $permissionTrigger->type) === 'both' ? 'selected' : '' }}>Both (оба)</option>
                         </select>
                         @error('type')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-300">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <div class="mb-6">
                         <label class="inline-flex items-center">
                             <input type="checkbox" name="is_active" value="1" {{ old('is_active', $permissionTrigger->is_active) ? 'checked' : '' }}
-                                   class="rounded text-purple-600 shadow-sm focus:border-purple-500 focus:ring-purple-500">
+                                   class="rounded text-purple-600 dark:text-purple-300 shadow-sm focus:border-purple-500 focus:ring-purple-500">
                             <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">
                                 Активен
                                 <x-perm::field-hint

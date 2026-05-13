@@ -1,13 +1,13 @@
 <div>
     <!-- Flash Messages -->
     @if($flashMessage)
-        <div class="mb-4 bg-green-100 dark:bg-green-900 border-l-4 border-green-500 text-green-700 dark:text-green-200 p-4 rounded" role="alert">
+        <div class="mb-4 bg-green-100 dark:bg-green-900 border-l-4 border-green-500 dark:border-green-400 text-green-700 dark:text-green-200 p-4 rounded" role="alert">
             <p>{{ $flashMessage }}</p>
         </div>
     @endif
 
     @if($flashError)
-        <div class="mb-4 bg-red-100 dark:bg-red-900 border-l-4 border-red-500 text-red-700 dark:text-red-200 p-4 rounded" role="alert">
+        <div class="mb-4 bg-red-100 dark:bg-red-900 border-l-4 border-red-500 dark:border-red-400 text-red-700 dark:text-red-200 p-4 rounded" role="alert">
             <p>{{ $flashError }}</p>
         </div>
     @endif
@@ -26,11 +26,11 @@
         <div class="border-b border-gray-200 dark:border-neutral-700 mb-6">
             <nav class="-mb-px flex space-x-8">
                 <button wire:click="setActiveTab('grant')"
-                        class="@if($activeTab === 'grant') border-orange-500 text-orange-600 dark:text-orange-400 @else border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 @endif whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                        class="@if($activeTab === 'grant') border-orange-500 dark:border-orange-400 text-orange-600 dark:text-orange-400 @else border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-neutral-600 @endif whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                     📥 {{ __('permission-registry::Grant Dependencies') }}
                 </button>
                 <button wire:click="setActiveTab('revoke')"
-                        class="@if($activeTab === 'revoke') border-orange-500 text-orange-600 dark:text-orange-400 @else border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 @endif whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                        class="@if($activeTab === 'revoke') border-orange-500 dark:border-orange-400 text-orange-600 dark:text-orange-400 @else border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-neutral-600 @endif whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                     📤 {{ __('permission-registry::Revoke Dependencies') }}
                 </button>
             </nav>
@@ -75,7 +75,7 @@
                             <label class="inline-flex items-center">
                                 <input type="checkbox" 
                                        wire:click="toggleStrict({{ $dependency->id }})"
-                                       class="rounded text-orange-600 dark:bg-neutral-600 dark:border-neutral-500"
+                                       class="rounded text-orange-600 dark:text-orange-300 dark:bg-neutral-600 dark:border-neutral-500"
                                        {{ $dependency->is_strict ? 'checked' : '' }}>
                                 <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ __('permission-registry::Strict') }}</span>
                             </label>
@@ -121,7 +121,7 @@
                         <label class="inline-flex items-center">
                             <input type="checkbox" 
                                    wire:model="isStrict"
-                                   class="rounded text-orange-600 dark:bg-neutral-600 dark:border-neutral-500">
+                                   class="rounded text-orange-600 dark:text-orange-300 dark:bg-neutral-600 dark:border-neutral-500">
                             <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">
                                 {{ __('permission-registry::Strict') }}
                                 <x-perm::field-hint

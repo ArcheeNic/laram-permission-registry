@@ -40,7 +40,7 @@
             <div class="mt-6">
                 <div class="relative flex-1">
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="h-5 w-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                         </svg>
                     </div>
@@ -177,7 +177,7 @@
                     <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">
                         {{ __('permission-registry::Create New User') }}
                     </h3>
-                    <button wire:click="toggleCreateForm" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                    <button wire:click="toggleCreateForm" class="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-200">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
@@ -197,7 +197,7 @@
                                        placeholder="{{ $field['default_value'] ?? '' }}"
                                        class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-neutral-600 dark:bg-neutral-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
                                 @error('newUserFields.' . $field['id']) 
-                                    <span class="text-red-500 text-sm mt-1">{{ $message }}</span> 
+                                    <span class="text-red-500 dark:text-red-300 text-sm mt-1">{{ $message }}</span> 
                                 @enderror
                                 @if(isset($duplicateHints[$field['id']]) && $duplicateHints[$field['id']] > 0)
                                     <span class="text-amber-600 dark:text-amber-400 text-sm mt-1 flex items-center gap-1">
@@ -355,7 +355,7 @@
                 @foreach($manualGrantMissingFields as $field)
                 <div class="mb-4 last:mb-0">
                     <label for="manual_grant_field_{{ $field['id'] }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        {{ $field['name'] }} <span class="text-red-500">*</span>
+                        {{ $field['name'] }} <span class="text-red-500 dark:text-red-300">*</span>
                     </label>
                     <input type="text"
                            id="manual_grant_field_{{ $field['id'] }}"
