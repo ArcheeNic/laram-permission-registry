@@ -3,6 +3,7 @@
 namespace ArcheeNic\PermissionRegistry\Models;
 
 use ArcheeNic\PermissionRegistry\Enums\ManagementMode;
+use ArcheeNic\PermissionRegistry\Enums\PermissionScope;
 use ArcheeNic\PermissionRegistry\Enums\RiskLevel;
 use ArcheeNic\PermissionRegistry\Models\Base\Permission as BasePermission;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -24,6 +25,7 @@ class Permission extends BasePermission
 
     protected $casts = [
         self::TAGS => 'array',
+        self::SCOPE => PermissionScope::class,
         self::MANAGEMENT_MODE => ManagementMode::class,
         self::RISK_LEVEL => RiskLevel::class,
         self::ATTESTATION_PERIOD_DAYS => 'integer',

@@ -22,7 +22,7 @@ class PermissionUsers extends Component
     {
         $users = GrantedPermission::query()
             ->where('permission_id', $this->permissionId)
-            ->with('user')
+            ->with(['user', 'resource'])
             ->when($this->search, function ($query) {
                 $query->whereHas('user', function ($q) {
                     $q->where('name', 'like', "%{$this->search}%");

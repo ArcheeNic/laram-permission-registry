@@ -2,10 +2,12 @@
 
 namespace ArcheeNic\PermissionRegistry\Livewire\Concerns;
 
+use ArcheeNic\PermissionRegistry\Enums\PermissionScope;
 use ArcheeNic\PermissionRegistry\Jobs\GrantMultiplePermissionsJob;
 use ArcheeNic\PermissionRegistry\Jobs\RevokeMultiplePermissionsJob;
 use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
 use ArcheeNic\PermissionRegistry\Models\Permission;
+use ArcheeNic\PermissionRegistry\Models\PermissionResource;
 use ArcheeNic\PermissionRegistry\Models\Position;
 use ArcheeNic\PermissionRegistry\Services\PermissionDependencyResolver;
 
@@ -14,6 +16,8 @@ trait ManagesPermissions
     public $permissionSearch = '';
     public $selectedPermissions = [];
     public $permissionFields = [];
+    /** @var array<int, array<int, int>> permission_id => list<resource_id> */
+    public array $permissionResources = [];
     public $expandedPermissionFields = [];
 
     public $expandedDependentPermissionFields = [];
@@ -49,6 +53,7 @@ trait ManagesPermissions
         $dependentPermissionIds = $this->dependentPermissions->pluck('id')->toArray();
 
         return Permission::with('fields')
+            ->select(['*'])
             ->whereNotIn('id', $dependentPermissionIds)
             ->when($this->permissionSearch, function ($query) {
                 $query->where(function ($q) {
@@ -62,6 +67,46 @@ trait ManagesPermissions
             ->get();
     }
 
+    public function getPermissionResourceCatalogProperty(): array
+    {
+        $available = $this->availablePermissions;
+        $byKind = [];
+
+        foreach ($available as $permission) {
+            $scope = $permission->scope ?? PermissionScope::Service;
+            if ($scope !== PermissionScope::Resource || !$permission->resource_kind) {
+                continue;
+            }
+            $byKind[$permission->service.'|'.$permission->resource_kind] = true;
+        }
+
+        if ($byKind === []) {
+            return [];
+        }
+
+        $catalog = [];
+        foreach (array_keys($byKind) as $sk) {
+            [$service, $kind] = explode('|', $sk);
+            $resources = PermissionResource::query()
+                ->where('service', $service)
+                ->where('kind', $kind)
+                ->where('present_in_source', true)
+                ->orderBy('name')
+                ->get(['id', 'service', 'kind', 'external_id', 'name']);
+
+            foreach ($available as $permission) {
+                if (($permission->scope ?? PermissionScope::Service) === PermissionScope::Resource
+                    && $permission->service === $service
+                    && $permission->resource_kind === $kind
+                ) {
+                    $catalog[$permission->id] = $resources;
+                }
+            }
+        }
+
+        return $catalog;
+    }
+
     public function getDependentPermissionsProperty()
     {
         if (!$this->selectedUserId) {
@@ -71,6 +116,7 @@ trait ManagesPermissions
         $result = collect();
 
         $userGrantedPermissions = GrantedPermission::where('virtual_user_id', $this->selectedUserId)
+            ->whereNull('resource_id')
             ->get()
             ->keyBy('permission_id');
 
@@ -229,18 +275,50 @@ trait ManagesPermissions
 
     private function dispatchDirectPermissionGrants(array $availablePermissionIds, $userPermissions): void
     {
+        $permissionsById = $this->availablePermissions->keyBy('id');
         $permissionsToGrant = [];
-        foreach ($availablePermissionIds as $permId) {
-            $isSelected = isset($this->selectedPermissions[$permId]) && $this->selectedPermissions[$permId];
-            $existingPermission = $userPermissions->firstWhere('permission_id', $permId);
 
-            if ($isSelected && (!$existingPermission || !$existingPermission->enabled)) {
-                $permissionsToGrant[] = [
-                    'permissionId' => $permId,
-                    'fieldValues' => $this->permissionFields[$permId] ?? [],
-                    'meta' => $existingPermission ? $existingPermission->meta : [],
-                    'expiresAt' => $existingPermission ? $existingPermission->expires_at : null,
-                ];
+        foreach ($availablePermissionIds as $permId) {
+            $permission = $permissionsById->get($permId);
+            if (!$permission) {
+                continue;
+            }
+
+            $scope = $permission->scope ?? PermissionScope::Service;
+            $isSelected = isset($this->selectedPermissions[$permId]) && $this->selectedPermissions[$permId];
+
+            if ($scope === PermissionScope::Resource) {
+                if (!$isSelected) {
+                    continue;
+                }
+                $selectedResourceIds = array_values(array_filter(array_map(
+                    static fn ($v) => (int) $v,
+                    $this->permissionResources[$permId] ?? []
+                )));
+                $existing = $userPermissions->where('permission_id', $permId)->where('enabled', true);
+                $existingResourceIds = $existing->pluck('resource_id')->filter()->values()->all();
+
+                $toGrant = array_diff($selectedResourceIds, $existingResourceIds);
+                foreach ($toGrant as $resourceId) {
+                    $permissionsToGrant[] = [
+                        'permissionId' => $permId,
+                        'resourceId' => $resourceId,
+                        'fieldValues' => $this->permissionFields[$permId] ?? [],
+                        'meta' => [],
+                        'expiresAt' => null,
+                    ];
+                }
+            } else {
+                $existingPermission = $userPermissions->firstWhere(fn ($g) => $g->permission_id === $permId && $g->resource_id === null);
+                if ($isSelected && (!$existingPermission || !$existingPermission->enabled)) {
+                    $permissionsToGrant[] = [
+                        'permissionId' => $permId,
+                        'resourceId' => null,
+                        'fieldValues' => $this->permissionFields[$permId] ?? [],
+                        'meta' => $existingPermission ? $existingPermission->meta : [],
+                        'expiresAt' => $existingPermission ? $existingPermission->expires_at : null,
+                    ];
+                }
             }
         }
 
@@ -251,13 +329,49 @@ trait ManagesPermissions
 
     private function dispatchDirectPermissionRevokes(array $availablePermissionIds, $userPermissions): void
     {
+        $permissionsById = $this->availablePermissions->keyBy('id');
         $permissionsToRevoke = [];
-        foreach ($availablePermissionIds as $permId) {
-            $isSelected = isset($this->selectedPermissions[$permId]) && $this->selectedPermissions[$permId];
-            $existingPermission = $userPermissions->firstWhere('permission_id', $permId);
 
-            if (!$isSelected && $existingPermission && $existingPermission->enabled) {
-                $permissionsToRevoke[] = $permId;
+        foreach ($availablePermissionIds as $permId) {
+            $permission = $permissionsById->get($permId);
+            if (!$permission) {
+                continue;
+            }
+
+            $scope = $permission->scope ?? PermissionScope::Service;
+            $isSelected = isset($this->selectedPermissions[$permId]) && $this->selectedPermissions[$permId];
+
+            if ($scope === PermissionScope::Resource) {
+                $existing = $userPermissions->where('permission_id', $permId)->where('enabled', true);
+                if (!$isSelected) {
+                    foreach ($existing as $granted) {
+                        $permissionsToRevoke[] = [
+                            'permissionId' => $permId,
+                            'resourceId' => $granted->resource_id,
+                        ];
+                    }
+                    continue;
+                }
+                $selectedResourceIds = array_values(array_filter(array_map(
+                    static fn ($v) => (int) $v,
+                    $this->permissionResources[$permId] ?? []
+                )));
+                foreach ($existing as $granted) {
+                    if ($granted->resource_id !== null && !in_array($granted->resource_id, $selectedResourceIds, true)) {
+                        $permissionsToRevoke[] = [
+                            'permissionId' => $permId,
+                            'resourceId' => $granted->resource_id,
+                        ];
+                    }
+                }
+            } else {
+                $existingPermission = $userPermissions->firstWhere(fn ($g) => $g->permission_id === $permId && $g->resource_id === null);
+                if (!$isSelected && $existingPermission && $existingPermission->enabled) {
+                    $permissionsToRevoke[] = [
+                        'permissionId' => $permId,
+                        'resourceId' => null,
+                    ];
+                }
             }
         }
 
@@ -270,11 +384,12 @@ trait ManagesPermissions
     {
         $dependentPermissionsToGrant = [];
         foreach ($this->dependentSelectedPermissions as $permId => $isEnabled) {
-            $existingPermission = $userPermissions->firstWhere('permission_id', $permId);
+            $existingPermission = $userPermissions->first(fn ($g) => $g->permission_id === $permId && $g->resource_id === null);
 
             if ($isEnabled && (!$existingPermission || !$existingPermission->enabled)) {
                 $dependentPermissionsToGrant[] = [
                     'permissionId' => $permId,
+                    'resourceId' => null,
                     'fieldValues' => $this->dependentPermissionFields[$permId] ?? [],
                     'meta' => $existingPermission ? $existingPermission->meta : [],
                     'expiresAt' => $existingPermission ? $existingPermission->expires_at : null,
@@ -337,10 +452,13 @@ trait ManagesPermissions
     {
         $dependentPermissionsToRevoke = [];
         foreach ($this->dependentSelectedPermissions as $permId => $isEnabled) {
-            $existingPermission = $userPermissions->firstWhere('permission_id', $permId);
+            $existingPermission = $userPermissions->first(fn ($g) => $g->permission_id === $permId && $g->resource_id === null);
 
             if (!$isEnabled && $existingPermission && $existingPermission->enabled) {
-                $dependentPermissionsToRevoke[] = $permId;
+                $dependentPermissionsToRevoke[] = [
+                    'permissionId' => $permId,
+                    'resourceId' => null,
+                ];
             }
         }
 

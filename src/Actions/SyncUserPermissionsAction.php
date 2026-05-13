@@ -2,6 +2,7 @@
 
 namespace ArcheeNic\PermissionRegistry\Actions;
 
+use ArcheeNic\PermissionRegistry\Enums\PermissionScope;
 use ArcheeNic\PermissionRegistry\Events\AfterPermissionGranted;
 use ArcheeNic\PermissionRegistry\Events\BeforePermissionGranted;
 use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
@@ -13,26 +14,37 @@ use ArcheeNic\PermissionRegistry\Models\VirtualUserGroup;
 use ArcheeNic\PermissionRegistry\Models\VirtualUserPosition;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Log;
 
 class SyncUserPermissionsAction
 {
     /**
-     * Синхронизирует доступы пользователя на основе его должностей и групп
+     * Синхронизирует доступы пользователя на основе его должностей и групп.
+     * Учитываются только service-scope; resource-scoped права выдаются вручную с указанием ресурса.
      */
     public function handle(int $userId): void
     {
-        // Определяем, какие доступы должны быть у пользователя
         $requiredPermissions = $this->getRequiredPermissions($userId);
 
-        // Получаем текущие доступы пользователя
         $currentPermissions = GrantedPermission::where('virtual_user_id', $userId)
             ->where('enabled', true)
+            ->whereNull('resource_id')
             ->pluck('permission_id')
             ->toArray();
 
-        // Выдаем новые доступы
         $permissionsToGrant = array_diff($requiredPermissions, $currentPermissions);
         foreach ($permissionsToGrant as $permissionId) {
+            $permission = Permission::find($permissionId);
+            if (! $permission) {
+                continue;
+            }
+            if (($permission->scope ?? PermissionScope::Service) === PermissionScope::Resource) {
+                Log::warning('Skipping resource-scoped permission in user sync', [
+                    'permission_id' => $permissionId,
+                    'virtual_user_id' => $userId,
+                ]);
+                continue;
+            }
             $this->grantPermission($userId, $permissionId);
         }
     }
@@ -126,10 +138,11 @@ class SyncUserPermissionsAction
             $permission->service
         ));
 
-        // Создание записи о выданном доступе
+        // Создание записи о выданном доступе (service-scope, resource_id всегда NULL)
         $grantedPermission = GrantedPermission::create([
             'virtual_user_id' => $userId,
             'permission_id' => $permissionId,
+            'resource_id' => null,
             'enabled' => true,
             'granted_at' => now(),
         ]);

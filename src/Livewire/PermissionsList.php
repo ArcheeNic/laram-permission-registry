@@ -4,6 +4,7 @@ namespace ArcheeNic\PermissionRegistry\Livewire;
 
 use ArcheeNic\PermissionRegistry\Actions\DeletePermissionAction;
 use ArcheeNic\PermissionRegistry\Enums\ManagementMode;
+use ArcheeNic\PermissionRegistry\Enums\PermissionScope;
 use ArcheeNic\PermissionRegistry\Enums\RiskLevel;
 use ArcheeNic\PermissionRegistry\Exceptions\PermissionCannotBeDeletedException;
 use ArcheeNic\PermissionRegistry\Models\Permission;
@@ -18,6 +19,7 @@ class PermissionsList extends Component
 
     public $search = '';
     public $service = '';
+    public $scope = '';
     public $managementMode = '';
     public $riskLevel = '';
     public $perPage = 15;
@@ -28,12 +30,18 @@ class PermissionsList extends Component
     protected $queryString = [
         'search' => ['except' => ''],
         'service' => ['except' => ''],
+        'scope' => ['except' => ''],
         'managementMode' => ['except' => ''],
         'riskLevel' => ['except' => ''],
         'perPage' => ['except' => 15],
     ];
 
     public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingScope()
     {
         $this->resetPage();
     }
@@ -109,6 +117,9 @@ class PermissionsList extends Component
             ->when($this->service, function ($query) {
                 $query->where('service', $this->service);
             })
+            ->when($this->scope, function ($query) {
+                $query->where('scope', $this->scope);
+            })
             ->when($this->managementMode, function ($query) {
                 $query->where('management_mode', $this->managementMode);
             })
@@ -125,6 +136,7 @@ class PermissionsList extends Component
         return view('permission-registry::livewire.permissions-list', [
             'permissions' => $this->permissions,
             'services' => Permission::select('service')->distinct()->pluck('service'),
+            'scopes' => PermissionScope::cases(),
             'managementModes' => ManagementMode::cases(),
             'riskLevels' => RiskLevel::cases(),
         ]);

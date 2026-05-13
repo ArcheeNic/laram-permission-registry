@@ -25,7 +25,7 @@ class PermissionRegistryManagerTest extends TestCase
         $permissionChecker = Mockery::mock(PermissionChecker::class);
         $permissionChecker->shouldReceive('hasPermission')
             ->once()
-            ->with(1, 'service', 'permission')
+            ->with(1, 'service', 'permission', null)
             ->andReturn(true);
 
         $manager = new PermissionRegistryManager(

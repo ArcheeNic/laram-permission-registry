@@ -40,6 +40,26 @@ class GrantedPermission extends BaseGrantedPermission
         return $this->belongsTo(Permission::class);
     }
 
+    public function resource(): BelongsTo
+    {
+        return $this->belongsTo(PermissionResource::class, 'resource_id');
+    }
+
+    public static function findForUserPermissionResource(int $userId, int $permissionId, ?int $resourceId): ?self
+    {
+        $query = static::query()
+            ->where(self::VIRTUAL_USER_ID, $userId)
+            ->where(self::PERMISSION_ID, $permissionId);
+
+        if ($resourceId === null) {
+            $query->whereNull(self::RESOURCE_ID);
+        } else {
+            $query->where(self::RESOURCE_ID, $resourceId);
+        }
+
+        return $query->first();
+    }
+
     public function fieldValues(): HasMany
     {
         return $this->hasMany(GrantedPermissionFieldValue::class);

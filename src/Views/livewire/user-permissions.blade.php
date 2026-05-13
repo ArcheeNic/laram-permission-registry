@@ -25,6 +25,40 @@
                                 <p class="text-xs text-gray-500">{{ $permission->service }}</p>
                                 <p class="text-xs text-gray-500">{{ $permission->description }}</p>
 
+                                @php
+                                    $isResourceScoped = ($permission->scope ?? \ArcheeNic\PermissionRegistry\Enums\PermissionScope::Service) === \ArcheeNic\PermissionRegistry\Enums\PermissionScope::Resource;
+                                    $resourceCatalog = $this->permissionResourceCatalog[$permission->id] ?? collect();
+                                @endphp
+
+                                @if($isResourceScoped && isset($selectedPermissions[$permission->id]) && $selectedPermissions[$permission->id])
+                                    <div class="mt-2 border-t border-gray-100 dark:border-neutral-700 pt-2">
+                                        <p class="text-xs text-gray-700 dark:text-gray-300 mb-1">
+                                            {{ __('permission-registry::Resources') }}
+                                            @if($permission->resource_kind)
+                                                <span class="text-gray-400 dark:text-gray-500">({{ $permission->resource_kind }})</span>
+                                            @endif
+                                        </p>
+                                        @if($resourceCatalog->isEmpty())
+                                            <p class="text-xs text-amber-600 dark:text-amber-400">
+                                                {{ __('permission-registry::No resources discovered yet — run sync first') }}
+                                            </p>
+                                        @else
+                                            <div class="max-h-48 overflow-y-auto border border-gray-200 dark:border-neutral-600 rounded p-2 bg-gray-50 dark:bg-neutral-700/40">
+                                                @foreach($resourceCatalog as $resource)
+                                                    <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
+                                                        <input type="checkbox"
+                                                               value="{{ $resource->id }}"
+                                                               wire:model.live="permissionResources.{{ $permission->id }}"
+                                                               class="h-4 w-4 text-blue-600 border-gray-300 dark:border-neutral-500 rounded focus:ring-blue-500 dark:bg-neutral-800">
+                                                        <span>{{ $resource->name }}</span>
+                                                        <span class="ml-auto text-xs font-mono text-gray-400 dark:text-gray-500">{{ $resource->external_id }}</span>
+                                                    </label>
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                    </div>
+                                @endif
+
                                 @if($permission->fields->count() > 0 && isset($selectedPermissions[$permission->id]) && $selectedPermissions[$permission->id])
                                     <div class="mt-2 border-t border-gray-100 pt-2">
                                         <p class="text-xs text-gray-700 mb-1">{{ __('permission-registry::Permission fields') }}:</p>

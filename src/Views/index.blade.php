@@ -56,6 +56,20 @@
                     </a>
                 </div>
 
+                <!-- Раздел каталога ресурсов -->
+                <div class="bg-white dark:bg-neutral-800 overflow-hidden shadow-xl sm:rounded-lg p-6 hover:shadow-2xl transition-shadow duration-300">
+                    <div class="flex items-center mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m-8 8c-4.418 0-8-1.79-8-4" />
+                        </svg>
+                        <h3 class="ml-3 text-lg font-medium text-gray-900 dark:text-gray-100">{{ __('permission-registry::Resources catalog') }}</h3>
+                    </div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">{{ __('permission-registry::Discovered resources from external services (B24 departments, Telegram chats, etc.)') }}</p>
+                    <a href="{{ route('permission-registry::resources.index') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-sky-600 hover:bg-sky-700 transition-colors">
+                        {{ __('permission-registry::Open catalog') }}
+                    </a>
+                </div>
+
                 <!-- Раздел триггеров -->
                 <div class="bg-white dark:bg-neutral-800 overflow-hidden shadow-xl sm:rounded-lg p-6 hover:shadow-2xl transition-shadow duration-300">
                     <div class="flex items-center mb-4">

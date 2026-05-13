@@ -45,9 +45,9 @@ class GrantMultiplePermissionsJob implements ShouldQueue
             'permission_ids' => $permissionIds
         ]);
         
-        // Сортировать по зависимостям для выдачи (grant)
+        // Sort permissions ONCE; iterate all entries per permission (each entry may be a different resource).
         try {
-            $sortedIds = $dependencyResolver->sortByDependencies($permissionIds, 'grant');
+            $sortedIds = $dependencyResolver->sortByDependencies(array_values(array_unique($permissionIds)), 'grant');
         } catch (\RuntimeException $e) {
             Log::error('Failed to sort permissions by dependencies', [
                 'user_id' => $this->userId,
@@ -58,40 +58,46 @@ class GrantMultiplePermissionsJob implements ShouldQueue
         
         // Выдать права последовательно с синхронным выполнением триггеров
         foreach ($sortedIds as $permId) {
-            $data = collect($this->permissionsData)
-                ->firstWhere('permissionId', $permId);
-            
-            if (!$data) {
+            $entries = collect($this->permissionsData)
+                ->where('permissionId', $permId)
+                ->values();
+
+            if ($entries->isEmpty()) {
                 continue;
             }
-            
-            try {
-                Log::debug('GrantMultiplePermissionsJob: выдача права', [
-                    'user_id' => $this->userId,
-                    'permission_id' => $permId
-                ]);
-                
-                $grantAction->handle(
-                    userId: $this->userId,
-                    permissionId: $permId,
-                    fieldValues: $data['fieldValues'] ?? [],
-                    meta: $data['meta'] ?? [],
-                    expiresAt: $data['expiresAt'] ?? null,
-                    skipTriggers: false,
-                    executeTriggersSync: true
-                );
-            } catch (UserDeactivatedException $e) {
-                Log::info('GrantMultiplePermissionsJob: aborted — user deactivated mid-batch', [
-                    'user_id' => $this->userId,
-                ]);
 
-                return;
-            } catch (\Exception $e) {
-                Log::error('Failed to grant permission in batch', [
-                    'user_id' => $this->userId,
-                    'permission_id' => $permId,
-                    'error' => $e->getMessage()
-                ]);
+            foreach ($entries as $data) {
+                try {
+                    Log::debug('GrantMultiplePermissionsJob: выдача права', [
+                        'user_id' => $this->userId,
+                        'permission_id' => $permId,
+                        'resource_id' => $data['resourceId'] ?? null,
+                    ]);
+
+                    $grantAction->handle(
+                        userId: $this->userId,
+                        permissionId: $permId,
+                        fieldValues: $data['fieldValues'] ?? [],
+                        meta: $data['meta'] ?? [],
+                        expiresAt: $data['expiresAt'] ?? null,
+                        skipTriggers: false,
+                        executeTriggersSync: true,
+                        resourceId: $data['resourceId'] ?? null,
+                    );
+                } catch (UserDeactivatedException $e) {
+                    Log::info('GrantMultiplePermissionsJob: aborted — user deactivated mid-batch', [
+                        'user_id' => $this->userId,
+                    ]);
+
+                    return;
+                } catch (\Exception $e) {
+                    Log::error('Failed to grant permission in batch', [
+                        'user_id' => $this->userId,
+                        'permission_id' => $permId,
+                        'resource_id' => $data['resourceId'] ?? null,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
             }
         }
     }

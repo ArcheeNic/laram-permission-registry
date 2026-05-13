@@ -22,17 +22,20 @@ class RevokePermissionAction
     }
 
     public function handle(
-        int $userId, 
+        int $userId,
         int $permissionId,
         bool $skipTriggers = false,
-        bool $executeTriggersSync = false
+        bool $executeTriggersSync = false,
+        ?int $resourceId = null
     ): bool {
         $permission = Permission::findOrFail($permissionId);
 
         // Поиск выданного доступа
-        $grantedPermission = GrantedPermission::where('virtual_user_id', $userId)
-            ->where('permission_id', $permissionId)
-            ->first();
+        $grantedPermission = GrantedPermission::findForUserPermissionResource(
+            $userId,
+            $permissionId,
+            $resourceId
+        );
 
         if (!$grantedPermission) {
             return false;

@@ -2,9 +2,12 @@
 
 namespace ArcheeNic\PermissionRegistry\Actions;
 
+use ArcheeNic\PermissionRegistry\Enums\PermissionScope;
 use ArcheeNic\PermissionRegistry\Jobs\GrantMultiplePermissionsJob;
 use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
+use ArcheeNic\PermissionRegistry\Models\Permission;
 use ArcheeNic\PermissionRegistry\Models\Position;
+use Illuminate\Support\Facades\Log;
 
 class AutoGrantPermissionsForPositionAction
 {
@@ -18,22 +21,35 @@ class AutoGrantPermissionsForPositionAction
         $permissionIds = [];
         $this->collectPositionPermissionsForAutoGrant($positionId, $permissionIds);
 
-        $uniqueIds = array_unique($permissionIds);
+        $uniqueIds = array_values(array_unique($permissionIds));
 
         if (empty($uniqueIds)) {
             return;
         }
 
+        $permissions = Permission::whereIn('id', $uniqueIds)->get();
+
         $permissionsData = [];
 
-        foreach ($uniqueIds as $permissionId) {
+        foreach ($permissions as $permission) {
+            if (($permission->scope ?? PermissionScope::Service) === PermissionScope::Resource) {
+                Log::warning('Skipping resource-scoped permission in auto-grant via position', [
+                    'permission_id' => $permission->id,
+                    'position_id' => $positionId,
+                    'virtual_user_id' => $userId,
+                ]);
+                continue;
+            }
+
             $exists = GrantedPermission::where('virtual_user_id', $userId)
-                ->where('permission_id', $permissionId)
+                ->where('permission_id', $permission->id)
+                ->whereNull('resource_id')
                 ->exists();
 
             if (!$exists) {
                 $permissionsData[] = [
-                    'permissionId' => $permissionId,
+                    'permissionId' => $permission->id,
+                    'resourceId' => null,
                     'fieldValues' => [],
                     'meta' => ['auto_granted' => true, 'auto_grant_source' => 'position'],
                     'expiresAt' => null,

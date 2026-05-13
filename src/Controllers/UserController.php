@@ -43,6 +43,7 @@ class UserController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'permission_id' => 'required|exists:permissions,id',
+            'resource_id' => 'nullable|integer|exists:permission_resources,id',
             'expires_at' => 'nullable|date',
             'fields' => 'nullable|array',
         ]);
@@ -53,11 +54,12 @@ class UserController extends Controller
 
         $action = app(GrantPermissionAction::class);
         $action->handle(
-            $user->id,
-            $request->permission_id,
-            $request->fields ?? [],
-            [], // meta
-            $request->expires_at
+            userId: $user->id,
+            permissionId: (int) $request->permission_id,
+            fieldValues: $request->fields ?? [],
+            meta: [],
+            expiresAt: $request->expires_at,
+            resourceId: $request->filled('resource_id') ? (int) $request->resource_id : null,
         );
 
         return redirect()->route('permission-registry::users.permissions', $user)
@@ -67,7 +69,11 @@ class UserController extends Controller
     public function revokePermission(VirtualUser $user, GrantedPermission $permission)
     {
         $action = app(RevokePermissionAction::class);
-        $action->handle($user->id, $permission->permission_id);
+        $action->handle(
+            userId: $user->id,
+            permissionId: $permission->permission_id,
+            resourceId: $permission->resource_id,
+        );
 
         return redirect()->route('permission-registry::users.permissions', $user)
             ->with('success', __('permission-registry::Право успешно отозвано'));

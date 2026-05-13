@@ -111,7 +111,9 @@ class PendingRevocationsDashboardTest extends TestCase
         Queue::assertPushed(RevokeMultiplePermissionsJob::class, function (RevokeMultiplePermissionsJob $job) use ($automated) {
             $permissionIds = $this->readPrivateProperty($job, 'permissionIds');
 
-            return $permissionIds === [$automated->id];
+            return is_array($permissionIds)
+                && count($permissionIds) === 1
+                && ($permissionIds[0]['permissionId'] ?? null) === $automated->id;
         });
     }
 

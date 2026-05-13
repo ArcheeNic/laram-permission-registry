@@ -11,17 +11,17 @@ use ArcheeNic\PermissionRegistry\Tests\TestCase;
 
 class PermissionCheckerTest extends TestCase
 {
-    public function test_returns_true_when_permissions_table_empty(): void
+    public function test_returns_false_when_permissions_table_empty(): void
     {
         $user = VirtualUser::create(['name' => 'Test User', 'status' => VirtualUserStatus::ACTIVE]);
 
         $checker = new PermissionChecker();
         $result = $checker->hasPermission($user->id, 'test', 'non-existent-perm');
 
-        $this->assertTrue($result);
+        $this->assertFalse($result);
     }
 
-    public function test_returns_true_when_specific_permission_not_registered(): void
+    public function test_returns_false_when_specific_permission_not_registered(): void
     {
         Permission::create([
             'service' => 'other',
@@ -33,7 +33,7 @@ class PermissionCheckerTest extends TestCase
         $checker = new PermissionChecker();
         $result = $checker->hasPermission($user->id, 'test', 'non-existent-perm');
 
-        $this->assertTrue($result);
+        $this->assertFalse($result);
     }
 
     public function test_returns_false_when_user_has_no_granted_permission(): void

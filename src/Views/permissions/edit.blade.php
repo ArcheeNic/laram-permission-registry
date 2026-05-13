@@ -64,6 +64,63 @@
                         </div>
                     </div>
 
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                        <div>
+                            <label for="scope" class="block text-sm font-medium text-gray-700">
+                                {{ __('permission-registry::Scope') }} *
+                                <x-perm::field-hint
+                                    :title="__('permission-registry::hints.permissions_scope_title')"
+                                    :description="__('permission-registry::hints.permissions_scope_desc')"
+                                />
+                            </label>
+                            <select name="scope" id="scope" required
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <option value="service" {{ old('scope', $permission->scope?->value ?? 'service') === 'service' ? 'selected' : '' }}>
+                                    {{ __('permission-registry::Service-wide') }}
+                                </option>
+                                <option value="resource" {{ old('scope', $permission->scope?->value) === 'resource' ? 'selected' : '' }}>
+                                    {{ __('permission-registry::Resource-scoped') }}
+                                </option>
+                            </select>
+                            @error('scope')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div>
+                            <label for="resource_kind" class="block text-sm font-medium text-gray-700">
+                                {{ __('permission-registry::Kind') }}
+                                <x-perm::field-hint
+                                    :title="__('permission-registry::hints.permissions_resource_kind_title')"
+                                    :description="__('permission-registry::hints.permissions_resource_kind_desc')"
+                                />
+                            </label>
+                            <input type="text" name="resource_kind" id="resource_kind"
+                                   value="{{ old('resource_kind', $permission->resource_kind) }}"
+                                   placeholder="department / chat / repo / …"
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            @error('resource_kind')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div>
+                            <label for="display_name" class="block text-sm font-medium text-gray-700">
+                                {{ __('permission-registry::Display name') }}
+                                <x-perm::field-hint
+                                    :title="__('permission-registry::hints.permissions_display_name_title')"
+                                    :description="__('permission-registry::hints.permissions_display_name_desc')"
+                                />
+                            </label>
+                            <input type="text" name="display_name" id="display_name"
+                                   value="{{ old('display_name', $permission->display_name) }}"
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            @error('display_name')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+
                     <div class="mb-6">
                         <label for="description" class="block text-sm font-medium text-gray-700">
                             {{ __('permission-registry::Description') }}

@@ -38,9 +38,13 @@ class PermissionRegistryManager
     /**
      * Проверяет наличие доступа у пользователя
      */
-    public function hasPermission(int $userId, string $service, string $permissionName): bool
-    {
-        return $this->permissionChecker->hasPermission($userId, $service, $permissionName);
+    public function hasPermission(
+        int $userId,
+        string $service,
+        string $permissionName,
+        ?string $resourceExternalId = null
+    ): bool {
+        return $this->permissionChecker->hasPermission($userId, $service, $permissionName, $resourceExternalId);
     }
 
     /**
@@ -71,21 +75,23 @@ class PermissionRegistryManager
         string $expiresAt = null,
         bool $skipTriggers = false,
         ?int $requestedBy = null,
-        ?int $confirmedBy = null
+        ?int $confirmedBy = null,
+        ?int $resourceId = null
     ) {
         $permission = Permission::where('service', $service)
             ->where('name', $permissionName)
             ->firstOrFail();
 
         return $this->grantPermissionAction->handle(
-            $userId, 
-            $permission->id, 
-            $fieldValues, 
-            $meta, 
-            $expiresAt,
-            $skipTriggers,
-            $requestedBy,
-            $confirmedBy
+            userId: $userId,
+            permissionId: $permission->id,
+            fieldValues: $fieldValues,
+            meta: $meta,
+            expiresAt: $expiresAt,
+            skipTriggers: $skipTriggers,
+            requestedBy: $requestedBy,
+            confirmedBy: $confirmedBy,
+            resourceId: $resourceId,
         );
     }
 
@@ -93,10 +99,11 @@ class PermissionRegistryManager
      * Отзывает доступ у пользователя
      */
     public function revokePermission(
-        int $userId, 
-        string $service, 
+        int $userId,
+        string $service,
         string $permissionName,
-        bool $skipTriggers = false
+        bool $skipTriggers = false,
+        ?int $resourceId = null
     ): bool {
         $permission = Permission::where('service', $service)
             ->where('name', $permissionName)
@@ -106,7 +113,12 @@ class PermissionRegistryManager
             return false;
         }
 
-        return $this->revokePermissionAction->handle($userId, $permission->id, $skipTriggers);
+        return $this->revokePermissionAction->handle(
+            userId: $userId,
+            permissionId: $permission->id,
+            skipTriggers: $skipTriggers,
+            resourceId: $resourceId,
+        );
     }
 
     /**

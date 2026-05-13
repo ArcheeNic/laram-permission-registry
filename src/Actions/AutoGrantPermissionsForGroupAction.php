@@ -2,9 +2,11 @@
 
 namespace ArcheeNic\PermissionRegistry\Actions;
 
+use ArcheeNic\PermissionRegistry\Enums\PermissionScope;
 use ArcheeNic\PermissionRegistry\Jobs\GrantMultiplePermissionsJob;
 use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
 use ArcheeNic\PermissionRegistry\Models\PermissionGroup;
+use Illuminate\Support\Facades\Log;
 
 class AutoGrantPermissionsForGroupAction
 {
@@ -26,13 +28,24 @@ class AutoGrantPermissionsForGroupAction
         $permissionsData = [];
 
         foreach ($group->permissions as $permission) {
+            if (($permission->scope ?? PermissionScope::Service) === PermissionScope::Resource) {
+                Log::warning('Skipping resource-scoped permission in auto-grant via group', [
+                    'permission_id' => $permission->id,
+                    'group_id' => $groupId,
+                    'virtual_user_id' => $userId,
+                ]);
+                continue;
+            }
+
             $exists = GrantedPermission::where('virtual_user_id', $userId)
                 ->where('permission_id', $permission->id)
+                ->whereNull('resource_id')
                 ->exists();
 
             if (!$exists) {
                 $permissionsData[] = [
                     'permissionId' => $permission->id,
+                    'resourceId' => null,
                     'fieldValues' => [],
                     'meta' => ['auto_granted' => true, 'auto_grant_source' => 'group'],
                     'expiresAt' => null,

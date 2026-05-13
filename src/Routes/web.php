@@ -87,6 +87,11 @@ Route::middleware('can:permission-registry.manage')->group(function () {
         Route::delete('{group}', [PermissionGroupController::class, 'destroy'])->name('groups.destroy');
     });
 
+    // Маршруты для каталога ресурсов
+    Route::get('resources', function () {
+        return view('permission-registry::resources.index');
+    })->name('resources.index');
+
     // Маршруты для должностей
     Route::prefix('positions')->group(function () {
         Route::get('', [PositionController::class, 'index'])->name('positions.index');

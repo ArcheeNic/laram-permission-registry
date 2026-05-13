@@ -23,6 +23,9 @@
                         {{ __('permission-registry::Name') }}
                     </th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        {{ __('permission-registry::Resource') }}
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         {{ __('permission-registry::Status') }}
                     </th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -42,6 +45,16 @@
                                    class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
                                     {{ $grant->user->name }}
                                 </a>
+                            @else
+                                <span class="text-gray-400 dark:text-gray-500">—</span>
+                            @endif
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                            @if($grant->resource)
+                                <span class="font-medium">{{ $grant->resource->name }}</span>
+                                <span class="ml-1 text-xs font-mono text-gray-500 dark:text-gray-400">({{ $grant->resource->external_id }})</span>
+                            @elseif($grant->resource_name_at_grant)
+                                <span class="text-gray-500 dark:text-gray-400">{{ $grant->resource_name_at_grant }}</span>
                             @else
                                 <span class="text-gray-400 dark:text-gray-500">—</span>
                             @endif

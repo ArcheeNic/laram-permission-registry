@@ -38,7 +38,7 @@ class ProcessFireRevocationsAction
 
         $remainingPermissions = $remainingPermissionsQuery->get();
 
-        $permissionIdsToRevoke = [];
+        $entriesToRevoke = [];
         $manualTasksCreated = 0;
 
         foreach ($remainingPermissions as $grantedPermission) {
@@ -49,7 +49,10 @@ class ProcessFireRevocationsAction
             $managementMode = $this->resolveManagementMode($grantedPermission->permission->management_mode);
 
             if ($managementMode === ManagementMode::AUTOMATED) {
-                $permissionIdsToRevoke[] = $grantedPermission->permission_id;
+                $entriesToRevoke[] = [
+                    'permissionId' => $grantedPermission->permission_id,
+                    'resourceId' => $grantedPermission->resource_id,
+                ];
                 continue;
             }
 
@@ -73,13 +76,12 @@ class ProcessFireRevocationsAction
             $manualTasksCreated++;
         }
 
-        $uniquePermissionIdsToRevoke = array_values(array_unique($permissionIdsToRevoke));
-        if ($dispatchAutomatedRevokes && ! empty($uniquePermissionIdsToRevoke)) {
-            RevokeMultiplePermissionsJob::dispatch($userId, $uniquePermissionIdsToRevoke)->afterCommit();
+        if ($dispatchAutomatedRevokes && ! empty($entriesToRevoke)) {
+            RevokeMultiplePermissionsJob::dispatch($userId, $entriesToRevoke)->afterCommit();
         }
 
         return [
-            'automated_revokes_dispatched' => count($uniquePermissionIdsToRevoke),
+            'automated_revokes_dispatched' => count($entriesToRevoke),
             'manual_tasks_created' => $manualTasksCreated,
             'remaining_permissions_count' => $remainingPermissions->count(),
         ];

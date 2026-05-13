@@ -7,8 +7,10 @@ use ArcheeNic\PermissionRegistry\Actions\GrantPermissionAction;
 use ArcheeNic\PermissionRegistry\Actions\RevokePermissionAction;
 use ArcheeNic\PermissionRegistry\Actions\GetVirtualUserFieldValueAction;
 use ArcheeNic\PermissionRegistry\Actions\UpdateVirtualUserGlobalFieldsAction;
+use ArcheeNic\PermissionRegistry\Enums\PermissionScope;
 use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
 use ArcheeNic\PermissionRegistry\Models\Permission;
+use ArcheeNic\PermissionRegistry\Models\PermissionResource;
 use ArcheeNic\PermissionRegistry\Models\VirtualUserFieldValue;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
@@ -22,6 +24,7 @@ class UserPermissions extends Component
     public $userId;
     public $search = '';
     public $selectedPermission = null;
+    public ?int $selectedResourceId = null;
     public $fieldValues = [];
     public $meta = [];
     public $expiresAt = null;
@@ -38,6 +41,7 @@ class UserPermissions extends Component
     public function selectPermission($permissionId)
     {
         $this->selectedPermission = Permission::with('fields')->find($permissionId);
+        $this->selectedResourceId = null;
 
         // Заполнение значений полей по умолчанию или существующих глобальных значений
         $this->fieldValues = [];
@@ -63,14 +67,15 @@ class UserPermissions extends Component
         try {
             $action = app(GrantPermissionAction::class);
             $action->handle(
-                $this->userId,
-                $this->selectedPermission->id,
-                $this->fieldValues,
-                $this->meta,
-                $this->expiresAt
+                userId: $this->userId,
+                permissionId: $this->selectedPermission->id,
+                fieldValues: $this->fieldValues,
+                meta: $this->meta,
+                expiresAt: $this->expiresAt,
+                resourceId: $this->selectedResourceId,
             );
 
-            $this->reset(['selectedPermission', 'fieldValues', 'meta', 'expiresAt']);
+            $this->reset(['selectedPermission', 'selectedResourceId', 'fieldValues', 'meta', 'expiresAt']);
             $this->dispatch('refreshUserPermissions');
             session()->flash('success', 'Право успешно выдано');
         } catch (ValidationException $e) {
@@ -120,9 +125,30 @@ class UserPermissions extends Component
 
         if ($grantedPermission) {
             $action = app(RevokePermissionAction::class);
-            $action->handle($this->userId, $grantedPermission->permission_id);
+            $action->handle(
+                userId: $this->userId,
+                permissionId: $grantedPermission->permission_id,
+                resourceId: $grantedPermission->resource_id,
+            );
             $this->dispatch('refreshUserPermissions');
         }
+    }
+
+    public function getAvailableResourcesProperty()
+    {
+        if (!$this->selectedPermission
+            || ($this->selectedPermission->scope ?? PermissionScope::Service) !== PermissionScope::Resource
+            || !$this->selectedPermission->resource_kind
+        ) {
+            return collect();
+        }
+
+        return PermissionResource::query()
+            ->where('service', $this->selectedPermission->service)
+            ->where('kind', $this->selectedPermission->resource_kind)
+            ->where('present_in_source', true)
+            ->orderBy('name')
+            ->get();
     }
 
     public function getUserProperty()

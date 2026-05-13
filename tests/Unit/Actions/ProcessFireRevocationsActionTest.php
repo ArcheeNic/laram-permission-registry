@@ -77,7 +77,11 @@ class ProcessFireRevocationsActionTest extends TestCase
         Queue::assertPushed(RevokeMultiplePermissionsJob::class, function (RevokeMultiplePermissionsJob $job) use ($automatedPermission) {
             $permissionIds = $this->readPrivateProperty($job, 'permissionIds');
 
-            return $permissionIds === [$automatedPermission->id];
+            return is_array($permissionIds)
+                && count($permissionIds) === 1
+                && ($permissionIds[0]['permissionId'] ?? null) === $automatedPermission->id
+                && array_key_exists('resourceId', $permissionIds[0])
+                && $permissionIds[0]['resourceId'] === null;
         });
 
         $this->assertDatabaseHas('manual_provision_tasks', [

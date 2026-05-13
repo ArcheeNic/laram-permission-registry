@@ -138,7 +138,8 @@ class ProcessApprovalDecisionAction
             permissionId: $grantedPermission->permission_id,
             requestedBy: $grantedPermission->requested_by,
             confirmedBy: $request->decisions->last()?->approver_id,
-            skipApprovalCheck: true
+            skipApprovalCheck: true,
+            resourceId: $grantedPermission->resource_id,
         );
     }
 

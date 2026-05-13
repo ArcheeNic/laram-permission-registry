@@ -7,3 +7,6 @@
 /.env
 /build/
 /my-*.(sh|txt)
+/demo/
+*.sqlite
+*.sqlite-journal

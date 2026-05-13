@@ -12,6 +12,12 @@ class Permission extends Model
 
     public const NAME = 'name';
 
+    public const SCOPE = 'scope';
+
+    public const DISPLAY_NAME = 'display_name';
+
+    public const RESOURCE_KIND = 'resource_kind';
+
     public const DESCRIPTION = 'description';
 
     public const TAGS = 'tags';
@@ -35,6 +41,9 @@ class Permission extends Model
     protected $fillable = [
         self::SERVICE,
         self::NAME,
+        self::SCOPE,
+        self::DISPLAY_NAME,
+        self::RESOURCE_KIND,
         self::DESCRIPTION,
         self::TAGS,
         self::AUTO_GRANT,

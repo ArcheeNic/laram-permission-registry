@@ -35,6 +35,9 @@ class PermissionController extends Controller
         $validator = Validator::make($request->all(), [
             'service' => 'required|string|max:255',
             'name' => 'required|string|max:255',
+            'scope' => 'required|in:service,resource',
+            'display_name' => 'nullable|string|max:255',
+            'resource_kind' => 'nullable|string|max:50|required_if:scope,resource',
             'description' => 'nullable|string',
             'tags' => 'nullable|array',
             'fields' => 'nullable|array',
@@ -49,6 +52,9 @@ class PermissionController extends Controller
         $permission = Permission::create([
             'service' => $request->service,
             'name' => $request->name,
+            'scope' => $request->scope,
+            'display_name' => $request->display_name,
+            'resource_kind' => $request->scope === 'resource' ? $request->resource_kind : null,
             'description' => $request->description,
             'tags' => $request->tags ?? [],
             'auto_grant' => $request->boolean('auto_grant'),
@@ -75,6 +81,9 @@ class PermissionController extends Controller
         $validator = Validator::make($request->all(), [
             'service' => 'required|string|max:255',
             'name' => 'required|string|max:255',
+            'scope' => 'required|in:service,resource',
+            'display_name' => 'nullable|string|max:255',
+            'resource_kind' => 'nullable|string|max:50|required_if:scope,resource',
             'description' => 'nullable|string',
             'tags' => 'nullable|array',
             'fields' => 'nullable|array',
@@ -89,6 +98,9 @@ class PermissionController extends Controller
         $permission->update([
             'service' => $request->service,
             'name' => $request->name,
+            'scope' => $request->scope,
+            'display_name' => $request->display_name,
+            'resource_kind' => $request->scope === 'resource' ? $request->resource_kind : null,
             'description' => $request->description,
             'tags' => $request->tags ?? [],
             'auto_grant' => $request->boolean('auto_grant'),

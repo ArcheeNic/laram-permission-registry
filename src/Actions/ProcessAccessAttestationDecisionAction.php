@@ -51,7 +51,8 @@ class ProcessAccessAttestationDecisionAction
             $this->revokeAction->handle(
                 $grantedPermission->virtual_user_id,
                 $grantedPermission->permission_id,
-                skipTriggers: true
+                skipTriggers: true,
+                resourceId: $grantedPermission->resource_id,
             );
         }
 

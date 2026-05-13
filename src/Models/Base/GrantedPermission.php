@@ -9,6 +9,9 @@ class GrantedPermission extends Model
     public const ID = 'id';
     public const VIRTUAL_USER_ID = 'virtual_user_id';
     public const PERMISSION_ID = 'permission_id';
+    public const RESOURCE_ID = 'resource_id';
+    public const RESOURCE_NAME_AT_GRANT = 'resource_name_at_grant';
+    public const SOURCE = 'source';
     public const STATUS = 'status';
     public const STATUS_MESSAGE = 'status_message';
     public const ENABLED = 'enabled';
@@ -24,6 +27,9 @@ class GrantedPermission extends Model
     protected $fillable = [
         self::VIRTUAL_USER_ID,
         self::PERMISSION_ID,
+        self::RESOURCE_ID,
+        self::RESOURCE_NAME_AT_GRANT,
+        self::SOURCE,
         self::STATUS,
         self::STATUS_MESSAGE,
         self::ENABLED,

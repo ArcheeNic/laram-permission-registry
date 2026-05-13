@@ -18,7 +18,7 @@ class GetUserPermissionsAction
                 $query->whereNull('expires_at')
                     ->orWhere('expires_at', '>', now());
             })
-            ->with(['permission', 'fieldValues.field']);
+            ->with(['permission', 'fieldValues.field', 'resource']);
 
         if ($service) {
             $query->whereHas('permission', function ($q) use ($service) {
@@ -48,6 +48,9 @@ class GetUserPermissionsAction
                 'description' => $permission->description,
                 'granted_at' => $grantedPermission->granted_at->toIso8601String(),
                 'expires_at' => $grantedPermission->expires_at ? $grantedPermission->expires_at->toIso8601String() : null,
+                'resource_id' => $grantedPermission->resource_id,
+                'resource_external_id' => $grantedPermission->resource?->external_id,
+                'resource_name' => $grantedPermission->resource?->name ?? $grantedPermission->resource_name_at_grant,
                 'fields' => [],
             ];
 

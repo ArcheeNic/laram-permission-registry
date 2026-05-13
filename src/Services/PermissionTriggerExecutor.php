@@ -305,7 +305,8 @@ class PermissionTriggerExecutor
             fieldValues: $fieldValues,
             globalFields: $globalFields,
             grantedPermission: $grantedPermission,
-            config: $assignmentConfig
+            config: $assignmentConfig,
+            resource: $grantedPermission->resource,
         );
     }
 

@@ -281,6 +281,7 @@ class UsersManagement extends Component
         $this->selectedGroup = null;
         $this->selectedPermissions = [];
         $this->permissionFields = [];
+        $this->permissionResources = [];
         $this->dependentSelectedPermissions = [];
         $this->dependentPermissionFields = [];
         $this->globalFields = [];
@@ -330,6 +331,12 @@ class UsersManagement extends Component
 
         foreach ($activePermissions as $granted) {
             $this->selectedPermissions[$granted->permission_id] = true;
+            if ($granted->resource_id !== null) {
+                $this->permissionResources[$granted->permission_id][] = (int) $granted->resource_id;
+            }
+        }
+        foreach ($this->permissionResources as $permId => $ids) {
+            $this->permissionResources[$permId] = array_values(array_unique($ids));
         }
 
         foreach ($allUserPermissions as $granted) {
@@ -367,7 +374,7 @@ class UsersManagement extends Component
         $dependentPermissions = $this->getDependentPermissionsProperty();
 
         foreach ($dependentPermissions as $permission) {
-            $existingPermission = $allUserPermissions->firstWhere('permission_id', $permission['id']);
+            $existingPermission = $allUserPermissions->first(fn ($g) => $g->permission_id === $permission['id'] && $g->resource_id === null);
 
             if ($existingPermission) {
                 $this->dependentSelectedPermissions[$permission['id']] = $existingPermission->enabled;

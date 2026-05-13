@@ -2,6 +2,7 @@
 
 namespace ArcheeNic\PermissionRegistry\Actions;
 
+use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
 use ArcheeNic\PermissionRegistry\Models\Position;
 use Illuminate\Support\Facades\Log;
 
@@ -24,20 +25,30 @@ class AutoRevokePermissionsForPositionAction
         $permissionIds = [];
         $this->collectPositionPermissionsForAutoRevoke($positionId, $permissionIds);
 
-        if (empty($permissionIds)) {
+        $uniqueIds = array_values(array_unique($permissionIds));
+        if (empty($uniqueIds)) {
             return;
         }
 
-        foreach (array_unique($permissionIds) as $permissionId) {
+        $grants = GrantedPermission::query()
+            ->where('virtual_user_id', $userId)
+            ->whereIn('permission_id', $uniqueIds)
+            ->where('enabled', true)
+            ->get(['permission_id', 'resource_id']);
+
+        foreach ($grants as $grant) {
             try {
                 $this->revokePermissionAction->handle(
                     userId: $userId,
-                    permissionId: $permissionId,
-                    skipTriggers: false
+                    permissionId: $grant->permission_id,
+                    skipTriggers: false,
+                    resourceId: $grant->resource_id,
                 );
             } catch (\Exception $e) {
-                // Логируем ошибку, но продолжаем отзывать остальные права
-                Log::warning("Failed to auto-revoke permission {$permissionId} from user {$userId}: " . $e->getMessage());
+                Log::warning(sprintf(
+                    'Failed to auto-revoke permission %d (resource=%s) from user %d: %s',
+                    $grant->permission_id, $grant->resource_id ?? 'null', $userId, $e->getMessage()
+                ));
             }
         }
     }

@@ -5,6 +5,7 @@ namespace ArcheeNic\PermissionRegistry\Livewire;
 use ArcheeNic\PermissionRegistry\Actions\GrantPermissionAction;
 use ArcheeNic\PermissionRegistry\Contracts\UserToVirtualUserResolver;
 use ArcheeNic\PermissionRegistry\Enums\GrantedPermissionStatus;
+use ArcheeNic\PermissionRegistry\Enums\PermissionScope;
 use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
 use ArcheeNic\PermissionRegistry\Models\Permission;
 use Illuminate\Validation\ValidationException;
@@ -36,7 +37,7 @@ class MyPermissions extends Component
             return collect();
         }
 
-        $query = GrantedPermission::with('permission')
+        $query = GrantedPermission::with(['permission', 'resource'])
             ->where('virtual_user_id', $this->virtualUserId);
 
         if ($this->statusFilter) {
@@ -104,8 +105,14 @@ class MyPermissions extends Component
             }
         }
 
+        if (($permission->scope ?? PermissionScope::Service) === PermissionScope::Resource) {
+            $this->flashError = __('permission-registry::Self-service request for resource-scoped permissions is not supported. Ask an administrator.');
+            return;
+        }
+
         $existing = GrantedPermission::where('virtual_user_id', $this->virtualUserId)
             ->where('permission_id', $this->selectedPermissionId)
+            ->whereNull('resource_id')
             ->whereNotIn('status', [
                 GrantedPermissionStatus::REVOKED->value,
                 GrantedPermissionStatus::REJECTED->value,
@@ -126,7 +133,8 @@ class MyPermissions extends Component
                 fieldValues: $this->fieldValues,
                 requestedBy: $this->virtualUserId,
                 skipTriggers: false,
-                executeTriggersSync: false
+                executeTriggersSync: false,
+                resourceId: null,
             );
 
             $this->closeRequestModal();
@@ -146,6 +154,7 @@ class MyPermissions extends Component
         }
 
         $grantedIds = GrantedPermission::where('virtual_user_id', $this->virtualUserId)
+            ->whereNull('resource_id')
             ->whereNotIn('status', [
                 GrantedPermissionStatus::REVOKED->value,
                 GrantedPermissionStatus::REJECTED->value,
@@ -154,6 +163,9 @@ class MyPermissions extends Component
             ->pluck('permission_id');
 
         return Permission::whereNotIn('id', $grantedIds)
+            ->where(function ($q) {
+                $q->whereNull('scope')->orWhere('scope', PermissionScope::Service->value);
+            })
             ->orderBy('service')
             ->orderBy('name')
             ->get();

@@ -4,6 +4,7 @@ namespace ArcheeNic\PermissionRegistry\ValueObjects;
 
 use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
 use ArcheeNic\PermissionRegistry\Models\Permission;
+use ArcheeNic\PermissionRegistry\Models\PermissionResource;
 
 readonly class TriggerContext
 {
@@ -14,7 +15,8 @@ readonly class TriggerContext
         public array $fieldValues,
         public array $globalFields,
         public ?GrantedPermission $grantedPermission = null,
-        public array $config = []
+        public array $config = [],
+        public ?PermissionResource $resource = null,
     ) {
     }
 }

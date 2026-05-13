@@ -2,7 +2,12 @@
 
 namespace ArcheeNic\PermissionRegistry;
 
+use ArcheeNic\PermissionRegistry\Commands\BootstrapAdminCommand;
+use ArcheeNic\PermissionRegistry\Commands\MigrateToResourceModelCommand;
+use ArcheeNic\PermissionRegistry\Commands\RegisterResourceCommand;
+use ArcheeNic\PermissionRegistry\Commands\SyncResourcesCommand;
 use ArcheeNic\PermissionRegistry\Console\ExpireApprovalRequestsCommand;
+use ArcheeNic\PermissionRegistry\Services\ResourceSyncerRegistry;
 use ArcheeNic\PermissionRegistry\Livewire\ApprovalPolicyManager;
 use ArcheeNic\PermissionRegistry\Livewire\AttestationsList;
 use ArcheeNic\PermissionRegistry\Livewire\FieldsList;
@@ -17,6 +22,7 @@ use ArcheeNic\PermissionRegistry\Livewire\PermissionDependencies;
 use ArcheeNic\PermissionRegistry\Livewire\PermissionsList;
 use ArcheeNic\PermissionRegistry\Livewire\PermissionUsers;
 use ArcheeNic\PermissionRegistry\Livewire\PositionsList;
+use ArcheeNic\PermissionRegistry\Livewire\ResourcesList;
 use ArcheeNic\PermissionRegistry\Livewire\UserPermissions;
 use ArcheeNic\PermissionRegistry\Livewire\UsersManagement;
 use Illuminate\Support\ServiceProvider as BaseServiceProvider;
@@ -84,6 +90,8 @@ class ServiceProvider extends BaseServiceProvider
         $this->app->singleton(WidgetRegistry::class, function ($app) {
             return new WidgetRegistry($app);
         });
+
+        $this->app->singleton(ResourceSyncerRegistry::class);
     }
 
     public function boot(): void
@@ -128,6 +136,10 @@ class ServiceProvider extends BaseServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 ExpireApprovalRequestsCommand::class,
+                SyncResourcesCommand::class,
+                RegisterResourceCommand::class,
+                MigrateToResourceModelCommand::class,
+                BootstrapAdminCommand::class,
             ]);
         }
 
@@ -192,6 +204,7 @@ class ServiceProvider extends BaseServiceProvider
         Livewire::component('permission-registry::attestations-list', AttestationsList::class);
         Livewire::component('permission-registry::pending-revocations-dashboard', PendingRevocationsDashboard::class);
         Livewire::component('permission-registry::import-manager', ImportManager::class);
+        Livewire::component('permission-registry::resources-list', ResourcesList::class);
     }
 
     protected function registerBladeComponents(): void
