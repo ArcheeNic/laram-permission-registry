@@ -42,14 +42,18 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200 dark:divide-neutral-700">
-                            @forelse($triggersByService as $service => $triggers)
+                            @forelse($services as $service)
+                                @php
+                                    $configured = $configuredByService[$service] ?? collect();
+                                    $unconfigured = $unconfiguredByService[$service] ?? collect();
+                                @endphp
                                 <tr class="bg-gray-50 dark:bg-neutral-900/40">
                                     <td colspan="5" class="px-6 py-2 text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
                                         {{ $service }}
-                                        <span class="ml-2 text-gray-400 dark:text-gray-500 normal-case">({{ $triggers->count() }})</span>
+                                        <span class="ml-2 text-gray-400 dark:text-gray-500 normal-case">({{ $configured->count() }})</span>
                                     </td>
                                 </tr>
-                                @foreach($triggers as $trigger)
+                                @foreach($configured as $trigger)
                                     <tr>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
@@ -101,6 +105,41 @@
                                                     Удалить
                                                 </button>
                                             </form>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                                @foreach($unconfigured as $available)
+                                    <tr class="bg-amber-50/40 dark:bg-amber-900/10">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-500 dark:text-gray-400 italic">
+                                                {{ $available['name'] }}
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <div class="text-sm text-gray-500 dark:text-gray-400 font-mono">
+                                                {{ $available['class_name'] }}
+                                            </div>
+                                            @if(!empty($available['description']))
+                                                <div class="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                                                    {{ $available['description'] }}
+                                                </div>
+                                            @endif
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-600 dark:bg-neutral-700 dark:text-gray-300">
+                                                —
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
+                                                Не настроен
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <a href="{{ route('permission-registry::triggers.create', ['class_name' => $available['class_name']]) }}"
+                                               class="text-purple-600 hover:text-purple-900 dark:text-purple-400">
+                                                Настроить
+                                            </a>
                                         </td>
                                     </tr>
                                 @endforeach

@@ -17,25 +17,48 @@ class PermissionTriggerController extends Controller
         private TriggerDiscoveryService $discoveryService,
         private TriggerFieldMappingService $mappingService,
         private SaveTriggerFieldMappingAction $saveMappingAction
-    ) {
-    }
+    ) {}
+
     public function index()
     {
-        $lookup = $this->discoveryService->getServiceLookup();
         $fallback = __('permission-registry::messages.other_service');
+        $discovered = $this->discoveryService->discover();
 
-        $triggersByService = PermissionTrigger::orderBy('name')->get()
-            ->groupBy(fn (PermissionTrigger $trigger) => $lookup[$trigger->class_name] ?? $fallback)
-            ->sortKeys();
+        $lookup = [];
+        foreach ($discovered as $item) {
+            $lookup[$item['class_name']] = $item['service_name'] ?? $fallback;
+        }
 
-        return view('permission-registry::triggers.index', compact('triggersByService'));
+        $configured = PermissionTrigger::orderBy('name')->get();
+        $configuredClassNames = $configured->pluck('class_name')->filter()->unique()->all();
+
+        $configuredByService = $configured
+            ->groupBy(fn (PermissionTrigger $trigger) => $lookup[$trigger->class_name] ?? $fallback);
+
+        $unconfiguredByService = collect($discovered)
+            ->reject(fn (array $item) => in_array($item['class_name'], $configuredClassNames, true))
+            ->reject(fn (array $item) => str_starts_with(class_basename($item['class_name']), 'Example'))
+            ->groupBy(fn (array $item) => $item['service_name'] ?? $fallback);
+
+        $services = $configuredByService->keys()
+            ->merge($unconfiguredByService->keys())
+            ->unique()
+            ->sort()
+            ->values();
+
+        return view('permission-registry::triggers.index', compact(
+            'services',
+            'configuredByService',
+            'unconfiguredByService'
+        ));
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $globalFields = PermissionField::where('is_global', true)->orderBy('name')->get();
-        
-        return view('permission-registry::triggers.create', compact('globalFields'));
+        $prefilledClassName = (string) $request->query('class_name', '');
+
+        return view('permission-registry::triggers.create', compact('globalFields', 'prefilledClassName'));
     }
 
     public function store(Request $request)
@@ -63,7 +86,7 @@ class PermissionTriggerController extends Controller
         $requiredFields = collect($metadata['required_fields'] ?? []);
 
         // Проверить что все входящие поля замаплены
-        $inputFields = $requiredFields->filter(fn($f) => !($f['is_internal'] ?? false));
+        $inputFields = $requiredFields->filter(fn ($f) => ! ($f['is_internal'] ?? false));
         foreach ($inputFields as $field) {
             $mappingValue = $request->input("mapping.{$field['name']}");
             if (empty($mappingValue)) {
@@ -72,7 +95,7 @@ class PermissionTriggerController extends Controller
         }
 
         // Проверить что все внутренние поля замаплены
-        $internalFields = $requiredFields->filter(fn($f) => $f['is_internal'] ?? false);
+        $internalFields = $requiredFields->filter(fn ($f) => $f['is_internal'] ?? false);
         foreach ($internalFields as $field) {
             $mappingValue = $request->input("internal_mapping.{$field['name']}");
             if (empty($mappingValue)) {
@@ -108,14 +131,14 @@ class PermissionTriggerController extends Controller
         $metadata = $this->discoveryService->getTriggerMetadata($permissionTrigger->class_name);
         $currentMapping = $this->mappingService->getMapping($permissionTrigger->id);
         $globalFields = PermissionField::where('is_global', true)->orderBy('name')->get();
-        
+
         return view('permission-registry::triggers.edit', compact('permissionTrigger', 'metadata', 'currentMapping', 'globalFields'));
     }
 
     public function update(Request $request, PermissionTrigger $permissionTrigger)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255|unique:permission_triggers,name,' . $permissionTrigger->id,
+            'name' => 'required|string|max:255|unique:permission_triggers,name,'.$permissionTrigger->id,
             'class_name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'type' => 'required|in:grant,revoke,both',
@@ -137,7 +160,7 @@ class PermissionTriggerController extends Controller
         $requiredFields = collect($metadata['required_fields'] ?? []);
 
         // Проверить что все входящие поля замаплены
-        $inputFields = $requiredFields->filter(fn($f) => !($f['is_internal'] ?? false));
+        $inputFields = $requiredFields->filter(fn ($f) => ! ($f['is_internal'] ?? false));
         foreach ($inputFields as $field) {
             $mappingValue = $request->input("mapping.{$field['name']}");
             if (empty($mappingValue)) {
@@ -146,7 +169,7 @@ class PermissionTriggerController extends Controller
         }
 
         // Проверить что все внутренние поля замаплены
-        $internalFields = $requiredFields->filter(fn($f) => $f['is_internal'] ?? false);
+        $internalFields = $requiredFields->filter(fn ($f) => $f['is_internal'] ?? false);
         foreach ($internalFields as $field) {
             $mappingValue = $request->input("internal_mapping.{$field['name']}");
             if (empty($mappingValue)) {
@@ -205,7 +228,7 @@ class PermissionTriggerController extends Controller
     {
         $className = $request->input('class_name');
 
-        if (!$className) {
+        if (! $className) {
             return response()->json([
                 'success' => false,
                 'message' => 'Class name is required',
@@ -214,7 +237,7 @@ class PermissionTriggerController extends Controller
 
         $metadata = $this->discoveryService->getTriggerMetadata($className);
 
-        if (!$metadata) {
+        if (! $metadata) {
             return response()->json([
                 'success' => false,
                 'message' => 'Trigger not found or invalid',

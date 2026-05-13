@@ -252,6 +252,7 @@
             }
 
             const fallbackServiceName = @json(__('permission-registry::messages.other_service'));
+            const prefilledClassName = @json($prefilledClassName ?? '') || @json(old('class_name', ''));
 
             // Загрузить список триггеров
             fetch('{{ route('permission-registry::triggers.api.discover') }}')
@@ -286,6 +287,13 @@
                                 });
                             classNameSelect.appendChild(optgroup);
                         });
+
+                    if (prefilledClassName) {
+                        classNameSelect.value = prefilledClassName;
+                        if (classNameSelect.value === prefilledClassName) {
+                            classNameSelect.dispatchEvent(new Event('change'));
+                        }
+                    }
                 })
                 .catch(error => {
                     console.error('Ошибка загрузки триггеров:', error);
