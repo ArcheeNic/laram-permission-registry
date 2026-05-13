@@ -58,10 +58,17 @@
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                         {{ __('permission-registry::Description') }}
                                     </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        {{ __('permission-registry::Resources') }}
+                                    </th>
                                 </tr>
                                 </thead>
                                 <tbody class="bg-white dark:bg-neutral-800 divide-y divide-gray-200 dark:divide-neutral-700">
                                 @foreach($group->permissions as $permission)
+                                    @php
+                                        $isResourceScoped = ($permission->scope ?? \ArcheeNic\PermissionRegistry\Enums\PermissionScope::Service) === \ArcheeNic\PermissionRegistry\Enums\PermissionScope::Resource;
+                                        $boundResources = $resourcesByPermission[$permission->id] ?? collect();
+                                    @endphp
                                     <tr>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                             {{ $permission->service }}
@@ -73,6 +80,21 @@
                                         </td>
                                         <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                                             {{ Str::limit($permission->description, 100) ?: '—' }}
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                                            @if(!$isResourceScoped)
+                                                <span class="text-gray-400 dark:text-gray-500">—</span>
+                                            @elseif($boundResources->isEmpty())
+                                                <span class="text-amber-600 dark:text-amber-400 text-xs">{{ __('permission-registry::No resources bound — will not auto-grant') }}</span>
+                                            @else
+                                                <div class="flex flex-wrap gap-1">
+                                                    @foreach($boundResources as $res)
+                                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300" title="{{ $res->external_id }}">
+                                                            {{ $res->name }}
+                                                        </span>
+                                                    @endforeach
+                                                </div>
+                                            @endif
                                         </td>
                                     </tr>
                                 @endforeach

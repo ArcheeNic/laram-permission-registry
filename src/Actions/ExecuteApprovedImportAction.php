@@ -4,8 +4,11 @@ namespace ArcheeNic\PermissionRegistry\Actions;
 
 use ArcheeNic\PermissionRegistry\Enums\ImportExecutionStatus;
 use ArcheeNic\PermissionRegistry\Enums\ImportMatchStatus;
+use ArcheeNic\PermissionRegistry\Enums\PermissionScope;
 use ArcheeNic\PermissionRegistry\Enums\VirtualUserStatus;
 use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
+use ArcheeNic\PermissionRegistry\Models\Permission;
+use ArcheeNic\PermissionRegistry\Models\PermissionResource;
 use ArcheeNic\PermissionRegistry\Models\VirtualUser;
 use ArcheeNic\PermissionRegistry\Models\ImportExecutionLog;
 use ArcheeNic\PermissionRegistry\Models\ImportStagingRow;
@@ -13,6 +16,7 @@ use ArcheeNic\PermissionRegistry\Models\PermissionImport;
 use ArcheeNic\PermissionRegistry\Services\ImportFieldMappingService;
 use ArcheeNic\PermissionRegistry\Services\ImportTriggerConfigResolver;
 use ArcheeNic\PermissionRegistry\Services\TriggerPermissionMatcherService;
+use ArcheeNic\PermissionRegistry\Services\UserAutoGrantPairsCollector;
 use Illuminate\Support\Facades\Log;
 
 class ExecuteApprovedImportAction
@@ -123,20 +127,26 @@ class ExecuteApprovedImportAction
         $user = $this->createVirtualUserAction->handle($globalFields);
         $this->hireVirtualUserAction->handle(userId: $user->id, skipHrTriggers: true);
 
-        $permissionIds = $this->resolvePermissionIdsFromRow($row, $triggerClassPatterns, $departmentFieldName, $fallbackPermissionIds);
-        $existingPermissionIds = GrantedPermission::query()
-            ->where(GrantedPermission::VIRTUAL_USER_ID, $user->id)
-            ->whereIn(GrantedPermission::PERMISSION_ID, $permissionIds)
-            ->pluck(GrantedPermission::PERMISSION_ID)
-            ->map(static fn (mixed $id): int => (int) $id)
-            ->all();
+        $shouldHavePairs = $this->resolvePermissionPairsFromRow(
+            $row,
+            $triggerClassPatterns,
+            $departmentFieldName,
+            $fallbackPermissionIds
+        );
 
-        foreach (array_values(array_diff($permissionIds, $existingPermissionIds)) as $permissionId) {
+        $existingKeys = $this->existingPairKeys((int) $user->id, $this->permissionIdsFromPairs($shouldHavePairs));
+
+        foreach ($shouldHavePairs as $pair) {
+            $key = UserAutoGrantPairsCollector::key($pair['permission_id'], $pair['resource_id']);
+            if (isset($existingKeys[$key])) {
+                continue;
+            }
             $this->grantPermissionAction->handle(
-                userId: $user->id,
-                permissionId: $permissionId,
+                userId: (int) $user->id,
+                permissionId: $pair['permission_id'],
                 skipTriggers: true,
                 skipApprovalCheck: true,
+                resourceId: $pair['resource_id'],
             );
         }
 
@@ -169,33 +179,14 @@ class ExecuteApprovedImportAction
         $this->rehireIfDeactivated($virtualUserId);
 
         if ($virtualUserId !== null && $managedPermissionIds !== []) {
-            $shouldHavePermissionIds = $this->resolvePermissionIdsFromRow($row, $triggerClassPatterns, $departmentFieldName, $fallbackPermissionIds);
-            $currentPermissionIds = GrantedPermission::query()
-                ->where(GrantedPermission::VIRTUAL_USER_ID, $virtualUserId)
-                ->whereIn(GrantedPermission::PERMISSION_ID, $managedPermissionIds)
-                ->pluck(GrantedPermission::PERMISSION_ID)
-                ->map(static fn (mixed $id): int => (int) $id)
-                ->all();
-
-            $toGrant = array_values(array_diff($shouldHavePermissionIds, $currentPermissionIds));
-            $toRevoke = array_values(array_diff($currentPermissionIds, $shouldHavePermissionIds));
-
-            foreach ($toGrant as $permissionId) {
-                $this->grantPermissionAction->handle(
-                    userId: (int) $virtualUserId,
-                    permissionId: $permissionId,
-                    skipTriggers: true,
-                    skipApprovalCheck: true,
-                );
-            }
-
-            foreach ($toRevoke as $permissionId) {
-                $this->revokePermissionAction->handle(
-                    userId: (int) $virtualUserId,
-                    permissionId: $permissionId,
-                    skipTriggers: true,
-                );
-            }
+            $this->reconcileGrants(
+                (int) $virtualUserId,
+                $row,
+                $triggerClassPatterns,
+                $departmentFieldName,
+                $managedPermissionIds,
+                $fallbackPermissionIds,
+            );
         }
 
         $stats['updated']++;
@@ -222,33 +213,14 @@ class ExecuteApprovedImportAction
             return;
         }
 
-        $shouldHavePermissionIds = $this->resolvePermissionIdsFromRow($row, $triggerClassPatterns, $departmentFieldName, $fallbackPermissionIds);
-        $currentPermissionIds = GrantedPermission::query()
-            ->where(GrantedPermission::VIRTUAL_USER_ID, $virtualUserId)
-            ->whereIn(GrantedPermission::PERMISSION_ID, $managedPermissionIds)
-            ->pluck(GrantedPermission::PERMISSION_ID)
-            ->map(static fn (mixed $id): int => (int) $id)
-            ->all();
-
-        $toGrant = array_values(array_diff($shouldHavePermissionIds, $currentPermissionIds));
-        $toRevoke = array_values(array_diff($currentPermissionIds, $shouldHavePermissionIds));
-
-        foreach ($toGrant as $permissionId) {
-            $this->grantPermissionAction->handle(
-                userId: (int) $virtualUserId,
-                permissionId: $permissionId,
-                skipTriggers: true,
-                skipApprovalCheck: true,
-            );
-        }
-
-        foreach ($toRevoke as $permissionId) {
-            $this->revokePermissionAction->handle(
-                userId: (int) $virtualUserId,
-                permissionId: $permissionId,
-                skipTriggers: true,
-            );
-        }
+        $this->reconcileGrants(
+            (int) $virtualUserId,
+            $row,
+            $triggerClassPatterns,
+            $departmentFieldName,
+            $managedPermissionIds,
+            $fallbackPermissionIds,
+        );
 
         $stats['synced']++;
     }
@@ -260,19 +232,14 @@ class ExecuteApprovedImportAction
     {
         $virtualUserId = $row->{ImportStagingRow::MATCHED_VIRTUAL_USER_ID};
 
-        if ($virtualUserId !== null) {
-            $currentManagedPermissionIds = GrantedPermission::query()
-                ->where(GrantedPermission::VIRTUAL_USER_ID, (int) $virtualUserId)
-                ->whereIn(GrantedPermission::PERMISSION_ID, $managedPermissionIds)
-                ->pluck(GrantedPermission::PERMISSION_ID)
-                ->map(static fn (mixed $id): int => (int) $id)
-                ->all();
-
-            foreach ($currentManagedPermissionIds as $permissionId) {
+        if ($virtualUserId !== null && $managedPermissionIds !== []) {
+            $currentPairs = $this->loadCurrentManagedPairs((int) $virtualUserId, $managedPermissionIds);
+            foreach ($currentPairs as $pair) {
                 $this->revokePermissionAction->handle(
                     userId: (int) $virtualUserId,
-                    permissionId: (int) $permissionId,
+                    permissionId: $pair['permission_id'],
                     skipTriggers: true,
+                    resourceId: $pair['resource_id'],
                 );
             }
         }
@@ -282,6 +249,54 @@ class ExecuteApprovedImportAction
         }
 
         $stats['fired']++;
+    }
+
+    private function reconcileGrants(
+        int $virtualUserId,
+        ImportStagingRow $row,
+        array $triggerClassPatterns,
+        string $departmentFieldName,
+        array $managedPermissionIds,
+        array $fallbackPermissionIds,
+    ): void {
+        $shouldHavePairs = $this->resolvePermissionPairsFromRow(
+            $row,
+            $triggerClassPatterns,
+            $departmentFieldName,
+            $fallbackPermissionIds
+        );
+        $shouldKeys = [];
+        foreach ($shouldHavePairs as $pair) {
+            $shouldKeys[UserAutoGrantPairsCollector::key($pair['permission_id'], $pair['resource_id'])] = $pair;
+        }
+
+        $currentPairs = $this->loadCurrentManagedPairs($virtualUserId, $managedPermissionIds);
+        $currentKeys = [];
+        foreach ($currentPairs as $pair) {
+            $currentKeys[UserAutoGrantPairsCollector::key($pair['permission_id'], $pair['resource_id'])] = $pair;
+        }
+
+        $toGrant = array_diff_key($shouldKeys, $currentKeys);
+        $toRevoke = array_diff_key($currentKeys, $shouldKeys);
+
+        foreach ($toGrant as $pair) {
+            $this->grantPermissionAction->handle(
+                userId: $virtualUserId,
+                permissionId: $pair['permission_id'],
+                skipTriggers: true,
+                skipApprovalCheck: true,
+                resourceId: $pair['resource_id'],
+            );
+        }
+
+        foreach ($toRevoke as $pair) {
+            $this->revokePermissionAction->handle(
+                userId: $virtualUserId,
+                permissionId: $pair['permission_id'],
+                skipTriggers: true,
+                resourceId: $pair['resource_id'],
+            );
+        }
     }
 
     private function rehireIfDeactivated(?int $virtualUserId): void
@@ -318,11 +333,16 @@ class ExecuteApprovedImportAction
     }
 
     /**
+     * Возвращает пары (permission_id, resource_id|null), которые должны быть у пользователя.
+     * Для service-scoped прав resource_id = null. Для resource-scoped — резолвится из каталога
+     * permission_resources по (service, kind, external_id=department_id). Если ресурса нет —
+     * пара пропускается, в лог пишется warning.
+     *
      * @param array<int, string> $triggerClassPatterns
-     * @param array<int, int> $fallbackPermissionIds
-     * @return array<int, int>
+     * @param array<int, int>    $fallbackPermissionIds
+     * @return array<int, array{permission_id:int, resource_id:?int}>
      */
-    private function resolvePermissionIdsFromRow(
+    private function resolvePermissionPairsFromRow(
         ImportStagingRow $row,
         array $triggerClassPatterns,
         string $departmentFieldName,
@@ -333,21 +353,201 @@ class ExecuteApprovedImportAction
             $fields[$departmentFieldName] ?? null
         );
 
-        $permissionIds = $this->triggerPermissionMatcherService
-            ->matchByDepartments($departmentIds, $triggerClassPatterns)
-            ->pluck('permission_id')
-            ->map(static fn (mixed $permissionId): int => (int) $permissionId)
+        $matched = $this->triggerPermissionMatcherService
+            ->matchByDepartments($departmentIds, $triggerClassPatterns);
+
+        $matchedPermissionIds = $matched->pluck('permission_id')
+            ->map(static fn (mixed $id): int => (int) $id)
             ->unique()
             ->values()
             ->all();
+        $matchedPermissionIds = array_values(array_diff($matchedPermissionIds, $fallbackPermissionIds));
 
-        $permissionIds = array_values(array_diff($permissionIds, $fallbackPermissionIds));
-
-        if ($permissionIds === []) {
-            return array_values(array_unique($fallbackPermissionIds));
+        if ($matchedPermissionIds === [] && $fallbackPermissionIds !== []) {
+            return $this->pairsForServiceScoped(array_values(array_unique($fallbackPermissionIds)));
         }
 
-        return $permissionIds;
+        if ($matchedPermissionIds === []) {
+            return [];
+        }
+
+        return $this->buildPairs($matchedPermissionIds, $matched->all());
+    }
+
+    /**
+     * @param array<int, int> $permissionIds
+     * @return array<int, array{permission_id:int, resource_id:?int}>
+     */
+    private function pairsForServiceScoped(array $permissionIds): array
+    {
+        if ($permissionIds === []) {
+            return [];
+        }
+
+        $permissions = Permission::query()->whereIn('id', $permissionIds)->get()->keyBy('id');
+        $pairs = [];
+        foreach ($permissionIds as $permissionId) {
+            $permission = $permissions[$permissionId] ?? null;
+            if ($permission === null) {
+                continue;
+            }
+            $scope = $permission->scope ?? PermissionScope::Service;
+            if ($scope === PermissionScope::Resource) {
+                Log::warning('Import fallback: skipping resource-scoped permission (no department context)', [
+                    'permission_id' => $permissionId,
+                ]);
+                continue;
+            }
+            $pairs[] = ['permission_id' => $permissionId, 'resource_id' => null];
+        }
+        return $pairs;
+    }
+
+    /**
+     * @param array<int, int> $permissionIds
+     * @param array<int, array{permission_id:int, permission_name:string, department_id:string}> $matched
+     * @return array<int, array{permission_id:int, resource_id:?int}>
+     */
+    private function buildPairs(array $permissionIds, array $matched): array
+    {
+        $permissions = Permission::query()->whereIn('id', $permissionIds)->get()->keyBy('id');
+
+        $resourceNeeded = [];
+        foreach ($permissions as $permission) {
+            $scope = $permission->scope ?? PermissionScope::Service;
+            if ($scope === PermissionScope::Resource && $permission->resource_kind) {
+                $resourceNeeded[$permission->service.'|'.$permission->resource_kind] = [
+                    'service' => $permission->service,
+                    'kind' => $permission->resource_kind,
+                ];
+            }
+        }
+
+        $resourceMap = [];
+        foreach ($resourceNeeded as $entry) {
+            $externalIds = collect($matched)
+                ->where('permission_id', '!=', null)
+                ->pluck('department_id')
+                ->filter(fn ($id) => $id !== null && $id !== '')
+                ->map(fn ($id) => (string) $id)
+                ->unique()
+                ->values()
+                ->all();
+
+            if ($externalIds === []) {
+                continue;
+            }
+
+            PermissionResource::query()
+                ->where('service', $entry['service'])
+                ->where('kind', $entry['kind'])
+                ->whereIn('external_id', $externalIds)
+                ->get()
+                ->each(function (PermissionResource $resource) use (&$resourceMap, $entry) {
+                    $resourceMap[$entry['service'].'|'.$entry['kind'].'|'.$resource->external_id] = (int) $resource->id;
+                });
+        }
+
+        $pairs = [];
+        $seen = [];
+        foreach ($matched as $item) {
+            $permissionId = (int) $item['permission_id'];
+            $departmentExternalId = (string) $item['department_id'];
+            $permission = $permissions[$permissionId] ?? null;
+            if ($permission === null) {
+                continue;
+            }
+            $scope = $permission->scope ?? PermissionScope::Service;
+
+            if ($scope !== PermissionScope::Resource) {
+                $key = $permissionId.'|';
+                if (isset($seen[$key])) {
+                    continue;
+                }
+                $seen[$key] = true;
+                $pairs[] = ['permission_id' => $permissionId, 'resource_id' => null];
+                continue;
+            }
+
+            if (!$permission->resource_kind) {
+                Log::warning('Import: resource-scoped permission has no resource_kind, skipping', [
+                    'permission_id' => $permissionId,
+                ]);
+                continue;
+            }
+
+            $resourceKey = $permission->service.'|'.$permission->resource_kind.'|'.$departmentExternalId;
+            $resourceId = $resourceMap[$resourceKey] ?? null;
+            if ($resourceId === null) {
+                Log::warning('Import: resource not found in catalog, skipping pair', [
+                    'permission_id' => $permissionId,
+                    'service' => $permission->service,
+                    'kind' => $permission->resource_kind,
+                    'external_id' => $departmentExternalId,
+                ]);
+                continue;
+            }
+
+            $key = $permissionId.'|'.$resourceId;
+            if (isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+            $pairs[] = ['permission_id' => $permissionId, 'resource_id' => $resourceId];
+        }
+
+        return $pairs;
+    }
+
+    /**
+     * @param array<int, array{permission_id:int, resource_id:?int}> $pairs
+     * @return array<int, int>
+     */
+    private function permissionIdsFromPairs(array $pairs): array
+    {
+        return array_values(array_unique(array_map(static fn ($p) => $p['permission_id'], $pairs)));
+    }
+
+    /**
+     * @param array<int, int> $permissionIds
+     * @return array<string, true>
+     */
+    private function existingPairKeys(int $userId, array $permissionIds): array
+    {
+        if ($permissionIds === []) {
+            return [];
+        }
+        $keys = [];
+        GrantedPermission::query()
+            ->where(GrantedPermission::VIRTUAL_USER_ID, $userId)
+            ->whereIn(GrantedPermission::PERMISSION_ID, $permissionIds)
+            ->get(['permission_id', 'resource_id'])
+            ->each(function ($grant) use (&$keys) {
+                $resourceId = $grant->resource_id !== null ? (int) $grant->resource_id : null;
+                $keys[UserAutoGrantPairsCollector::key((int) $grant->permission_id, $resourceId)] = true;
+            });
+        return $keys;
+    }
+
+    /**
+     * @param array<int, int> $managedPermissionIds
+     * @return array<int, array{permission_id:int, resource_id:?int}>
+     */
+    private function loadCurrentManagedPairs(int $userId, array $managedPermissionIds): array
+    {
+        if ($managedPermissionIds === []) {
+            return [];
+        }
+        return GrantedPermission::query()
+            ->where(GrantedPermission::VIRTUAL_USER_ID, $userId)
+            ->whereIn(GrantedPermission::PERMISSION_ID, $managedPermissionIds)
+            ->where('enabled', true)
+            ->get(['permission_id', 'resource_id'])
+            ->map(static fn ($g) => [
+                'permission_id' => (int) $g->permission_id,
+                'resource_id' => $g->resource_id !== null ? (int) $g->resource_id : null,
+            ])
+            ->all();
     }
 
     /**

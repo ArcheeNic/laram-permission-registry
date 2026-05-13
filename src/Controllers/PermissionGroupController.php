@@ -3,27 +3,18 @@
 namespace ArcheeNic\PermissionRegistry\Controllers;
 
 use App\Http\Controllers\Controller;
-use ArcheeNic\PermissionRegistry\Actions\GrantPermissionAction;
-use ArcheeNic\PermissionRegistry\Actions\RevokePermissionAction;
 use ArcheeNic\PermissionRegistry\Enums\PermissionScope;
+use ArcheeNic\PermissionRegistry\Jobs\ApplyMembershipResourceDiffJob;
 use ArcheeNic\PermissionRegistry\Models\Permission;
 use ArcheeNic\PermissionRegistry\Models\PermissionGroup;
 use ArcheeNic\PermissionRegistry\Models\PermissionGroupResource;
 use ArcheeNic\PermissionRegistry\Models\PermissionResource;
-use ArcheeNic\PermissionRegistry\Services\UserAutoGrantPairsCollector;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class PermissionGroupController extends Controller
 {
-    public function __construct(
-        private GrantPermissionAction $grantAction,
-        private RevokePermissionAction $revokeAction,
-        private UserAutoGrantPairsCollector $pairsCollector,
-    ) {
-    }
 
     public function index()
     {
@@ -32,8 +23,11 @@ class PermissionGroupController extends Controller
 
     public function show(PermissionGroup $group)
     {
-        $group->load(['permissions']);
-        return view('permission-registry::groups.show', compact('group'));
+        $group->load(['permissions', 'permissionResources.resource']);
+        $resourcesByPermission = $group->permissionResources
+            ->groupBy('permission_id')
+            ->map(fn ($rows) => $rows->map(fn ($r) => $r->resource)->filter()->values());
+        return view('permission-registry::groups.show', compact('group', 'resourcesByPermission'));
     }
 
     public function create()
@@ -102,24 +96,40 @@ class PermissionGroupController extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        $group->update([
-            'name' => $request->name,
-            'description' => $request->description,
-        ]);
+        $diff = DB::transaction(function () use ($group, $request): array {
+            $group->update([
+                'name' => $request->name,
+                'description' => $request->description,
+            ]);
 
-        $oldPairs = $this->loadGroupPairs($group->id);
+            $oldPairs = $this->loadGroupPairs($group->id);
 
-        if ($request->has('permissions')) {
-            $group->permissions()->sync((array) $request->input('permissions', []));
-        } else {
-            $group->permissions()->detach();
+            if ($request->has('permissions')) {
+                $group->permissions()->sync((array) $request->input('permissions', []));
+            } else {
+                $group->permissions()->detach();
+            }
+
+            $this->syncPermissionResources($group, $request->input('permission_resources', []));
+
+            $newPairs = $this->loadGroupPairs($group->id);
+
+            return [
+                'added' => array_values(array_diff_key($newPairs, $oldPairs)),
+                'removed' => array_values(array_diff_key($oldPairs, $newPairs)),
+                'userIds' => $this->affectedUserIds($group),
+            ];
+        });
+
+        if (!empty($diff['userIds']) && (!empty($diff['added']) || !empty($diff['removed']))) {
+            ApplyMembershipResourceDiffJob::dispatch(
+                'group',
+                $group->id,
+                $diff['added'],
+                $diff['removed'],
+                $diff['userIds'],
+            )->afterCommit();
         }
-
-        $this->syncPermissionResources($group, $request->input('permission_resources', []));
-
-        $newPairs = $this->loadGroupPairs($group->id);
-
-        $this->applyPairsDiff($group, $oldPairs, $newPairs);
 
         return redirect()->route('permission-registry::groups.show', $group)
             ->with('success', __('permission-registry::Group updated successfully'));
@@ -216,14 +226,12 @@ class PermissionGroupController extends Controller
             }
         }
 
-        DB::transaction(function () use ($group, $desired) {
-            PermissionGroupResource::query()->where('permission_group_id', $group->id)->delete();
-            if (!empty($desired)) {
-                $now = now();
-                $rows = array_map(fn (array $r) => $r + ['created_at' => $now, 'updated_at' => $now], $desired);
-                PermissionGroupResource::query()->insert($rows);
-            }
-        });
+        PermissionGroupResource::query()->where('permission_group_id', $group->id)->delete();
+        if (!empty($desired)) {
+            $now = now();
+            $rows = array_map(fn (array $r) => $r + ['created_at' => $now, 'updated_at' => $now], $desired);
+            PermissionGroupResource::query()->insert($rows);
+        }
     }
 
     /**
@@ -278,46 +286,6 @@ class PermissionGroupController extends Controller
     }
 
     /**
-     * @param array<string, array{permission_id:int, resource_id:?int, auto_grant?:bool, auto_revoke?:bool}> $oldPairs
-     * @param array<string, array{permission_id:int, resource_id:?int, auto_grant?:bool, auto_revoke?:bool}> $newPairs
-     */
-    private function applyPairsDiff(PermissionGroup $group, array $oldPairs, array $newPairs): void
-    {
-        $added = array_diff_key($newPairs, $oldPairs);
-        $removed = array_diff_key($oldPairs, $newPairs);
-
-        if (empty($added) && empty($removed)) {
-            return;
-        }
-
-        $userIds = $this->affectedUserIds($group);
-        if (empty($userIds)) {
-            return;
-        }
-
-        foreach ($userIds as $userId) {
-            foreach ($added as $pair) {
-                if (empty($pair['auto_grant'])) {
-                    continue;
-                }
-                $this->safeGrant($userId, $pair['permission_id'], $pair['resource_id']);
-            }
-
-            $remainingPairs = $this->pairsCollector->collect($userId, excludeGroupId: $group->id);
-
-            foreach ($removed as $key => $pair) {
-                if (empty($pair['auto_revoke'])) {
-                    continue;
-                }
-                if (isset($remainingPairs[$key])) {
-                    continue;
-                }
-                $this->safeRevoke($userId, $pair['permission_id'], $pair['resource_id']);
-            }
-        }
-    }
-
-    /**
      * Пользователи, на которых может повлиять изменение состава прав/ресурсов группы:
      * прямые участники группы + участники позиций, использующих группу, + участники
      * дочерних позиций (которые получают права parent через наследование).
@@ -359,46 +327,6 @@ class PermissionGroupController extends Controller
             }
             $ids[] = $childId;
             $this->collectChildrenIds($childId, $ids);
-        }
-    }
-
-    private function safeGrant(int $userId, int $permissionId, ?int $resourceId): void
-    {
-        try {
-            $this->grantAction->handle(
-                userId: $userId,
-                permissionId: $permissionId,
-                resourceId: $resourceId,
-                meta: ['auto_granted' => true, 'auto_grant_source' => 'group'],
-            );
-        } catch (\Throwable $e) {
-            Log::warning(sprintf(
-                'Failed to grant permission %d (resource=%s) to user %d on group resource change: %s',
-                $permissionId,
-                $resourceId ?? 'null',
-                $userId,
-                $e->getMessage(),
-            ));
-        }
-    }
-
-    private function safeRevoke(int $userId, int $permissionId, ?int $resourceId): void
-    {
-        try {
-            $this->revokeAction->handle(
-                userId: $userId,
-                permissionId: $permissionId,
-                skipTriggers: false,
-                resourceId: $resourceId,
-            );
-        } catch (\Throwable $e) {
-            Log::warning(sprintf(
-                'Failed to revoke permission %d (resource=%s) from user %d on group resource change: %s',
-                $permissionId,
-                $resourceId ?? 'null',
-                $userId,
-                $e->getMessage(),
-            ));
         }
     }
 }

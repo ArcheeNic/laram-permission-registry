@@ -3,9 +3,8 @@
 namespace ArcheeNic\PermissionRegistry\Controllers;
 
 use App\Http\Controllers\Controller;
-use ArcheeNic\PermissionRegistry\Actions\GrantPermissionAction;
-use ArcheeNic\PermissionRegistry\Actions\RevokePermissionAction;
 use ArcheeNic\PermissionRegistry\Enums\PermissionScope;
+use ArcheeNic\PermissionRegistry\Jobs\ApplyMembershipResourceDiffJob;
 use ArcheeNic\PermissionRegistry\Models\Permission;
 use ArcheeNic\PermissionRegistry\Models\PermissionGroup;
 use ArcheeNic\PermissionRegistry\Models\PermissionResource;
@@ -14,18 +13,10 @@ use ArcheeNic\PermissionRegistry\Models\PositionPermissionResource;
 use ArcheeNic\PermissionRegistry\Services\UserAutoGrantPairsCollector;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class PositionController extends Controller
 {
-    public function __construct(
-        private GrantPermissionAction $grantAction,
-        private RevokePermissionAction $revokeAction,
-        private UserAutoGrantPairsCollector $pairsCollector,
-    ) {
-    }
-
     public function index()
     {
         return view('permission-registry::positions.index');
@@ -33,8 +24,11 @@ class PositionController extends Controller
 
     public function show(Position $position)
     {
-        $position->load(['permissions', 'groups', 'parent', 'children']);
-        return view('permission-registry::positions.show', compact('position'));
+        $position->load(['permissions', 'groups', 'parent', 'children', 'permissionResources.resource']);
+        $resourcesByPermission = $position->permissionResources
+            ->groupBy('permission_id')
+            ->map(fn ($rows) => $rows->map(fn ($r) => $r->resource)->filter()->values());
+        return view('permission-registry::positions.show', compact('position', 'resourcesByPermission'));
     }
 
     public function create()
@@ -120,31 +114,47 @@ class PositionController extends Controller
             return redirect()->back()->withErrors(['parent_id' => __('permission-registry::Cannot set position as its own parent')]);
         }
 
-        $position->update([
-            'name' => $request->name,
-            'description' => $request->description,
-            'parent_id' => $request->parent_id,
-        ]);
+        $diff = DB::transaction(function () use ($position, $request): array {
+            $position->update([
+                'name' => $request->name,
+                'description' => $request->description,
+                'parent_id' => $request->parent_id,
+            ]);
 
-        $oldPairs = $this->loadPositionPairs($position->id);
+            $oldPairs = $this->loadPositionPairs($position->id);
 
-        if ($request->has('permissions')) {
-            $position->permissions()->sync((array) $request->input('permissions', []));
-        } else {
-            $position->permissions()->detach();
+            if ($request->has('permissions')) {
+                $position->permissions()->sync((array) $request->input('permissions', []));
+            } else {
+                $position->permissions()->detach();
+            }
+
+            if ($request->has('groups')) {
+                $position->groups()->sync($request->groups);
+            } else {
+                $position->groups()->detach();
+            }
+
+            $this->syncPermissionResources($position, $request->input('permission_resources', []));
+
+            $newPairs = $this->loadPositionPairs($position->id);
+
+            return [
+                'added' => array_values(array_diff_key($newPairs, $oldPairs)),
+                'removed' => array_values(array_diff_key($oldPairs, $newPairs)),
+                'userIds' => $this->affectedUserIds($position),
+            ];
+        });
+
+        if (!empty($diff['userIds']) && (!empty($diff['added']) || !empty($diff['removed']))) {
+            ApplyMembershipResourceDiffJob::dispatch(
+                'position',
+                $position->id,
+                $diff['added'],
+                $diff['removed'],
+                $diff['userIds'],
+            )->afterCommit();
         }
-
-        if ($request->has('groups')) {
-            $position->groups()->sync($request->groups);
-        } else {
-            $position->groups()->detach();
-        }
-
-        $this->syncPermissionResources($position, $request->input('permission_resources', []));
-
-        $newPairs = $this->loadPositionPairs($position->id);
-
-        $this->applyPairsDiff($position, $oldPairs, $newPairs);
 
         return redirect()->route('permission-registry::positions.show', $position)
             ->with('success', __('permission-registry::Position updated successfully'));
@@ -241,14 +251,12 @@ class PositionController extends Controller
             }
         }
 
-        DB::transaction(function () use ($position, $desired) {
-            PositionPermissionResource::query()->where('position_id', $position->id)->delete();
-            if (!empty($desired)) {
-                $now = now();
-                $rows = array_map(fn (array $r) => $r + ['created_at' => $now, 'updated_at' => $now], $desired);
-                PositionPermissionResource::query()->insert($rows);
-            }
-        });
+        PositionPermissionResource::query()->where('position_id', $position->id)->delete();
+        if (!empty($desired)) {
+            $now = now();
+            $rows = array_map(fn (array $r) => $r + ['created_at' => $now, 'updated_at' => $now], $desired);
+            PositionPermissionResource::query()->insert($rows);
+        }
     }
 
     /**
@@ -303,46 +311,6 @@ class PositionController extends Controller
     }
 
     /**
-     * @param array<string, array{permission_id:int, resource_id:?int, auto_grant:bool, auto_revoke:bool}> $oldPairs
-     * @param array<string, array{permission_id:int, resource_id:?int, auto_grant:bool, auto_revoke:bool}> $newPairs
-     */
-    private function applyPairsDiff(Position $position, array $oldPairs, array $newPairs): void
-    {
-        $added = array_diff_key($newPairs, $oldPairs);
-        $removed = array_diff_key($oldPairs, $newPairs);
-
-        if (empty($added) && empty($removed)) {
-            return;
-        }
-
-        $userIds = $this->affectedUserIds($position);
-        if (empty($userIds)) {
-            return;
-        }
-
-        foreach ($userIds as $userId) {
-            foreach ($added as $pair) {
-                if (empty($pair['auto_grant'])) {
-                    continue;
-                }
-                $this->safeGrant($userId, $pair['permission_id'], $pair['resource_id']);
-            }
-
-            $remainingPairs = $this->pairsCollector->collect($userId, excludePositionId: $position->id);
-
-            foreach ($removed as $key => $pair) {
-                if (empty($pair['auto_revoke'])) {
-                    continue;
-                }
-                if (isset($remainingPairs[$key])) {
-                    continue;
-                }
-                $this->safeRevoke($userId, $pair['permission_id'], $pair['resource_id']);
-            }
-        }
-    }
-
-    /**
      * Пользователи, чьи права могут зависеть от этой позиции: участники самой позиции
      * и всех дочерних позиций (которые наследуют по parent).
      *
@@ -374,46 +342,6 @@ class PositionController extends Controller
             }
             $ids[] = $childId;
             $this->collectChildrenIds($childId, $ids);
-        }
-    }
-
-    private function safeGrant(int $userId, int $permissionId, ?int $resourceId): void
-    {
-        try {
-            $this->grantAction->handle(
-                userId: $userId,
-                permissionId: $permissionId,
-                resourceId: $resourceId,
-                meta: ['auto_granted' => true, 'auto_grant_source' => 'position'],
-            );
-        } catch (\Throwable $e) {
-            Log::warning(sprintf(
-                'Failed to grant permission %d (resource=%s) to user %d on position resource change: %s',
-                $permissionId,
-                $resourceId ?? 'null',
-                $userId,
-                $e->getMessage(),
-            ));
-        }
-    }
-
-    private function safeRevoke(int $userId, int $permissionId, ?int $resourceId): void
-    {
-        try {
-            $this->revokeAction->handle(
-                userId: $userId,
-                permissionId: $permissionId,
-                skipTriggers: false,
-                resourceId: $resourceId,
-            );
-        } catch (\Throwable $e) {
-            Log::warning(sprintf(
-                'Failed to revoke permission %d (resource=%s) from user %d on position resource change: %s',
-                $permissionId,
-                $resourceId ?? 'null',
-                $userId,
-                $e->getMessage(),
-            ));
         }
     }
 }
