@@ -159,6 +159,12 @@ class ExecuteApprovedImportAction
         $virtualUserId = $row->{ImportStagingRow::MATCHED_VIRTUAL_USER_ID};
         $globalFields = $this->buildGlobalFields($row, $mapping);
 
+        foreach ($mapping as $mappingData) {
+            if ($mappingData['is_internal']) {
+                unset($globalFields[$mappingData['permission_field_id']]);
+            }
+        }
+
         $this->updateGlobalFieldsAction->execute($virtualUserId, $globalFields);
         $this->rehireIfDeactivated($virtualUserId);
 
