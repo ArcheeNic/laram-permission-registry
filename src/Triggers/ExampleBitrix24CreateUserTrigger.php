@@ -77,6 +77,11 @@ class ExampleBitrix24CreateUserTrigger implements PermissionTriggerInterface
         return 'Создает учетную запись пользователя в системе Bitrix24';
     }
 
+    public function getServiceName(): string
+    {
+        return 'Bitrix24';
+    }
+
     public function getRequiredFields(): array
     {
         return [

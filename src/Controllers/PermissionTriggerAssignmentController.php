@@ -25,7 +25,9 @@ class PermissionTriggerAssignmentController extends Controller
 
         $grantTriggers = $permission->grantTriggers()->with('trigger')->get();
         $revokeTriggers = $permission->revokeTriggers()->with('trigger')->get();
-        $availableTriggers = PermissionTrigger::where('is_active', true)->get();
+        $availableTriggersByService = $this->groupTriggersByService(
+            PermissionTrigger::where('is_active', true)->orderBy('name')->get()
+        );
         $notConfiguredTriggerIds = $this->getNotConfiguredTriggerIds();
         $overlaps = $this->triggerOverlapDetectorService->detectOverlaps($permission->id);
 
@@ -33,10 +35,20 @@ class PermissionTriggerAssignmentController extends Controller
             'permission',
             'grantTriggers',
             'revokeTriggers',
-            'availableTriggers',
+            'availableTriggersByService',
             'notConfiguredTriggerIds',
             'overlaps'
         ));
+    }
+
+    private function groupTriggersByService(\Illuminate\Support\Collection $triggers): \Illuminate\Support\Collection
+    {
+        $lookup = $this->triggerDiscoveryService->getServiceLookup();
+        $fallback = __('permission-registry::messages.other_service');
+
+        return $triggers
+            ->groupBy(fn (PermissionTrigger $trigger) => $lookup[$trigger->class_name] ?? $fallback)
+            ->sortKeys();
     }
 
     public function store(Request $request, Permission $permission)

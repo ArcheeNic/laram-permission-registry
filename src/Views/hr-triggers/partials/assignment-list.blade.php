@@ -5,7 +5,7 @@
     'title',
     'description',
     'assignments',
-    'availableTriggers',
+    'availableTriggersByService',
     'notConfiguredTriggerIds' => [],
 ])
 
@@ -65,11 +65,15 @@
         <div class="flex-1 min-w-[200px]">
             <select id="{{ $key }}-trigger-select" data-trigger-select="1" data-key="{{ $key }}" class="w-full rounded-md border-gray-300 dark:bg-neutral-700 dark:border-neutral-600 dark:text-gray-100">
                 <option value="">{{ __('permission-registry::messages.select_trigger') }}</option>
-                @foreach($availableTriggers as $trigger)
-                    @php($notConfigured = in_array($trigger->id, $notConfiguredTriggerIds))
-                    <option value="{{ $trigger->id }}" @if($notConfigured) disabled @endif>
-                        {{ $trigger->name }}@if($notConfigured) — {{ __('permission-registry::messages.not_configured') }}@endif
-                    </option>
+                @foreach($availableTriggersByService as $service => $triggers)
+                    <optgroup label="{{ $service }}">
+                        @foreach($triggers as $trigger)
+                            @php($notConfigured = in_array($trigger->id, $notConfiguredTriggerIds))
+                            <option value="{{ $trigger->id }}" @if($notConfigured) disabled @endif>
+                                {{ $trigger->name }}@if($notConfigured) — {{ __('permission-registry::messages.not_configured') }}@endif
+                            </option>
+                        @endforeach
+                    </optgroup>
                 @endforeach
             </select>
         </div>

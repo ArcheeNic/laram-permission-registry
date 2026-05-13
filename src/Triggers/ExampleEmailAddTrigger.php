@@ -74,6 +74,11 @@ class ExampleEmailAddTrigger implements PermissionTriggerInterface
         return 'Создает корпоративный почтовый ящик для пользователя';
     }
 
+    public function getServiceName(): string
+    {
+        return 'Email';
+    }
+
     public function getRequiredFields(): array
     {
         return [

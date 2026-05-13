@@ -42,18 +42,30 @@ class HrEventTriggerAssignmentController extends Controller
             ];
         }
 
-        $availableTriggers = PermissionTrigger::query()
-            ->where('is_active', true)
-            ->get();
-
+        $availableTriggersByService = $this->groupTriggersByService(
+            PermissionTrigger::query()
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get()
+        );
         $notConfiguredTriggerIds = $this->getNotConfiguredTriggerIds();
 
         return view('permission-registry::hr-triggers.index', compact(
             'categories',
             'triggersByCategory',
-            'availableTriggers',
+            'availableTriggersByService',
             'notConfiguredTriggerIds'
         ));
+    }
+
+    private function groupTriggersByService(\Illuminate\Support\Collection $triggers): \Illuminate\Support\Collection
+    {
+        $lookup = $this->triggerDiscoveryService->getServiceLookup();
+        $fallback = __('permission-registry::messages.other_service');
+
+        return $triggers
+            ->groupBy(fn (PermissionTrigger $trigger) => $lookup[$trigger->class_name] ?? $fallback)
+            ->sortKeys();
     }
 
     public function store(Request $request)

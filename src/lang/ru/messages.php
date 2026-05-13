@@ -186,4 +186,5 @@ return [
     'import.rows_shown' => 'Показано :count из :total',
     'triggers_overlap_title' => 'Пересечение конфигураций триггеров',
     'triggers_overlap_warning' => 'Отдел :department также используется в правах: :permissions',
+    'other_service' => 'Прочее',
 ];

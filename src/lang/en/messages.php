@@ -186,4 +186,5 @@ return [
     'import.rows_shown' => 'Showing :count of :total',
     'triggers_overlap_title' => 'Trigger configuration overlap',
     'triggers_overlap_warning' => 'Department :department is also used in permissions: :permissions',
+    'other_service' => 'Other',
 ];

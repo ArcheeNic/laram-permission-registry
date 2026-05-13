@@ -113,10 +113,15 @@
                             <div class="flex-1 min-w-[200px]">
                                 <select id="grant-trigger-select" class="w-full rounded-md border-gray-300 dark:bg-neutral-700 dark:border-neutral-600 dark:text-gray-100">
                                     <option value="">Выберите триггер...</option>
-                                    @foreach($availableTriggers as $trigger)
-                                        @if($trigger->type === 'grant' || $trigger->type === 'both')
-                                            @php($notConfigured = in_array($trigger->id, $notConfiguredTriggerIds ?? []))
-                                            <option value="{{ $trigger->id }}" @if($notConfigured) disabled @endif>{{ $trigger->name }}@if($notConfigured) — {{ __('permission-registry::Not configured') }}@endif</option>
+                                    @foreach($availableTriggersByService as $service => $triggers)
+                                        @php($visible = $triggers->filter(fn ($t) => $t->type === 'grant' || $t->type === 'both'))
+                                        @if($visible->isNotEmpty())
+                                            <optgroup label="{{ $service }}">
+                                                @foreach($visible as $trigger)
+                                                    @php($notConfigured = in_array($trigger->id, $notConfiguredTriggerIds ?? []))
+                                                    <option value="{{ $trigger->id }}" @if($notConfigured) disabled @endif>{{ $trigger->name }}@if($notConfigured) — {{ __('permission-registry::Not configured') }}@endif</option>
+                                                @endforeach
+                                            </optgroup>
                                         @endif
                                     @endforeach
                                 </select>
@@ -195,10 +200,15 @@
                             <div class="flex-1 min-w-[200px]">
                                 <select id="revoke-trigger-select" class="w-full rounded-md border-gray-300 dark:bg-neutral-700 dark:border-neutral-600 dark:text-gray-100">
                                     <option value="">Выберите триггер...</option>
-                                    @foreach($availableTriggers as $trigger)
-                                        @if($trigger->type === 'revoke' || $trigger->type === 'both')
-                                            @php($notConfigured = in_array($trigger->id, $notConfiguredTriggerIds ?? []))
-                                            <option value="{{ $trigger->id }}" @if($notConfigured) disabled @endif>{{ $trigger->name }}@if($notConfigured) — {{ __('permission-registry::Not configured') }}@endif</option>
+                                    @foreach($availableTriggersByService as $service => $triggers)
+                                        @php($visible = $triggers->filter(fn ($t) => $t->type === 'revoke' || $t->type === 'both'))
+                                        @if($visible->isNotEmpty())
+                                            <optgroup label="{{ $service }}">
+                                                @foreach($visible as $trigger)
+                                                    @php($notConfigured = in_array($trigger->id, $notConfiguredTriggerIds ?? []))
+                                                    <option value="{{ $trigger->id }}" @if($notConfigured) disabled @endif>{{ $trigger->name }}@if($notConfigured) — {{ __('permission-registry::Not configured') }}@endif</option>
+                                                @endforeach
+                                            </optgroup>
                                         @endif
                                     @endforeach
                                 </select>

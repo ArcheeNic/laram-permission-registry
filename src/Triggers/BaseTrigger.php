@@ -129,6 +129,14 @@ abstract class BaseTrigger implements PermissionTriggerInterface
         return [];
     }
 
+    /**
+     * Название внешнего сервиса (Bitrix24, Slack, Jira и т.п.) для группировки в UI.
+     */
+    public function getServiceName(): string
+    {
+        return __('permission-registry::messages.other_service');
+    }
+
     protected function getValidationErrorMessage(string $fieldName): string
     {
         return __("Поле ':field' обязательно для выполнения триггера", ['field' => $fieldName]);

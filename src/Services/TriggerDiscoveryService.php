@@ -7,18 +7,25 @@ use Illuminate\Support\Facades\File;
 
 class TriggerDiscoveryService
 {
+    private ?array $cachedTriggers = null;
+
     /**
      * Сканировать namespace и получить список доступных триггеров с метаданными
      */
     public function discover(): array
     {
+        if ($this->cachedTriggers !== null) {
+            return $this->cachedTriggers;
+        }
+
         $namespace = config('triggers.namespace');
         $directory = config('triggers.directory');
 
         if (!$namespace || !$directory || !File::isDirectory($directory)) {
-            return [];
+            return $this->cachedTriggers = [];
         }
 
+        $fallbackService = __('permission-registry::messages.other_service');
         $triggers = [];
         $files = File::allFiles($directory);
 
@@ -28,14 +35,14 @@ class TriggerDiscoveryService
             }
 
             $className = $this->getClassNameFromFile($file, $namespace, $directory);
-            
+
             if (!$className || !class_exists($className)) {
                 continue;
             }
 
             try {
                 $reflection = new \ReflectionClass($className);
-                
+
                 if ($reflection->isAbstract() || $reflection->isInterface() || $reflection->isTrait()) {
                     continue;
                 }
@@ -45,17 +52,19 @@ class TriggerDiscoveryService
                 }
 
                 $instance = app($className);
-                
+
                 // Проверить наличие методов метаданных (опциональные)
                 $name = method_exists($instance, 'getName') ? $instance->getName() : $className;
                 $description = method_exists($instance, 'getDescription') ? $instance->getDescription() : '';
                 $requiredFields = method_exists($instance, 'getRequiredFields') ? $instance->getRequiredFields() : [];
                 $configFields = method_exists($instance, 'getConfigFields') ? $instance->getConfigFields() : [];
+                $serviceName = method_exists($instance, 'getServiceName') ? $instance->getServiceName() : $fallbackService;
 
                 $triggers[] = [
                     'class_name' => $className,
                     'name' => $name,
                     'description' => $description,
+                    'service_name' => $serviceName,
                     'required_fields' => $requiredFields,
                     'config_fields' => $configFields,
                     'can_rollback' => $instance->canRollback(),
@@ -67,6 +76,7 @@ class TriggerDiscoveryService
                     'class_name' => $className,
                     'name' => class_basename($className),
                     'description' => '',
+                    'service_name' => $fallbackService,
                     'required_fields' => [],
                     'config_fields' => [],
                     'can_rollback' => false,
@@ -75,7 +85,26 @@ class TriggerDiscoveryService
             }
         }
 
-        return $triggers;
+        usort($triggers, static function (array $a, array $b): int {
+            return [$a['service_name'], $a['name']] <=> [$b['service_name'], $b['name']];
+        });
+
+        return $this->cachedTriggers = $triggers;
+    }
+
+    /**
+     * Карта class_name → service_name по результатам discover().
+     *
+     * @return array<string,string>
+     */
+    public function getServiceLookup(): array
+    {
+        $lookup = [];
+        foreach ($this->discover() as $item) {
+            $lookup[$item['class_name']] = $item['service_name'] ?? __('permission-registry::messages.other_service');
+        }
+
+        return $lookup;
     }
 
     /**
@@ -114,11 +143,15 @@ class TriggerDiscoveryService
             $description = method_exists($instance, 'getDescription') ? $instance->getDescription() : '';
             $requiredFields = method_exists($instance, 'getRequiredFields') ? $instance->getRequiredFields() : [];
             $configFields = method_exists($instance, 'getConfigFields') ? $instance->getConfigFields() : [];
+            $serviceName = method_exists($instance, 'getServiceName')
+                ? $instance->getServiceName()
+                : __('permission-registry::messages.other_service');
 
             return [
                 'class_name' => $className,
                 'name' => $name,
                 'description' => $description,
+                'service_name' => $serviceName,
                 'required_fields' => $requiredFields,
                 'config_fields' => $configFields,
                 'can_rollback' => $instance->canRollback(),

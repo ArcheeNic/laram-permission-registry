@@ -63,7 +63,7 @@
                                 'title' => __('permission-registry::messages.triggers_on_hire'),
                                 'description' => __('permission-registry::messages.triggers_on_hire_description'),
                                 'assignments' => $triggersByCategory[$category->value]['hire'],
-                                'availableTriggers' => $availableTriggers,
+                                'availableTriggersByService' => $availableTriggersByService,
                                 'notConfiguredTriggerIds' => $notConfiguredTriggerIds,
                             ])
                         </div>
@@ -76,7 +76,7 @@
                                 'title' => __('permission-registry::messages.triggers_on_fire'),
                                 'description' => __('permission-registry::messages.triggers_on_fire_description'),
                                 'assignments' => $triggersByCategory[$category->value]['fire'],
-                                'availableTriggers' => $availableTriggers,
+                                'availableTriggersByService' => $availableTriggersByService,
                                 'notConfiguredTriggerIds' => $notConfiguredTriggerIds,
                             ])
                         </div>

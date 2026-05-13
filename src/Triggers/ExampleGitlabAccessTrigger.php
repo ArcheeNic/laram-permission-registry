@@ -92,6 +92,11 @@ class ExampleGitlabAccessTrigger implements PermissionTriggerInterface
         return 'Создает пользователя в GitLab и добавляет SSH ключ';
     }
 
+    public function getServiceName(): string
+    {
+        return 'GitLab';
+    }
+
     public function getRequiredFields(): array
     {
         return [

@@ -251,23 +251,41 @@
                 return fieldContainer;
             }
 
+            const fallbackServiceName = @json(__('permission-registry::messages.other_service'));
+
             // Загрузить список триггеров
             fetch('{{ route('permission-registry::triggers.api.discover') }}')
                 .then(response => response.json())
                 .then(data => {
                     classNameSelect.innerHTML = '<option value="">Выберите триггер</option>';
-                    
-                    if (data.success && data.triggers.length > 0) {
-                        data.triggers.forEach(trigger => {
-                            const option = document.createElement('option');
-                            option.value = trigger.class_name;
-                            option.textContent = trigger.name;
-                            option.dataset.metadata = JSON.stringify(trigger);
-                            classNameSelect.appendChild(option);
-                        });
-                    } else {
+
+                    if (!data.success || !data.triggers.length) {
                         classNameSelect.innerHTML = '<option value="">Триггеры не найдены</option>';
+                        return;
                     }
+
+                    const groups = {};
+                    data.triggers.forEach(trigger => {
+                        const service = trigger.service_name || fallbackServiceName;
+                        (groups[service] = groups[service] || []).push(trigger);
+                    });
+
+                    Object.keys(groups)
+                        .sort((a, b) => a.localeCompare(b))
+                        .forEach(service => {
+                            const optgroup = document.createElement('optgroup');
+                            optgroup.label = service;
+                            groups[service]
+                                .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+                                .forEach(trigger => {
+                                    const option = document.createElement('option');
+                                    option.value = trigger.class_name;
+                                    option.textContent = trigger.name;
+                                    option.dataset.metadata = JSON.stringify(trigger);
+                                    optgroup.appendChild(option);
+                                });
+                            classNameSelect.appendChild(optgroup);
+                        });
                 })
                 .catch(error => {
                     console.error('Ошибка загрузки триггеров:', error);
