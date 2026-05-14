@@ -3,7 +3,22 @@
 namespace ArcheeNic\PermissionRegistry\Models\Base;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int|null $tenant_id
+ * @property string $service
+ * @property string $kind
+ * @property string $external_id
+ * @property string $name
+ * @property array<string, mixed>|null $metadata
+ * @property Carbon|null $synced_at
+ * @property bool $present_in_source
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property Carbon|null $deleted_at
+ */
 class PermissionResource extends Model
 {
     public const ID = 'id';
