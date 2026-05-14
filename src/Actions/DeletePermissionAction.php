@@ -8,16 +8,12 @@ use ArcheeNic\PermissionRegistry\Models\Permission;
 
 class DeletePermissionAction
 {
-    public function handle(Permission $permission): void
+    public function __construct(private RevokePermissionAction $revokeAction)
     {
-        $activeGrantCount = $permission->grantedPermissions()
-            ->whereNotIn('status', $this->terminalGrantStatuses())
-            ->count();
+    }
 
-        if ($activeGrantCount > 0) {
-            throw PermissionCannotBeDeletedException::hasActiveGrants($activeGrantCount);
-        }
-
+    public function handle(Permission $permission, bool $invokeTriggers = true): void
+    {
         $dependentRows = $permission->dependents()
             ->with(['permission' => fn ($query) => $query->withTrashed()->select('id', 'name')])
             ->get()
@@ -40,6 +36,19 @@ class DeletePermissionAction
 
             throw PermissionCannotBeDeletedException::hasDependents($dependentNames);
         }
+
+        $permission->grantedPermissions()
+            ->whereNotIn('status', $this->terminalGrantStatuses())
+            ->get()
+            ->each(function ($granted) use ($invokeTriggers) {
+                $this->revokeAction->handle(
+                    userId: $granted->virtual_user_id,
+                    permissionId: $granted->permission_id,
+                    skipTriggers: !$invokeTriggers,
+                    executeTriggersSync: $invokeTriggers,
+                    resourceId: $granted->resource_id,
+                );
+            });
 
         $permission->delete();
     }

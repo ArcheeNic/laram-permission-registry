@@ -290,6 +290,17 @@
                         {{ __('permission-registry::Are you sure you want to delete this permission?') }}
                     </div>
 
+                    <label class="mt-4 flex items-start gap-2 text-sm text-gray-700 dark:text-gray-200 cursor-pointer">
+                        <input wire:model="invokeTriggersOnDelete" type="checkbox"
+                               class="mt-0.5 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-600 dark:bg-neutral-700">
+                        <span>
+                            {{ __('permission-registry::Invoke revoke triggers in connected systems') }}
+                            <span class="block text-xs text-gray-500 dark:text-gray-400">
+                                {{ __('permission-registry::If disabled, access will be revoked in the registry only; external systems will not be touched.') }}
+                            </span>
+                        </span>
+                    </label>
+
                     @if($deleteError)
                         <div class="mt-4 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700 dark:border-red-500/60 dark:bg-red-900/30 dark:text-red-300">
                             {{ $deleteError }}

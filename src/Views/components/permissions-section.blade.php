@@ -57,7 +57,7 @@
                            class="text-sm rounded-lg border-gray-300 dark:border-neutral-600 dark:bg-neutral-700 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 w-full">
                 </div>
 
-                <x-pr::permissions-table 
+                <x-pr::permissions-table
                     :permissions="$this->availablePermissions"
                     :selectedPermissions="$this->selectedPermissions"
                     :permissionFields="$this->permissionFields"
@@ -65,6 +65,8 @@
                     permissionType="direct"
                     :showSource="false"
                     :permissionStatuses="$this->permissionStatuses"
+                    :permissionResourceCatalog="$this->permissionResourceCatalog"
+                    :permissionResources="$this->permissionResources"
                 />
 
                 <div class="mt-4 flex justify-end">

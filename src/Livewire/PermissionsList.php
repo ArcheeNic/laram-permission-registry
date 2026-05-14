@@ -26,6 +26,7 @@ class PermissionsList extends Component
     public $confirmingDelete = false;
     public $permissionToDelete = null;
     public $deleteError = null;
+    public bool $invokeTriggersOnDelete = true;
 
     protected $queryString = [
         'search' => ['except' => ''],
@@ -72,6 +73,7 @@ class PermissionsList extends Component
         $this->confirmingDelete = true;
         $this->permissionToDelete = $permissionId;
         $this->deleteError = null;
+        $this->invokeTriggersOnDelete = true;
     }
 
     public function deletePermission(DeletePermissionAction $action): void
@@ -90,7 +92,7 @@ class PermissionsList extends Component
         }
 
         try {
-            $action->handle($permission);
+            $action->handle($permission, $this->invokeTriggersOnDelete);
             $this->cancelDelete();
             session()->flash('success', __('permission-registry::Permission deleted successfully'));
         } catch (PermissionCannotBeDeletedException $exception) {
@@ -103,6 +105,7 @@ class PermissionsList extends Component
         $this->confirmingDelete = false;
         $this->permissionToDelete = null;
         $this->deleteError = null;
+        $this->invokeTriggersOnDelete = true;
     }
 
     public function getPermissionsProperty()

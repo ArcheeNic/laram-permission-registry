@@ -26,27 +26,42 @@ class DeletePermissionActionTest extends TestCase
         $this->assertSoftDeleted('permissions', ['id' => $permission->id]);
     }
 
-    public function test_blocks_deletion_when_non_terminal_granted_permission_exists(): void
+    public function test_revokes_active_grants_and_soft_deletes_permission(): void
     {
         $permission = Permission::factory()->create([
             'service' => 'svc',
-            'name' => 'blocked-by-grant',
+            'name' => 'with-active-grant',
         ]);
 
-        GrantedPermission::factory()->create([
+        $granted = GrantedPermission::factory()->create([
             'virtual_user_id' => VirtualUser::factory(),
             'permission_id' => $permission->id,
             'status' => GrantedPermissionStatus::GRANTED->value,
         ]);
 
-        $thrown = null;
-        try {
-            app(DeletePermissionAction::class)->handle($permission);
-        } catch (\Throwable $e) {
-            $thrown = $e;
-        }
+        app(DeletePermissionAction::class)->handle($permission);
 
-        $this->assertInstanceOf(PermissionCannotBeDeletedException::class, $thrown);
+        $this->assertSoftDeleted('permissions', ['id' => $permission->id]);
+        $this->assertDatabaseMissing('granted_permissions', ['id' => $granted->id]);
+    }
+
+    public function test_skips_triggers_when_invoke_triggers_flag_is_false(): void
+    {
+        $permission = Permission::factory()->create([
+            'service' => 'svc',
+            'name' => 'silent-delete',
+        ]);
+
+        $granted = GrantedPermission::factory()->create([
+            'virtual_user_id' => VirtualUser::factory(),
+            'permission_id' => $permission->id,
+            'status' => GrantedPermissionStatus::GRANTED->value,
+        ]);
+
+        app(DeletePermissionAction::class)->handle($permission, invokeTriggers: false);
+
+        $this->assertSoftDeleted('permissions', ['id' => $permission->id]);
+        $this->assertDatabaseMissing('granted_permissions', ['id' => $granted->id]);
     }
 
     public function test_blocks_deletion_when_required_by_permission_dependency(): void

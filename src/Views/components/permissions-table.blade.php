@@ -7,7 +7,9 @@
     'showSource' => false,
     'permissionStatuses' => [],
     'dependentPermissionErrors' => [],
-    'showContinueStepLink' => false
+    'showContinueStepLink' => false,
+    'permissionResourceCatalog' => [],
+    'permissionResources' => [],
 ])
 
 <div class="max-h-64 overflow-y-auto">
@@ -45,6 +47,16 @@
                     ? ($permission['status_message'] ?? null)
                     : ($permissionStatuses[$permId]['status_message'] ?? null);
                 $dependentError = $dependentPermissionErrors[$permId] ?? null;
+                $permScope = !is_array($permission) ? ($permission->scope ?? null) : null;
+                $permResourceKind = !is_array($permission) ? ($permission->resource_kind ?? null) : null;
+                $isResourceScoped = $permissionType === 'direct'
+                    && $permScope instanceof \ArcheeNic\PermissionRegistry\Enums\PermissionScope
+                    && $permScope === \ArcheeNic\PermissionRegistry\Enums\PermissionScope::Resource;
+                $resourceList = $isResourceScoped ? ($permissionResourceCatalog[$permId] ?? collect()) : collect();
+                $selectedResourceIdsForPermission = $isResourceScoped
+                    ? array_map('intval', (array) ($permissionResources[$permId] ?? []))
+                    : [];
+                $isPermissionChecked = isset($selectedPermissions[$permId]) && $selectedPermissions[$permId];
             @endphp
             <tr class="hover:bg-gray-50 dark:hover:bg-neutral-700 transition-colors">
                 <td class="px-3 py-2 whitespace-nowrap">
@@ -147,9 +159,24 @@
                     </td>
                 </tr>
             @endif
+            @if($isResourceScoped && $isPermissionChecked)
+                <tr class="bg-emerald-50 dark:bg-emerald-900/20">
+                    <td colspan="{{ $showSource ? 5 : 4 }}" class="px-3 py-3">
+                        <p class="text-xs font-medium text-emerald-800 dark:text-emerald-200 mb-2">
+                            {{ __('permission-registry::Resources') }}
+                        </p>
+                        <x-pr::resource-select
+                            :resources="$resourceList"
+                            :selected="$selectedResourceIdsForPermission"
+                            :wire-model="'permissionResources.' . $permId"
+                            :resource-kind="$permResourceKind"
+                        />
+                    </td>
+                </tr>
+            @endif
             <!-- Поля доступа - отображаются только если разрешено -->
-            @if($hasFields && 
-                isset($selectedPermissions[$permId]) && 
+            @if($hasFields &&
+                isset($selectedPermissions[$permId]) &&
                 $selectedPermissions[$permId] &&
                 isset($expandedPermissionFields[$permId]))
                 <tr class="bg-blue-50 dark:bg-blue-900/20">

@@ -43,6 +43,9 @@
                                         {{ __('permission-registry::Название') }}
                                     </th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        {{ __('permission-registry::Ресурс') }}
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                         {{ __('permission-registry::Выдано') }}
                                     </th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -64,6 +67,14 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
                                             {{ $grantedPermission->permission->name }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                            @if($grantedPermission->resource)
+                                                {{ $grantedPermission->resource->name }}
+                                                <span class="ml-1 text-xs font-mono text-gray-400 dark:text-gray-500">{{ $grantedPermission->resource->external_id }}</span>
+                                            @else
+                                                -
+                                            @endif
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                             {{ $grantedPermission->granted_at->format('d.m.Y H:i') }}
@@ -141,6 +152,27 @@
                             </div>
                         </div>
 
+                        <div class="mt-4">
+                            @foreach($availablePermissions as $permission)
+                                @php
+                                    $isResourceScoped = ($permission->scope ?? \ArcheeNic\PermissionRegistry\Enums\PermissionScope::Service) === \ArcheeNic\PermissionRegistry\Enums\PermissionScope::Resource;
+                                @endphp
+                                @if($isResourceScoped)
+                                    <div class="resource-block hidden mt-2" data-permission-id="{{ $permission->id }}">
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                            {{ __('permission-registry::Ресурсы') }}*
+                                        </label>
+                                        <x-pr::resource-select
+                                            :resources="$resourceCatalog[$permission->id] ?? collect()"
+                                            :selected="[]"
+                                            name="resource_ids[]"
+                                            :resource-kind="$permission->resource_kind"
+                                        />
+                                    </div>
+                                @endif
+                            @endforeach
+                        </div>
+
                         <div id="fields-container" class="hidden space-y-4 mt-4">
                             <h5 class="text-sm font-semibold">{{ __('permission-registry::Поля права доступа') }}</h5>
                             <div id="permission-fields" class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -164,40 +196,49 @@
             const permissionSelect = document.getElementById('permission_id');
             const fieldsContainer = document.getElementById('fields-container');
             const permissionFields = document.getElementById('permission-fields');
+            const resourceBlocks = document.querySelectorAll('.resource-block');
 
-            // Данные о полях прав доступа
             const permissions = @json($permissionsWithFields);
 
-            permissionSelect.addEventListener('change', function() {
-                const permissionId = this.value;
+            function toggleResourceBlocks(permission) {
+                resourceBlocks.forEach(block => {
+                    const permId = block.getAttribute('data-permission-id');
+                    const shouldShow = permission && permission.scope === 'resource' && String(permission.id) === permId;
+                    block.classList.toggle('hidden', !shouldShow);
+                    if (!shouldShow) {
+                        block.querySelectorAll('input[type="checkbox"]').forEach(cb => { cb.checked = false; });
+                    }
+                });
+            }
+
+            function renderFields(permission) {
                 permissionFields.innerHTML = '';
 
-                if (permissionId) {
-                    const permission = permissions.find(p => p.id == permissionId);
-
-                    if (permission && permission.fields.length > 0) {
-                        fieldsContainer.classList.remove('hidden');
-
-                        permission.fields.forEach(field => {
-                            const fieldHtml = `
-                                <div>
-                                    <label for="field_${field.id}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        ${field.name}
-                                    </label>
-                                    <input type="text" id="field_${field.id}" name="fields[${field.id}]"
-                                           value="${field.default_value || ''}"
-                                           class="mt-1 block w-full border-gray-300 dark:border-neutral-600 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
-                                </div>
-                            `;
-
-                            permissionFields.insertAdjacentHTML('beforeend', fieldHtml);
-                        });
-                    } else {
-                        fieldsContainer.classList.add('hidden');
-                    }
+                if (permission && permission.fields.length > 0) {
+                    fieldsContainer.classList.remove('hidden');
+                    permission.fields.forEach(field => {
+                        const fieldHtml = `
+                            <div>
+                                <label for="field_${field.id}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    ${field.name}
+                                </label>
+                                <input type="text" id="field_${field.id}" name="fields[${field.id}]"
+                                       value="${field.default_value || ''}"
+                                       class="mt-1 block w-full border-gray-300 dark:border-neutral-600 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            </div>
+                        `;
+                        permissionFields.insertAdjacentHTML('beforeend', fieldHtml);
+                    });
                 } else {
                     fieldsContainer.classList.add('hidden');
                 }
+            }
+
+            permissionSelect.addEventListener('change', function() {
+                const permissionId = this.value;
+                const permission = permissionId ? permissions.find(p => p.id == permissionId) : null;
+                toggleResourceBlocks(permission);
+                renderFields(permission);
             });
         });
     </script>

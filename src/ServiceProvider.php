@@ -226,6 +226,7 @@ class ServiceProvider extends BaseServiceProvider
         Blade::component('permission-registry::components.field-hint', 'pr::field-hint');
         Blade::component('permission-registry::components.field-hint', 'perm::field-hint');
         Blade::component('permission-registry::components.widget-slot', 'pr::widget-slot');
+        Blade::component('permission-registry::components.resource-select', 'pr::resource-select');
     }
 
     protected function registerGates(): void
