@@ -16,7 +16,6 @@ use ArcheeNic\PermissionRegistry\Enums\VirtualUserStatus;
 use ArcheeNic\PermissionRegistry\Events\AfterPermissionGranted;
 use ArcheeNic\PermissionRegistry\Models\AccessAttestation;
 use ArcheeNic\PermissionRegistry\Models\AccessEvidence;
-use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
 use ArcheeNic\PermissionRegistry\Models\ManualProvisionTask;
 use ArcheeNic\PermissionRegistry\Models\Permission;
 use ArcheeNic\PermissionRegistry\Models\VirtualUser;
@@ -31,9 +30,13 @@ use Mockery;
 class GovernanceFlowTest extends TestCase
 {
     private VirtualUser $user;
+
     private Permission $automatedPermission;
+
     private Permission $manualPermission;
+
     private Permission $declarativePermission;
+
     private Permission $declarativePermissionWithAttestation;
 
     protected function setUp(): void

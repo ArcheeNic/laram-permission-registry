@@ -3,13 +3,13 @@
 namespace ArcheeNic\PermissionRegistry\Tests\Unit\Actions;
 
 use ArcheeNic\PermissionRegistry\Actions\ReconcileUserPermissionsAction;
+use ArcheeNic\PermissionRegistry\Enums\VirtualUserStatus;
 use ArcheeNic\PermissionRegistry\Jobs\GrantMultiplePermissionsJob;
 use ArcheeNic\PermissionRegistry\Jobs\RevokeMultiplePermissionsJob;
 use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
 use ArcheeNic\PermissionRegistry\Models\Permission;
 use ArcheeNic\PermissionRegistry\Models\PermissionGroup;
 use ArcheeNic\PermissionRegistry\Models\Position;
-use ArcheeNic\PermissionRegistry\Enums\VirtualUserStatus;
 use ArcheeNic\PermissionRegistry\Models\VirtualUser;
 use ArcheeNic\PermissionRegistry\Tests\TestCase;
 use Illuminate\Support\Facades\Queue;
@@ -73,7 +73,7 @@ class ReconcileUserPermissionsActionTest extends TestCase
             $permissionIds = $this->readPrivateProperty($job, 'permissionIds');
 
             return in_array($revokedPermission->id, $permissionIds, true)
-                && !in_array($manualPermission->id, $permissionIds, true);
+                && ! in_array($manualPermission->id, $permissionIds, true);
         });
     }
 

@@ -15,15 +15,15 @@ class ImportTriggerConfigResolver
         $defaultDepartmentField = 'department_ids';
         $defaultFallback = null;
 
-        if (!$import || !class_exists($import->{PermissionImport::CLASS_NAME})) {
+        if (! $import || ! class_exists($import->{PermissionImport::CLASS_NAME})) {
             return [$defaultPatterns, $defaultDepartmentField, $defaultFallback];
         }
 
         try {
             /** @var object $importer */
             $importer = app($import->{PermissionImport::CLASS_NAME});
-            if (!method_exists($importer, 'getRelatedTriggerClassPatterns')
-                || !method_exists($importer, 'getDepartmentFieldName')) {
+            if (! method_exists($importer, 'getRelatedTriggerClassPatterns')
+                || ! method_exists($importer, 'getDepartmentFieldName')) {
                 return [$defaultPatterns, $defaultDepartmentField, $defaultFallback];
             }
 
@@ -44,12 +44,12 @@ class ImportTriggerConfigResolver
 
     private function sanitizeFallbackTriggerClass(mixed $value): ?string
     {
-        if (!is_string($value)) {
+        if (! is_string($value)) {
             return null;
         }
 
         $normalized = trim($value);
-        if ($normalized === '' || !str_starts_with($normalized, 'App\\Triggers\\')) {
+        if ($normalized === '' || ! str_starts_with($normalized, 'App\\Triggers\\')) {
             return null;
         }
 
@@ -57,19 +57,18 @@ class ImportTriggerConfigResolver
     }
 
     /**
-     * @param mixed $rawPatterns
-     * @param array<int, string> $defaultPatterns
+     * @param  array<int, string>  $defaultPatterns
      * @return array<int, string>
      */
     private function sanitizePatterns(mixed $rawPatterns, array $defaultPatterns): array
     {
-        if (!is_array($rawPatterns)) {
+        if (! is_array($rawPatterns)) {
             return $defaultPatterns;
         }
 
         $allowed = [];
         foreach ($rawPatterns as $pattern) {
-            if (!is_string($pattern)) {
+            if (! is_string($pattern)) {
                 continue;
             }
 
@@ -79,7 +78,7 @@ class ImportTriggerConfigResolver
             }
 
             // Restrict to application trigger classes to avoid too-wide matching patterns.
-            if (!str_starts_with($normalized, 'App\\Triggers\\')) {
+            if (! str_starts_with($normalized, 'App\\Triggers\\')) {
                 continue;
             }
 
@@ -91,7 +90,7 @@ class ImportTriggerConfigResolver
 
     private function sanitizeDepartmentFieldName(mixed $fieldName, string $default): string
     {
-        if (!is_string($fieldName)) {
+        if (! is_string($fieldName)) {
             return $default;
         }
 
@@ -100,7 +99,7 @@ class ImportTriggerConfigResolver
             return $default;
         }
 
-        if (!preg_match('/^[a-z0-9_]+$/i', $normalized)) {
+        if (! preg_match('/^[a-z0-9_]+$/i', $normalized)) {
             return $default;
         }
 

@@ -12,16 +12,13 @@ class SaveTriggerFieldMappingAction
 {
     public function __construct(
         private TriggerFieldMappingService $triggerFieldMappingService
-    ) {
-    }
+    ) {}
 
     /**
      * Сохранить маппинг полей для триггера
      *
-     * @param int $permissionTriggerId
-     * @param array $mapping Массив вида ['trigger_field' => 'field_name_or_id']
-     * @param array $internalMapping Массив вида ['trigger_field' => 'field_name_or_id'] для внутренних полей
-     * @return bool
+     * @param  array  $mapping  Массив вида ['trigger_field' => 'field_name_or_id']
+     * @param  array  $internalMapping  Массив вида ['trigger_field' => 'field_name_or_id'] для внутренних полей
      */
     public function handle(int $permissionTriggerId, array $mapping, array $internalMapping = []): bool
     {
@@ -35,7 +32,7 @@ class SaveTriggerFieldMappingAction
 
                 // Создать новый маппинг
                 $mappingsToInsert = [];
-                
+
                 // Обработать обычные поля
                 foreach ($mapping as $triggerField => $fieldNameOrId) {
                     // Пропустить пустые значения
@@ -44,8 +41,8 @@ class SaveTriggerFieldMappingAction
                     }
 
                     $permissionFieldId = $this->resolvePermissionFieldId($fieldNameOrId);
-                    
-                    if (!$permissionFieldId) {
+
+                    if (! $permissionFieldId) {
                         continue;
                     }
 
@@ -67,8 +64,8 @@ class SaveTriggerFieldMappingAction
                     }
 
                     $permissionFieldId = $this->resolvePermissionFieldId($fieldNameOrId);
-                    
-                    if (!$permissionFieldId) {
+
+                    if (! $permissionFieldId) {
                         continue;
                     }
 
@@ -82,7 +79,7 @@ class SaveTriggerFieldMappingAction
                     ];
                 }
 
-                if (!empty($mappingsToInsert)) {
+                if (! empty($mappingsToInsert)) {
                     TriggerFieldMapping::insert($mappingsToInsert);
                 }
             });
@@ -101,9 +98,6 @@ class SaveTriggerFieldMappingAction
 
     /**
      * Получить ID поля по имени или ID
-     *
-     * @param string|int $fieldNameOrId
-     * @return int|null
      */
     private function resolvePermissionFieldId(string|int $fieldNameOrId): ?int
     {
@@ -114,8 +108,7 @@ class SaveTriggerFieldMappingAction
 
         // Если передано имя - найти ID
         $field = PermissionField::where(PermissionField::NAME, $fieldNameOrId)->first();
-        
+
         return $field?->id;
     }
 }
-

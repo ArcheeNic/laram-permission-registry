@@ -30,7 +30,7 @@ class SavePermissionFieldsAction
 
     private function saveGlobalField(int $userId, PermissionField $field, array $fieldValues): void
     {
-        if (!array_key_exists($field->id, $fieldValues)) {
+        if (! array_key_exists($field->id, $fieldValues)) {
             return;
         }
 

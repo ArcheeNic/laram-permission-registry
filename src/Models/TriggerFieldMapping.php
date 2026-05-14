@@ -31,14 +31,13 @@ class TriggerFieldMapping extends BaseTriggerFieldMapping
         return self::with('permissionField')
             ->where(self::PERMISSION_TRIGGER_ID, $permissionTriggerId)
             ->get()
-            ->mapWithKeys(fn($mapping) => [
+            ->mapWithKeys(fn ($mapping) => [
                 $mapping->{self::TRIGGER_FIELD_NAME} => [
                     'permission_field_id' => $mapping->{self::PERMISSION_FIELD_ID},
                     'permission_field_name' => $mapping->permissionField->name,
                     'is_internal' => $mapping->{self::IS_INTERNAL},
-                ]
+                ],
             ])
             ->toArray();
     }
 }
-

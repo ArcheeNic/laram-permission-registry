@@ -2,33 +2,39 @@
 
 namespace ArcheeNic\PermissionRegistry\Livewire;
 
-use App\Models\User;
 use ArcheeNic\PermissionRegistry\Actions\GrantPermissionAction;
 use ArcheeNic\PermissionRegistry\Actions\RevokePermissionAction;
-use ArcheeNic\PermissionRegistry\Actions\GetVirtualUserFieldValueAction;
 use ArcheeNic\PermissionRegistry\Actions\UpdateVirtualUserGlobalFieldsAction;
 use ArcheeNic\PermissionRegistry\Enums\PermissionScope;
 use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
 use ArcheeNic\PermissionRegistry\Models\Permission;
 use ArcheeNic\PermissionRegistry\Models\PermissionResource;
+use ArcheeNic\PermissionRegistry\Models\VirtualUser;
 use ArcheeNic\PermissionRegistry\Models\VirtualUserFieldValue;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 use Livewire\WithPagination;
-use ArcheeNic\PermissionRegistry\Models\VirtualUser;
 
 class UserPermissions extends Component
 {
     use WithPagination;
 
     public $userId;
+
     public $search = '';
+
     public $selectedPermission = null;
+
     public ?int $selectedResourceId = null;
+
     public $fieldValues = [];
+
     public $meta = [];
+
     public $expiresAt = null;
+
     public $showGlobalFieldsModal = false;
+
     public $missingGlobalFields = [];
 
     protected $listeners = ['refreshUserPermissions' => '$refresh'];
@@ -93,15 +99,15 @@ class UserPermissions extends Component
     {
         // Сохранить глобальные поля
         $updateAction = app(UpdateVirtualUserGlobalFieldsAction::class);
-        
+
         $globalFieldsToSave = [];
         foreach ($this->missingGlobalFields as $field) {
-            if (!empty($this->fieldValues[$field['id']])) {
+            if (! empty($this->fieldValues[$field['id']])) {
                 $globalFieldsToSave[$field['id']] = $this->fieldValues[$field['id']];
             }
         }
 
-        if (!empty($globalFieldsToSave)) {
+        if (! empty($globalFieldsToSave)) {
             $updateAction->execute($this->userId, $globalFieldsToSave);
         }
 
@@ -136,9 +142,9 @@ class UserPermissions extends Component
 
     public function getAvailableResourcesProperty()
     {
-        if (!$this->selectedPermission
+        if (! $this->selectedPermission
             || ($this->selectedPermission->scope ?? PermissionScope::Service) !== PermissionScope::Resource
-            || !$this->selectedPermission->resource_kind
+            || ! $this->selectedPermission->resource_kind
         ) {
             return collect();
         }

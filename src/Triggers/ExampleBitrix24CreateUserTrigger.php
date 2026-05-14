@@ -5,7 +5,6 @@ namespace ArcheeNic\PermissionRegistry\Triggers;
 use ArcheeNic\PermissionRegistry\Contracts\PermissionTriggerInterface;
 use ArcheeNic\PermissionRegistry\ValueObjects\TriggerContext;
 use ArcheeNic\PermissionRegistry\ValueObjects\TriggerResult;
-use Illuminate\Support\Facades\Log;
 
 /**
  * Пример триггера для создания пользователя в Bitrix24
@@ -21,16 +20,15 @@ class ExampleBitrix24CreateUserTrigger implements PermissionTriggerInterface
             $lastName = $context->globalFields['last_name'] ?? null;
             $phone = $context->globalFields['phone'] ?? null;
 
-            if (!$email) {
+            if (! $email) {
                 return TriggerResult::failure('Email обязателен для создания пользователя B24');
             }
-
 
             // Здесь должна быть реальная логика создания пользователя в B24
             // Например, вызов REST API Bitrix24
 
             // Имитируем успешное создание
-            $b24UserId = 'b24_user_' . $context->virtualUserId;
+            $b24UserId = 'b24_user_'.$context->virtualUserId;
 
             return TriggerResult::success([
                 'b24_user_id' => $b24UserId,

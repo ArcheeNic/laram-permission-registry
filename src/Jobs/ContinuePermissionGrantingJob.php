@@ -16,15 +16,14 @@ class ContinuePermissionGrantingJob implements ShouldQueue
 
     public function __construct(
         private int $grantedPermissionId
-    ) {
-    }
+    ) {}
 
     public function handle(ContinuePermissionGrantingAction $action): void
     {
         try {
             $success = $action->execute($this->grantedPermissionId);
 
-            if (!$success) {
+            if (! $success) {
                 Log::warning('Continue permission granting completed with failure', [
                     'granted_permission_id' => $this->grantedPermissionId,
                 ]);

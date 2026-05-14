@@ -11,9 +11,13 @@ class PositionsList extends Component
     use WithPagination;
 
     public $search = '';
+
     public $perPage = 15;
+
     public $confirmingDelete = false;
+
     public $positionToDelete = null;
+
     public $openPositions = [];
 
     protected $queryString = [

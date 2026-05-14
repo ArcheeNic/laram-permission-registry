@@ -44,6 +44,7 @@ class UserController extends Controller
 
         $permissionsWithFields = Permission::with('fields')->get()->map(function (Permission $permission) {
             $scope = $permission->scope ?? PermissionScope::Service;
+
             return [
                 'id' => $permission->id,
                 'service' => $permission->service,
@@ -77,7 +78,7 @@ class UserController extends Controller
         $byKind = [];
         foreach ($permissions as $permission) {
             $scope = $permission->scope ?? PermissionScope::Service;
-            if ($scope !== PermissionScope::Resource || !$permission->resource_kind) {
+            if ($scope !== PermissionScope::Resource || ! $permission->resource_kind) {
                 continue;
             }
             $byKind[$permission->service.'|'.$permission->resource_kind] = true;
@@ -137,7 +138,7 @@ class UserController extends Controller
 
         if ($isResourceScoped && empty($resourceIds)) {
             return redirect()->back()
-                ->withErrors(['resource_ids' => __('permission-registry::Resources') . ': ' . __('permission-registry::This field is required')])
+                ->withErrors(['resource_ids' => __('permission-registry::Resources').': '.__('permission-registry::This field is required')])
                 ->withInput();
         }
 

@@ -6,6 +6,7 @@ use ArcheeNic\PermissionRegistry\Actions\ProcessAccessAttestationDecisionAction;
 use ArcheeNic\PermissionRegistry\Contracts\UserToVirtualUserResolver;
 use ArcheeNic\PermissionRegistry\Enums\AttestationStatus;
 use ArcheeNic\PermissionRegistry\Models\AccessAttestation;
+use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -103,7 +104,7 @@ class AttestationsList extends Component
 
             $this->flashMessage = __('permission-registry::governance.decision_saved');
             $this->closeModal();
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             $this->flashError = $e->validator->errors()->first();
         } catch (\Exception $e) {
             $this->flashError = $e->getMessage();

@@ -11,6 +11,7 @@ class PermissionUsers extends Component
     use WithPagination;
 
     public int $permissionId;
+
     public string $search = '';
 
     public function updatingSearch(): void

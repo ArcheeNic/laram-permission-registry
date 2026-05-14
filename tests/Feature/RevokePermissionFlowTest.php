@@ -4,9 +4,8 @@ namespace ArcheeNic\PermissionRegistry\Tests\Feature;
 
 use ArcheeNic\PermissionRegistry\Actions\GrantPermissionAction;
 use ArcheeNic\PermissionRegistry\Actions\RevokePermissionAction;
-use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
-use ArcheeNic\PermissionRegistry\Models\Permission;
 use ArcheeNic\PermissionRegistry\Enums\VirtualUserStatus;
+use ArcheeNic\PermissionRegistry\Models\Permission;
 use ArcheeNic\PermissionRegistry\Models\VirtualUser;
 use ArcheeNic\PermissionRegistry\Services\PermissionDependencyResolver;
 use ArcheeNic\PermissionRegistry\Tests\TestCase;

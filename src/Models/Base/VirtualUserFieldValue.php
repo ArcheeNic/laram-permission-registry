@@ -3,6 +3,7 @@
 namespace ArcheeNic\PermissionRegistry\Models\Base;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
 /**
  * Base model for VirtualUserFieldValue
@@ -17,19 +18,27 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $source
  * @property int|null $created_by
  * @property array<string, mixed>|null $meta
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  */
 class VirtualUserFieldValue extends Model
 {
     public const ID = 'id';
+
     public const VIRTUAL_USER_ID = 'virtual_user_id';
+
     public const PERMISSION_FIELD_ID = 'permission_field_id';
+
     public const VALUE = 'value';
+
     public const SOURCE = 'source';
+
     public const CREATED_BY = 'created_by';
+
     public const META = 'meta';
+
     public const CREATED_AT = 'created_at';
+
     public const UPDATED_AT = 'updated_at';
 
     protected $fillable = [

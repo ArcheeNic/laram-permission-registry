@@ -8,6 +8,5 @@ readonly class ImportContext
         public int $permissionImportId,
         public array $config,
         public array $fieldMappingSchema,
-    ) {
-    }
+    ) {}
 }

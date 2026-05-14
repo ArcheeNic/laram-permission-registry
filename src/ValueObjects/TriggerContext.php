@@ -17,6 +17,5 @@ readonly class TriggerContext
         public ?GrantedPermission $grantedPermission = null,
         public array $config = [],
         public ?PermissionResource $resource = null,
-    ) {
-    }
+    ) {}
 }

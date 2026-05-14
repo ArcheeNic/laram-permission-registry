@@ -2,6 +2,7 @@
 
 namespace ArcheeNic\PermissionRegistry\Models;
 
+use ArcheeNic\PermissionRegistry\Database\Factories\PermissionFieldFactory;
 use ArcheeNic\PermissionRegistry\Enums\PermissionFieldType;
 use ArcheeNic\PermissionRegistry\Models\Base\PermissionField as BasePermissionField;
 use Illuminate\Database\Eloquent\Builder;
@@ -14,7 +15,7 @@ class PermissionField extends BasePermissionField
 
     protected static function newFactory()
     {
-        return \ArcheeNic\PermissionRegistry\Database\Factories\PermissionFieldFactory::new();
+        return PermissionFieldFactory::new();
     }
 
     protected $casts = [

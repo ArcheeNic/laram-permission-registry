@@ -13,12 +13,11 @@ class HireVirtualUserAction
     public function __construct(
         private ReconcileUserPermissionsAction $reconcileUserPermissionsAction,
         private HrEventTriggerExecutor $hrEventTriggerExecutor
-    ) {
-    }
+    ) {}
 
     /**
-     * @param array<int> $positionIds
-     * @param array<int> $groupIds
+     * @param  array<int>  $positionIds
+     * @param  array<int>  $groupIds
      */
     public function handle(
         int $userId,
@@ -26,18 +25,17 @@ class HireVirtualUserAction
         array $groupIds = [],
         EmployeeCategory|string $employeeCategory = EmployeeCategory::STAFF,
         bool $skipHrTriggers = false
-    ): VirtualUser
-    {
+    ): VirtualUser {
         $resolvedCategory = $this->resolveCategory($employeeCategory);
 
         $user = DB::transaction(function () use ($userId, $positionIds, $groupIds, $resolvedCategory): VirtualUser {
             $user = VirtualUser::query()->findOrFail($userId);
 
-            if (!empty($positionIds)) {
+            if (! empty($positionIds)) {
                 $user->positions()->syncWithoutDetaching($positionIds);
             }
 
-            if (!empty($groupIds)) {
+            if (! empty($groupIds)) {
                 $user->groups()->syncWithoutDetaching($groupIds);
             }
 
@@ -50,7 +48,7 @@ class HireVirtualUserAction
             return $user->fresh();
         });
 
-        if (!$skipHrTriggers) {
+        if (! $skipHrTriggers) {
             $this->hrEventTriggerExecutor->execute($user->id, 'hire');
         }
 

@@ -26,25 +26,25 @@ class VirtualUserTest extends TestCase
 
     public function test_positions_relationship(): void
     {
-        $user = new VirtualUser();
+        $user = new VirtualUser;
         $this->assertInstanceOf(BelongsToMany::class, $user->positions());
     }
 
     public function test_groups_relationship(): void
     {
-        $user = new VirtualUser();
+        $user = new VirtualUser;
         $this->assertInstanceOf(BelongsToMany::class, $user->groups());
     }
 
     public function test_granted_permissions_relationship(): void
     {
-        $user = new VirtualUser();
+        $user = new VirtualUser;
         $this->assertInstanceOf(HasMany::class, $user->grantedPermissions());
     }
 
     public function test_field_values_relationship(): void
     {
-        $user = new VirtualUser();
+        $user = new VirtualUser;
         $this->assertInstanceOf(HasMany::class, $user->fieldValues());
     }
 

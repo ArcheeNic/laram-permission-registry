@@ -10,18 +10,25 @@ use ArcheeNic\PermissionRegistry\Models\Permission;
 use ArcheeNic\PermissionRegistry\Models\PermissionResource;
 use ArcheeNic\PermissionRegistry\Models\Position;
 use ArcheeNic\PermissionRegistry\Services\PermissionDependencyResolver;
+use Illuminate\Support\Collection;
 
 trait ManagesPermissions
 {
     public $permissionSearch = '';
+
     public $selectedPermissions = [];
+
     public $permissionFields = [];
+
     /** @var array<int, array<int, int>> permission_id => list<resource_id> */
     public array $permissionResources = [];
+
     public $expandedPermissionFields = [];
 
     public $expandedDependentPermissionFields = [];
+
     public $dependentPermissionFields = [];
+
     public $dependentSelectedPermissions = [];
 
     public array $dependentPermissionErrors = [];
@@ -46,7 +53,7 @@ trait ManagesPermissions
 
     public function getAvailablePermissionsProperty()
     {
-        if (!$this->selectedUserId) {
+        if (! $this->selectedUserId) {
             return collect();
         }
 
@@ -74,7 +81,7 @@ trait ManagesPermissions
 
         foreach ($available as $permission) {
             $scope = $permission->scope ?? PermissionScope::Service;
-            if ($scope !== PermissionScope::Resource || !$permission->resource_kind) {
+            if ($scope !== PermissionScope::Resource || ! $permission->resource_kind) {
                 continue;
             }
             $byKind[$permission->service.'|'.$permission->resource_kind] = true;
@@ -109,7 +116,7 @@ trait ManagesPermissions
 
     public function getDependentPermissionsProperty()
     {
-        if (!$this->selectedUserId) {
+        if (! $this->selectedUserId) {
             return collect();
         }
 
@@ -131,7 +138,7 @@ trait ManagesPermissions
         $this->clearFlashMessages();
         $this->dependentPermissionErrors = [];
 
-        if (!$this->selectedUserId) {
+        if (! $this->selectedUserId) {
             return;
         }
 
@@ -147,7 +154,7 @@ trait ManagesPermissions
 
         $this->initializeProcessingTracking();
 
-        if (!$this->isProcessing && !$hasDependentErrors) {
+        if (! $this->isProcessing && ! $hasDependentErrors) {
             $this->setFlashMessage(__('permission-registry::Permissions updated successfully'));
         }
     }
@@ -195,7 +202,7 @@ trait ManagesPermissions
             foreach ($positionsHierarchy as $hierarchyPosition) {
                 $sourceName = $hierarchyPosition->id === $position->id
                     ? $position->name
-                    : $position->name . ' → ' . $hierarchyPosition->name;
+                    : $position->name.' → '.$hierarchyPosition->name;
 
                 foreach ($hierarchyPosition->permissions as $permission) {
                     $result->push($this->buildPermissionData(
@@ -207,7 +214,7 @@ trait ManagesPermissions
                     foreach ($group->permissions as $permission) {
                         $result->push($this->buildPermissionData(
                             $permission, $userGrantedPermissions, 'position_group', $group->id,
-                            $sourceName . ' (' . $group->name . ')'
+                            $sourceName.' ('.$group->name.')'
                         ));
                     }
                 }
@@ -246,7 +253,7 @@ trait ManagesPermissions
         ];
     }
 
-    private function getAllPositionsInHierarchy(Position $position): \Illuminate\Support\Collection
+    private function getAllPositionsInHierarchy(Position $position): Collection
     {
         $result = collect([$position]);
         $visited = [$position->id];
@@ -257,11 +264,11 @@ trait ManagesPermissions
                 break;
             }
 
-            if (!$current->relationLoaded('parent')) {
+            if (! $current->relationLoaded('parent')) {
                 $current->load(['parent.permissions', 'parent.groups.permissions']);
             }
 
-            if (!$current->parent) {
+            if (! $current->parent) {
                 break;
             }
 
@@ -280,7 +287,7 @@ trait ManagesPermissions
 
         foreach ($availablePermissionIds as $permId) {
             $permission = $permissionsById->get($permId);
-            if (!$permission) {
+            if (! $permission) {
                 continue;
             }
 
@@ -288,7 +295,7 @@ trait ManagesPermissions
             $isSelected = isset($this->selectedPermissions[$permId]) && $this->selectedPermissions[$permId];
 
             if ($scope === PermissionScope::Resource) {
-                if (!$isSelected) {
+                if (! $isSelected) {
                     continue;
                 }
                 $selectedResourceIds = array_values(array_filter(array_map(
@@ -310,7 +317,7 @@ trait ManagesPermissions
                 }
             } else {
                 $existingPermission = $userPermissions->firstWhere(fn ($g) => $g->permission_id === $permId && $g->resource_id === null);
-                if ($isSelected && (!$existingPermission || !$existingPermission->enabled)) {
+                if ($isSelected && (! $existingPermission || ! $existingPermission->enabled)) {
                     $permissionsToGrant[] = [
                         'permissionId' => $permId,
                         'resourceId' => null,
@@ -322,7 +329,7 @@ trait ManagesPermissions
             }
         }
 
-        if (!empty($permissionsToGrant)) {
+        if (! empty($permissionsToGrant)) {
             GrantMultiplePermissionsJob::dispatch($this->selectedUserId, $permissionsToGrant);
         }
     }
@@ -334,7 +341,7 @@ trait ManagesPermissions
 
         foreach ($availablePermissionIds as $permId) {
             $permission = $permissionsById->get($permId);
-            if (!$permission) {
+            if (! $permission) {
                 continue;
             }
 
@@ -343,13 +350,14 @@ trait ManagesPermissions
 
             if ($scope === PermissionScope::Resource) {
                 $existing = $userPermissions->where('permission_id', $permId)->where('enabled', true);
-                if (!$isSelected) {
+                if (! $isSelected) {
                     foreach ($existing as $granted) {
                         $permissionsToRevoke[] = [
                             'permissionId' => $permId,
                             'resourceId' => $granted->resource_id,
                         ];
                     }
+
                     continue;
                 }
                 $selectedResourceIds = array_values(array_filter(array_map(
@@ -357,7 +365,7 @@ trait ManagesPermissions
                     $this->permissionResources[$permId] ?? []
                 )));
                 foreach ($existing as $granted) {
-                    if ($granted->resource_id !== null && !in_array($granted->resource_id, $selectedResourceIds, true)) {
+                    if ($granted->resource_id !== null && ! in_array($granted->resource_id, $selectedResourceIds, true)) {
                         $permissionsToRevoke[] = [
                             'permissionId' => $permId,
                             'resourceId' => $granted->resource_id,
@@ -366,7 +374,7 @@ trait ManagesPermissions
                 }
             } else {
                 $existingPermission = $userPermissions->firstWhere(fn ($g) => $g->permission_id === $permId && $g->resource_id === null);
-                if (!$isSelected && $existingPermission && $existingPermission->enabled) {
+                if (! $isSelected && $existingPermission && $existingPermission->enabled) {
                     $permissionsToRevoke[] = [
                         'permissionId' => $permId,
                         'resourceId' => null,
@@ -375,7 +383,7 @@ trait ManagesPermissions
             }
         }
 
-        if (!empty($permissionsToRevoke)) {
+        if (! empty($permissionsToRevoke)) {
             RevokeMultiplePermissionsJob::dispatch($this->selectedUserId, $permissionsToRevoke);
         }
     }
@@ -386,7 +394,7 @@ trait ManagesPermissions
         foreach ($this->dependentSelectedPermissions as $permId => $isEnabled) {
             $existingPermission = $userPermissions->first(fn ($g) => $g->permission_id === $permId && $g->resource_id === null);
 
-            if ($isEnabled && (!$existingPermission || !$existingPermission->enabled)) {
+            if ($isEnabled && (! $existingPermission || ! $existingPermission->enabled)) {
                 $dependentPermissionsToGrant[] = [
                     'permissionId' => $permId,
                     'resourceId' => null,
@@ -399,7 +407,7 @@ trait ManagesPermissions
 
         $hasDependentErrors = $this->validateDependentPermissions($dependentPermissionsToGrant);
 
-        if (!empty($dependentPermissionsToGrant) && !$hasDependentErrors) {
+        if (! empty($dependentPermissionsToGrant) && ! $hasDependentErrors) {
             GrantMultiplePermissionsJob::dispatch($this->selectedUserId, $dependentPermissionsToGrant);
         } elseif ($hasDependentErrors) {
             $this->setFlashError(__('permission-registry::Fix dependent permission errors before saving'));
@@ -416,18 +424,19 @@ trait ManagesPermissions
         foreach ($dependentPermissionsToGrant as $item) {
             $permId = $item['permissionId'];
             $permission = Permission::with('fields')->find($permId);
-            if (!$permission) {
+            if (! $permission) {
                 continue;
             }
 
             $depResult = $dependencyResolver->validatePermissionDependencies($this->selectedUserId, $permission, 'grant');
-            if (!$depResult->isValid) {
+            if (! $depResult->isValid) {
                 $this->dependentPermissionErrors[$permId] = [
                     'message' => $depResult->getErrorMessage(),
                     'missing_fields' => [],
                     'missing_permissions' => $depResult->missingPermissions,
                 ];
                 $hasDependentErrors = true;
+
                 continue;
             }
 
@@ -435,7 +444,7 @@ trait ManagesPermissions
             $fieldsResult = $dependencyResolver->validateGlobalFieldsWithValues(
                 $this->selectedUserId, $permission, $fieldValuesByFieldId
             );
-            if (!$fieldsResult->isValid) {
+            if (! $fieldsResult->isValid) {
                 $this->dependentPermissionErrors[$permId] = [
                     'message' => $fieldsResult->getErrorMessage(),
                     'missing_fields' => $fieldsResult->missingFields,
@@ -454,7 +463,7 @@ trait ManagesPermissions
         foreach ($this->dependentSelectedPermissions as $permId => $isEnabled) {
             $existingPermission = $userPermissions->first(fn ($g) => $g->permission_id === $permId && $g->resource_id === null);
 
-            if (!$isEnabled && $existingPermission && $existingPermission->enabled) {
+            if (! $isEnabled && $existingPermission && $existingPermission->enabled) {
                 $dependentPermissionsToRevoke[] = [
                     'permissionId' => $permId,
                     'resourceId' => null,
@@ -462,7 +471,7 @@ trait ManagesPermissions
             }
         }
 
-        if (!empty($dependentPermissionsToRevoke)) {
+        if (! empty($dependentPermissionsToRevoke)) {
             RevokeMultiplePermissionsJob::dispatch($this->selectedUserId, $dependentPermissionsToRevoke);
         }
     }

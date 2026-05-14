@@ -8,6 +8,7 @@ use ArcheeNic\PermissionRegistry\Enums\PermissionScope;
 use ArcheeNic\PermissionRegistry\Enums\VirtualUserStatus;
 use ArcheeNic\PermissionRegistry\Events\BeforePermissionGranted;
 use ArcheeNic\PermissionRegistry\Exceptions\UserDeactivatedException;
+use ArcheeNic\PermissionRegistry\Models\ApprovalPolicy;
 use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
 use ArcheeNic\PermissionRegistry\Models\Permission;
 use ArcheeNic\PermissionRegistry\Models\PermissionField;
@@ -94,6 +95,7 @@ class GrantPermissionAction
                     'resource' => [__('permission-registry::Service-scoped permission cannot have a resource')],
                 ]);
             }
+
             return null;
         }
 
@@ -104,7 +106,7 @@ class GrantPermissionAction
         }
 
         $resource = PermissionResource::query()->find($resourceId);
-        if (!$resource) {
+        if (! $resource) {
             throw ValidationException::withMessages([
                 'resource' => [__('permission-registry::Resource not found')],
             ]);
@@ -136,6 +138,7 @@ class GrantPermissionAction
 
         if ($existing) {
             $existing->update($attributes);
+
             return $existing;
         }
 
@@ -271,7 +274,7 @@ class GrantPermissionAction
     private function createAwaitingApproval(
         int $userId,
         Permission $permission,
-        \ArcheeNic\PermissionRegistry\Models\ApprovalPolicy $policy,
+        ApprovalPolicy $policy,
         array $fieldValues,
         array $meta,
         ?string $expiresAt,

@@ -2,7 +2,6 @@
 
 namespace ArcheeNic\PermissionRegistry\Controllers\Api;
 
-use Illuminate\Routing\Controller;
 use ArcheeNic\PermissionRegistry\Actions\AssignVirtualUserGroupAction;
 use ArcheeNic\PermissionRegistry\Actions\AssignVirtualUserPositionAction;
 use ArcheeNic\PermissionRegistry\Actions\CreateVirtualUserAction;
@@ -12,14 +11,15 @@ use ArcheeNic\PermissionRegistry\Http\Requests\AssignGroupRequest;
 use ArcheeNic\PermissionRegistry\Http\Requests\AssignPositionRequest;
 use ArcheeNic\PermissionRegistry\Http\Requests\CreateUserRequest;
 use ArcheeNic\PermissionRegistry\Http\Requests\GrantPermissionRequest;
-use ArcheeNic\PermissionRegistry\Http\Resources\VirtualUserResource;
 use ArcheeNic\PermissionRegistry\Http\Resources\GrantedPermissionResource;
+use ArcheeNic\PermissionRegistry\Http\Resources\VirtualUserResource;
 use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
 use ArcheeNic\PermissionRegistry\Models\PermissionGroup;
 use ArcheeNic\PermissionRegistry\Models\Position;
 use ArcheeNic\PermissionRegistry\Models\VirtualUser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
+use Illuminate\Routing\Controller;
 
 class UserApiController extends Controller
 {
@@ -88,7 +88,7 @@ class UserApiController extends Controller
 
         return response()->json([
             'message' => 'Position assigned successfully',
-            'user' => new VirtualUserResource($user->load(['positions', 'groups', 'grantedPermissions']))
+            'user' => new VirtualUserResource($user->load(['positions', 'groups', 'grantedPermissions'])),
         ]);
     }
 
@@ -117,7 +117,7 @@ class UserApiController extends Controller
 
         return response()->json([
             'message' => 'Group assigned successfully',
-            'user' => new VirtualUserResource($user->load(['positions', 'groups', 'grantedPermissions']))
+            'user' => new VirtualUserResource($user->load(['positions', 'groups', 'grantedPermissions'])),
         ]);
     }
 
@@ -133,5 +133,4 @@ class UserApiController extends Controller
 
         return response()->noContent();
     }
-
 }

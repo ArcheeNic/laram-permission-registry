@@ -13,7 +13,7 @@ trait ManagesPositions
 
     public function isPositionSelected(): bool
     {
-        return !empty($this->selectedPosition);
+        return ! empty($this->selectedPosition);
     }
 
     public function assignPosition()
@@ -36,7 +36,7 @@ trait ManagesPositions
 
     public function removePosition($positionId)
     {
-        if (!$this->selectedUserId) {
+        if (! $this->selectedUserId) {
             return;
         }
 
@@ -49,7 +49,7 @@ trait ManagesPositions
 
     public function getPositionsProperty()
     {
-        if (!$this->selectedUserId) {
+        if (! $this->selectedUserId) {
             return collect();
         }
 

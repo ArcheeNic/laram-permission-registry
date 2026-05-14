@@ -10,37 +10,35 @@ class CreateVirtualUserAction
 {
     public function __construct(
         private UpdateVirtualUserGlobalFieldsAction $updateGlobalFieldsAction
-    ) {
-    }
+    ) {}
 
     /**
      * Создать виртуального пользователя
      *
-     * @param array $globalFields Массив ['field_id' => 'value']
-     * @return VirtualUser
+     * @param  array  $globalFields  Массив ['field_id' => 'value']
      */
     public function handle(array $globalFields = []): VirtualUser
     {
         // Создаем пользователя с временным именем
         $user = VirtualUser::create([
-            'name' => 'User #' . uniqid(),
+            'name' => 'User #'.uniqid(),
         ]);
 
         // Сохраняем значения глобальных полей и генерируем display name
-        if (!empty($globalFields)) {
+        if (! empty($globalFields)) {
             $this->updateGlobalFieldsAction->execute($user->id, $globalFields);
-            
+
             // Перезагружаем пользователя, чтобы получить обновленное имя
             $user->refresh();
         }
 
         // Получаем email из глобальных полей для события
         $email = '';
-        if (!empty($globalFields)) {
+        if (! empty($globalFields)) {
             $emailField = $user->fieldValues()->whereHas('field', function ($query) {
                 $query->where('name', 'like', '%email%');
             })->first();
-            
+
             if ($emailField) {
                 $email = $emailField->value;
             }

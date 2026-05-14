@@ -5,7 +5,9 @@ namespace ArcheeNic\PermissionRegistry\Livewire\Concerns;
 trait HasFlashMessages
 {
     public ?string $flashMessage = null;
+
     public ?string $flashError = null;
+
     public ?string $flashWarning = null;
 
     protected function setFlashMessage(string $message): void

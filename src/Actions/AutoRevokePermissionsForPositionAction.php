@@ -14,8 +14,7 @@ class AutoRevokePermissionsForPositionAction
     public function __construct(
         private RevokePermissionAction $revokePermissionAction,
         private UserAutoGrantPairsCollector $pairsCollector,
-    ) {
-    }
+    ) {}
 
     /**
      * Автоотзыв прав с флагом auto_revoke при отзыве должности.
@@ -49,7 +48,7 @@ class AutoRevokePermissionsForPositionAction
                 ->where('enabled', true)
                 ->exists();
 
-            if (!$exists) {
+            if (! $exists) {
                 continue;
             }
 
@@ -73,7 +72,7 @@ class AutoRevokePermissionsForPositionAction
     }
 
     /**
-     * @param array<int, array{permission_id:int, resource_id:?int}> $pairs
+     * @param  array<int, array{permission_id:int, resource_id:?int}>  $pairs
      */
     private function collect(int $positionId, array &$pairs, array $processed = []): void
     {
@@ -91,7 +90,7 @@ class AutoRevokePermissionsForPositionAction
             ])
             ->find($positionId);
 
-        if (!$position) {
+        if (! $position) {
             return;
         }
 
@@ -114,7 +113,7 @@ class AutoRevokePermissionsForPositionAction
     }
 
     /**
-     * @param array<int, array{permission_id:int, resource_id:?int}> $pairs
+     * @param  array<int, array{permission_id:int, resource_id:?int}>  $pairs
      */
     private function collectFromGroup(int $groupId, array &$pairs): void
     {
@@ -125,7 +124,7 @@ class AutoRevokePermissionsForPositionAction
             ])
             ->find($groupId);
 
-        if (!$group) {
+        if (! $group) {
             return;
         }
 
@@ -140,8 +139,8 @@ class AutoRevokePermissionsForPositionAction
     }
 
     /**
-     * @param array<int, array<int>> $resourcesByPermission
-     * @param array<int, array{permission_id:int, resource_id:?int}> $pairs
+     * @param  array<int, array<int>>  $resourcesByPermission
+     * @param  array<int, array{permission_id:int, resource_id:?int}>  $pairs
      */
     private function appendPermissionPairs($permission, array $resourcesByPermission, array &$pairs): void
     {
@@ -151,6 +150,7 @@ class AutoRevokePermissionsForPositionAction
             foreach ($resourcesByPermission[$permission->id] ?? [] as $resourceId) {
                 $pairs[] = ['permission_id' => $permission->id, 'resource_id' => $resourceId];
             }
+
             return;
         }
 

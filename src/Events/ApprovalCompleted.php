@@ -10,6 +10,5 @@ readonly class ApprovalCompleted
     public function __construct(
         public ApprovalRequest $approvalRequest,
         public ApprovalRequestStatus $result,
-    ) {
-    }
+    ) {}
 }

@@ -2,6 +2,7 @@
 
 namespace ArcheeNic\PermissionRegistry\Models;
 
+use ArcheeNic\PermissionRegistry\Database\Factories\PositionFactory;
 use ArcheeNic\PermissionRegistry\Models\Base\Position as BasePosition;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,7 +15,7 @@ class Position extends BasePosition
 
     protected static function newFactory()
     {
-        return \ArcheeNic\PermissionRegistry\Database\Factories\PositionFactory::new();
+        return PositionFactory::new();
     }
 
     public function parent(): BelongsTo

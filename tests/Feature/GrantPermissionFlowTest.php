@@ -3,11 +3,11 @@
 namespace ArcheeNic\PermissionRegistry\Tests\Feature;
 
 use ArcheeNic\PermissionRegistry\Actions\GrantPermissionAction;
+use ArcheeNic\PermissionRegistry\Enums\VirtualUserStatus;
 use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
 use ArcheeNic\PermissionRegistry\Models\GrantedPermissionFieldValue;
 use ArcheeNic\PermissionRegistry\Models\Permission;
 use ArcheeNic\PermissionRegistry\Models\PermissionField;
-use ArcheeNic\PermissionRegistry\Enums\VirtualUserStatus;
 use ArcheeNic\PermissionRegistry\Models\VirtualUser;
 use ArcheeNic\PermissionRegistry\Services\PermissionDependencyResolver;
 use ArcheeNic\PermissionRegistry\Tests\TestCase;
@@ -64,7 +64,7 @@ class GrantPermissionFlowTest extends TestCase
         $user = VirtualUser::create(['name' => 'Test User', 'status' => VirtualUserStatus::ACTIVE]);
 
         $action = app(GrantPermissionAction::class);
-        $action->handle($user->id, $permission->id, [ $field->id => 'admin' ], skipTriggers: true);
+        $action->handle($user->id, $permission->id, [$field->id => 'admin'], skipTriggers: true);
 
         $granted = GrantedPermission::where('virtual_user_id', $user->id)
             ->where('permission_id', $permission->id)

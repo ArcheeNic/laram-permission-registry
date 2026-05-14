@@ -67,7 +67,7 @@ class FetchImportActionMultiEmailTest extends TestCase
         MultiEmailTestImporter::$usersToReturn = [
             ['external_id' => 'ext-1', 'corp_email' => 'alice@home.com'],
         ];
-        $this->app->bind(MultiEmailTestImporter::class, fn () => new MultiEmailTestImporter());
+        $this->app->bind(MultiEmailTestImporter::class, fn () => new MultiEmailTestImporter);
 
         $action = app(FetchImportAction::class);
         $importRunId = $action->handle($this->import->id);
@@ -99,7 +99,7 @@ class FetchImportActionMultiEmailTest extends TestCase
         MultiEmailTestImporter::$usersToReturn = [
             ['external_id' => 'ext-1', 'corp_email' => 'alice@home.com'],
         ];
-        $this->app->bind(MultiEmailTestImporter::class, fn () => new MultiEmailTestImporter());
+        $this->app->bind(MultiEmailTestImporter::class, fn () => new MultiEmailTestImporter);
 
         $action = app(FetchImportAction::class);
         $importRunId = $action->handle($this->import->id);

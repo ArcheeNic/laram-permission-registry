@@ -13,10 +13,15 @@ use ArcheeNic\PermissionRegistry\Models\Permission;
 class PermissionRegistryManager
 {
     protected PermissionChecker $permissionChecker;
+
     protected GrantPermissionAction $grantPermissionAction;
+
     protected RevokePermissionAction $revokePermissionAction;
+
     protected GetUserPermissionsAction $getUserPermissionsAction;
+
     protected CheckPermissionFieldsAction $checkPermissionFieldsAction;
+
     protected SyncUserPermissionsAction $syncUserPermissionsAction;
 
     public function __construct(
@@ -58,7 +63,7 @@ class PermissionRegistryManager
     /**
      * Получает все доступы пользователя
      */
-    public function getUserPermissions(int $userId, string $service = null): array
+    public function getUserPermissions(int $userId, ?string $service = null): array
     {
         return $this->getUserPermissionsAction->handle($userId, $service);
     }
@@ -72,7 +77,7 @@ class PermissionRegistryManager
         string $permissionName,
         array $fieldValues = [],
         array $meta = [],
-        string $expiresAt = null,
+        ?string $expiresAt = null,
         bool $skipTriggers = false,
         ?int $requestedBy = null,
         ?int $confirmedBy = null,
@@ -109,7 +114,7 @@ class PermissionRegistryManager
             ->where('name', $permissionName)
             ->first();
 
-        if (!$permission) {
+        if (! $permission) {
             return false;
         }
 

@@ -12,7 +12,6 @@ use ArcheeNic\PermissionRegistry\Models\PermissionGroup;
 use ArcheeNic\PermissionRegistry\Models\Position;
 use ArcheeNic\PermissionRegistry\Models\VirtualUserGroup;
 use ArcheeNic\PermissionRegistry\Models\VirtualUserPosition;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 
@@ -43,6 +42,7 @@ class SyncUserPermissionsAction
                     'permission_id' => $permissionId,
                     'virtual_user_id' => $userId,
                 ]);
+
                 continue;
             }
             $this->grantPermission($userId, $permissionId);
@@ -91,7 +91,7 @@ class SyncUserPermissionsAction
 
         $position = Position::with(['permissions', 'groups', 'parent'])->find($positionId);
 
-        if (!$position) {
+        if (! $position) {
             return;
         }
 

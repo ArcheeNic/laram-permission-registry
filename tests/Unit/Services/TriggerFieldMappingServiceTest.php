@@ -2,10 +2,10 @@
 
 namespace ArcheeNic\PermissionRegistry\Tests\Unit\Services;
 
+use ArcheeNic\PermissionRegistry\Enums\VirtualUserStatus;
 use ArcheeNic\PermissionRegistry\Models\PermissionField;
 use ArcheeNic\PermissionRegistry\Models\PermissionTrigger;
 use ArcheeNic\PermissionRegistry\Models\TriggerFieldMapping;
-use ArcheeNic\PermissionRegistry\Enums\VirtualUserStatus;
 use ArcheeNic\PermissionRegistry\Models\VirtualUser;
 use ArcheeNic\PermissionRegistry\Models\VirtualUserFieldValue;
 use ArcheeNic\PermissionRegistry\Services\TriggerFieldMappingService;
@@ -19,7 +19,7 @@ class TriggerFieldMappingServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new TriggerFieldMappingService();
+        $this->service = new TriggerFieldMappingService;
     }
 
     public function test_get_mapping_returns_empty_when_no_mappings(): void

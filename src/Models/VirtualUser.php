@@ -2,23 +2,24 @@
 
 namespace ArcheeNic\PermissionRegistry\Models;
 
+use ArcheeNic\PermissionRegistry\Database\Factories\VirtualUserFactory;
 use ArcheeNic\PermissionRegistry\Enums\EmployeeCategory;
 use ArcheeNic\PermissionRegistry\Enums\PermissionFieldType;
 use ArcheeNic\PermissionRegistry\Enums\VirtualUserStatus;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Builder;
 
 /**
  * Virtual User Model
- * 
- * IMPORTANT: This module uses 'virtual_users' table instead of 'users' to avoid 
- * conflicts with the application's user table. Always use VirtualUser model 
+ *
+ * IMPORTANT: This module uses 'virtual_users' table instead of 'users' to avoid
+ * conflicts with the application's user table. Always use VirtualUser model
  * when working with permissions in this module.
- * 
+ *
  * Related tables follow the same convention:
  * - virtual_user_field_values: stores global field values for users
  * - virtual_user_positions, virtual_user_groups: pivot tables for many-to-many relations
@@ -29,7 +30,7 @@ class VirtualUser extends Model
 
     protected static function newFactory()
     {
-        return \ArcheeNic\PermissionRegistry\Database\Factories\VirtualUserFactory::new();
+        return VirtualUserFactory::new();
     }
 
     protected $table = 'virtual_users';
@@ -121,7 +122,7 @@ class VirtualUser extends Model
             $fieldName = mb_strtolower((string) data_get($fieldValue, 'field.name', ''));
             $value = (string) ($fieldValue->value ?? '');
 
-            if ($value === '' || !filter_var($value, FILTER_VALIDATE_EMAIL)) {
+            if ($value === '' || ! filter_var($value, FILTER_VALIDATE_EMAIL)) {
                 return false;
             }
 

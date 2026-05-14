@@ -11,8 +11,11 @@ class FieldsList extends Component
     use WithPagination;
 
     public $search = '';
+
     public $perPage = 15;
+
     public $confirmingDelete = false;
+
     public $fieldToDelete = null;
 
     protected $queryString = [

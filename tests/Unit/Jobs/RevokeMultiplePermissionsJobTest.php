@@ -2,10 +2,10 @@
 
 namespace ArcheeNic\PermissionRegistry\Tests\Unit\Jobs;
 
+use ArcheeNic\PermissionRegistry\Enums\VirtualUserStatus;
 use ArcheeNic\PermissionRegistry\Jobs\RevokeMultiplePermissionsJob;
 use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
 use ArcheeNic\PermissionRegistry\Models\Permission;
-use ArcheeNic\PermissionRegistry\Enums\VirtualUserStatus;
 use ArcheeNic\PermissionRegistry\Models\VirtualUser;
 use ArcheeNic\PermissionRegistry\Services\PermissionDependencyResolver;
 use ArcheeNic\PermissionRegistry\Services\PermissionTriggerExecutor;

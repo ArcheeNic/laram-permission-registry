@@ -3,9 +3,9 @@
 namespace ArcheeNic\PermissionRegistry\Tests\Unit\Actions;
 
 use ArcheeNic\PermissionRegistry\Actions\GrantPermissionAction;
+use ArcheeNic\PermissionRegistry\Enums\VirtualUserStatus;
 use ArcheeNic\PermissionRegistry\Models\Permission;
 use ArcheeNic\PermissionRegistry\Models\PermissionField;
-use ArcheeNic\PermissionRegistry\Enums\VirtualUserStatus;
 use ArcheeNic\PermissionRegistry\Models\VirtualUser;
 use ArcheeNic\PermissionRegistry\Models\VirtualUserFieldValue;
 use ArcheeNic\PermissionRegistry\Services\PermissionDependencyResolver;

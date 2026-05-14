@@ -12,7 +12,7 @@ abstract class BaseModel extends Model
     public function getTable()
     {
         $baseTable = parent::getTable();
-        $configKey = 'permission-registry.tables.' . $baseTable;
+        $configKey = 'permission-registry.tables.'.$baseTable;
 
         return config($configKey, $baseTable);
     }

@@ -2,6 +2,7 @@
 
 namespace ArcheeNic\PermissionRegistry\Models;
 
+use ArcheeNic\PermissionRegistry\Database\Factories\ApprovalPolicyFactory;
 use ArcheeNic\PermissionRegistry\Enums\ApprovalType;
 use ArcheeNic\PermissionRegistry\Models\Base\ApprovalPolicy as BaseApprovalPolicy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,7 +15,7 @@ class ApprovalPolicy extends BaseApprovalPolicy
 
     protected static function newFactory()
     {
-        return \ArcheeNic\PermissionRegistry\Database\Factories\ApprovalPolicyFactory::new();
+        return ApprovalPolicyFactory::new();
     }
 
     protected $casts = [

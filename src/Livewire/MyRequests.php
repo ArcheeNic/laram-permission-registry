@@ -11,10 +11,13 @@ use Livewire\Component;
 class MyRequests extends Component
 {
     public ?int $currentUserId = null;
+
     public ?int $virtualUserId = null;
+
     public string $statusFilter = '';
 
     public ?string $flashMessage = null;
+
     public ?string $flashError = null;
 
     public function mount(?int $currentUserId = null): void
@@ -26,7 +29,7 @@ class MyRequests extends Component
 
     public function getRequestsProperty()
     {
-        if (!$this->virtualUserId) {
+        if (! $this->virtualUserId) {
             return collect();
         }
 
@@ -47,7 +50,7 @@ class MyRequests extends Component
             ->where('status', ApprovalRequestStatus::PENDING->value)
             ->first();
 
-        if (!$request) {
+        if (! $request) {
             return;
         }
 

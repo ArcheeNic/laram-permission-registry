@@ -18,14 +18,23 @@ class PermissionsList extends Component
     use WithPagination;
 
     public $search = '';
+
     public $service = '';
+
     public $scope = '';
+
     public $managementMode = '';
+
     public $riskLevel = '';
+
     public $perPage = 15;
+
     public $confirmingDelete = false;
+
     public $permissionToDelete = null;
+
     public $deleteError = null;
+
     public bool $invokeTriggersOnDelete = true;
 
     protected $queryString = [
@@ -59,7 +68,7 @@ class PermissionsList extends Component
 
     public function updatingPerPage($value): void
     {
-        if (!in_array((int) $value, [10, 15, 25, 50], true)) {
+        if (! in_array((int) $value, [10, 15, 25, 50], true)) {
             $this->perPage = 15;
         }
 
@@ -80,14 +89,15 @@ class PermissionsList extends Component
     {
         $this->authorize('permission-registry.manage');
 
-        if (!$this->permissionToDelete) {
+        if (! $this->permissionToDelete) {
             return;
         }
 
         $permission = Permission::query()->find($this->permissionToDelete);
 
-        if (!$permission) {
+        if (! $permission) {
             $this->deleteError = __('permission-registry::Cannot delete permission');
+
             return;
         }
 

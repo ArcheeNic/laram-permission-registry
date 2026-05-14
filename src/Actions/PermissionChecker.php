@@ -19,7 +19,7 @@ class PermissionChecker
             ->where('name', $permissionName)
             ->first();
 
-        if (!$permission) {
+        if (! $permission) {
             return false;
         }
 
@@ -30,7 +30,7 @@ class PermissionChecker
             }
 
             $resource = PermissionResource::findByExternal($service, $permission->resource_kind, $resourceExternalId);
-            if (!$resource) {
+            if (! $resource) {
                 return false;
             }
             $resourceId = $resource->id;

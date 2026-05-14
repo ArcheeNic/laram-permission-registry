@@ -19,8 +19,8 @@ class TriggerPermissionMatcherService
      * Для service-scoped (legacy): сохранена старая семантика — конкретный
      * department_id зашит в assignment.config['department_id'].
      *
-     * @param array<int, string> $departmentIds
-     * @param array<int, string> $triggerClassPatterns
+     * @param  array<int, string>  $departmentIds
+     * @param  array<int, string>  $triggerClassPatterns
      * @return Collection<int, array{permission_id: int, permission_name: string, department_id: string}>
      */
     public function matchByDepartments(array $departmentIds, array $triggerClassPatterns): Collection
@@ -49,6 +49,7 @@ class TriggerPermissionMatcherService
                         'department_id' => (string) $extId,
                     ]);
                 }
+
                 continue;
             }
 
@@ -56,7 +57,7 @@ class TriggerPermissionMatcherService
             if ($configDeptId === null) {
                 continue;
             }
-            if (!in_array($configDeptId, $normalizedDepartments, true)) {
+            if (! in_array($configDeptId, $normalizedDepartments, true)) {
                 continue;
             }
             $result->push([
@@ -72,7 +73,7 @@ class TriggerPermissionMatcherService
     }
 
     /**
-     * @param array<int, string> $triggerClassPatterns
+     * @param  array<int, string>  $triggerClassPatterns
      * @return array<int, int>
      */
     public function getAllManagedPermissionIds(array $triggerClassPatterns): array
@@ -110,7 +111,7 @@ class TriggerPermissionMatcherService
      * без фильтрации по config.department_id. Для resource-scoped прав config
      * обычно пуст, и фильтр по нему отрезал бы их от импорта.
      *
-     * @param array<int, string> $triggerClassPatterns
+     * @param  array<int, string>  $triggerClassPatterns
      * @return Collection<int, PermissionTriggerAssignment>
      */
     private function collectManagedGrantAssignments(array $triggerClassPatterns): Collection
@@ -134,7 +135,7 @@ class TriggerPermissionMatcherService
     }
 
     /**
-     * @param array<int, string>|string|null $departments
+     * @param  array<int, string>|string|null  $departments
      * @return array<int, string>
      */
     public function normalizeDepartmentIds(array|string|null $departments): array

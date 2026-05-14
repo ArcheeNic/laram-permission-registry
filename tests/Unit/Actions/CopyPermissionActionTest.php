@@ -139,13 +139,13 @@ class CopyPermissionActionTest extends TestCase
 
         Permission::factory()->create([
             'service' => 'hr',
-            'name' => 'view-salary ' . $suffix,
+            'name' => 'view-salary '.$suffix,
         ]);
 
         $copy = app(CopyPermissionAction::class)->handle($source);
 
         $this->assertSame(
-            'view-salary ' . str_replace(')', ' 2)', $suffix),
+            'view-salary '.str_replace(')', ' 2)', $suffix),
             $copy->name
         );
     }

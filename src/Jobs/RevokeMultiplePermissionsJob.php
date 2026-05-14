@@ -17,14 +17,13 @@ class RevokeMultiplePermissionsJob implements ShouldQueue
 
     /**
      * @param  array<int, int|array{permissionId: int, resourceId?: ?int}>  $permissionIds
-     *   Backward-compatible: каждый элемент либо целое (permission_id, service-scope revoke),
-     *   либо массив `{permissionId, resourceId}` для resource-scoped grants.
+     *                                                                                      Backward-compatible: каждый элемент либо целое (permission_id, service-scope revoke),
+     *                                                                                      либо массив `{permissionId, resourceId}` для resource-scoped grants.
      */
     public function __construct(
         private int $userId,
         private array $permissionIds
-    ) {
-    }
+    ) {}
 
     public function handle(
         RevokePermissionAction $revokeAction,
@@ -49,6 +48,7 @@ class RevokeMultiplePermissionsJob implements ShouldQueue
                 'user_id' => $this->userId,
                 'error' => $e->getMessage(),
             ]);
+
             return;
         }
 
@@ -102,6 +102,7 @@ class RevokeMultiplePermissionsJob implements ShouldQueue
                 ];
             }
         }
+
         return $result;
     }
 }

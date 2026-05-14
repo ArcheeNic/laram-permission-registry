@@ -22,7 +22,7 @@ class AutoGrantPermissionsForGroupAction
             ])
             ->find($groupId);
 
-        if (!$group) {
+        if (! $group) {
             return;
         }
 
@@ -49,6 +49,7 @@ class AutoGrantPermissionsForGroupAction
                         'expiresAt' => null,
                     ];
                 }
+
                 continue;
             }
 
@@ -65,7 +66,7 @@ class AutoGrantPermissionsForGroupAction
             ];
         }
 
-        if (!empty($permissionsData)) {
+        if (! empty($permissionsData)) {
             GrantMultiplePermissionsJob::dispatch($userId, $permissionsData);
         }
     }

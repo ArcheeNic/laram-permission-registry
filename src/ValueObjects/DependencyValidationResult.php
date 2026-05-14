@@ -8,8 +8,7 @@ readonly class DependencyValidationResult
         public bool $isValid,
         public array $missingPermissions = [],
         public array $missingFields = []
-    ) {
-    }
+    ) {}
 
     public static function valid(): self
     {
@@ -25,12 +24,12 @@ readonly class DependencyValidationResult
     {
         $messages = [];
 
-        if (!empty($this->missingPermissions)) {
+        if (! empty($this->missingPermissions)) {
             $permissionNames = implode(', ', array_column($this->missingPermissions, 'name'));
             $messages[] = "Требуются права: {$permissionNames}";
         }
 
-        if (!empty($this->missingFields)) {
+        if (! empty($this->missingFields)) {
             $fieldNames = implode(', ', array_column($this->missingFields, 'name'));
             $messages[] = "Не заполнены поля: {$fieldNames}";
         }

@@ -3,11 +3,11 @@
 namespace ArcheeNic\PermissionRegistry\Tests\Unit\Actions;
 
 use ArcheeNic\PermissionRegistry\Actions\CheckPermissionFieldsAction;
+use ArcheeNic\PermissionRegistry\Enums\VirtualUserStatus;
 use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
 use ArcheeNic\PermissionRegistry\Models\GrantedPermissionFieldValue;
 use ArcheeNic\PermissionRegistry\Models\Permission;
 use ArcheeNic\PermissionRegistry\Models\PermissionField;
-use ArcheeNic\PermissionRegistry\Enums\VirtualUserStatus;
 use ArcheeNic\PermissionRegistry\Models\VirtualUser;
 use ArcheeNic\PermissionRegistry\Tests\TestCase;
 
@@ -17,7 +17,7 @@ class CheckPermissionFieldsActionTest extends TestCase
     {
         $user = VirtualUser::create(['name' => 'Test User', 'status' => VirtualUserStatus::ACTIVE]);
 
-        $action = new CheckPermissionFieldsAction();
+        $action = new CheckPermissionFieldsAction;
         $result = $action->validate($user->id, 'test', 'non-existent', 'email', 'test@test.com');
 
         $this->assertFalse($result);
@@ -45,7 +45,7 @@ class CheckPermissionFieldsActionTest extends TestCase
             'value' => 'test@test.com',
         ]);
 
-        $action = new CheckPermissionFieldsAction();
+        $action = new CheckPermissionFieldsAction;
         $result = $action->validate($user->id, 'test', 'test-perm', 'non-existent-field', 'test@test.com');
 
         $this->assertFalse($result);
@@ -73,7 +73,7 @@ class CheckPermissionFieldsActionTest extends TestCase
             'value' => 'other@test.com',
         ]);
 
-        $action = new CheckPermissionFieldsAction();
+        $action = new CheckPermissionFieldsAction;
         $result = $action->validate($user->id, 'test', 'test-perm', 'email', 'test@test.com');
 
         $this->assertFalse($result);
@@ -101,7 +101,7 @@ class CheckPermissionFieldsActionTest extends TestCase
             'value' => 'test@test.com',
         ]);
 
-        $action = new CheckPermissionFieldsAction();
+        $action = new CheckPermissionFieldsAction;
         $result = $action->validate($user->id, 'test', 'test-perm', 'email', 'test@test.com');
 
         $this->assertTrue($result);

@@ -9,8 +9,7 @@ readonly class TriggerResult
         public ?string $errorMessage = null,
         public array $meta = [],
         public bool $awaitingResolution = false
-    ) {
-    }
+    ) {}
 
     public static function success(array $meta = []): self
     {

@@ -1,10 +1,10 @@
 <?php
 
+use ArcheeNic\PermissionRegistry\Controllers\HrEventTriggerAssignmentController;
 use ArcheeNic\PermissionRegistry\Controllers\PermissionController;
 use ArcheeNic\PermissionRegistry\Controllers\PermissionDependencyController;
 use ArcheeNic\PermissionRegistry\Controllers\PermissionFieldController;
 use ArcheeNic\PermissionRegistry\Controllers\PermissionGroupController;
-use ArcheeNic\PermissionRegistry\Controllers\HrEventTriggerAssignmentController;
 use ArcheeNic\PermissionRegistry\Controllers\PermissionTriggerAssignmentController;
 use ArcheeNic\PermissionRegistry\Controllers\PermissionTriggerController;
 use ArcheeNic\PermissionRegistry\Controllers\PositionController;

@@ -3,15 +3,15 @@
 namespace ArcheeNic\PermissionRegistry\Tests\Unit\Enums;
 
 use ArcheeNic\PermissionRegistry\Enums\GrantedPermissionStatus;
-use PHPUnit\Framework\Attributes\DataProvider;
 use ArcheeNic\PermissionRegistry\Tests\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 class GrantedPermissionStatusTest extends TestCase
 {
     public function test_all_cases_exist(): void
     {
         $cases = GrantedPermissionStatus::cases();
-        $values = array_map(fn($c) => $c->value, $cases);
+        $values = array_map(fn ($c) => $c->value, $cases);
 
         $this->assertContains('pending', $values);
         $this->assertContains('granting', $values);

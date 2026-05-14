@@ -9,19 +9,33 @@ class HrTriggerExecutionLog extends Model
     protected $table = 'hr_trigger_execution_logs';
 
     public const ID = 'id';
+
     public const VIRTUAL_USER_ID = 'virtual_user_id';
+
     public const HR_EVENT_TRIGGER_ASSIGNMENT_ID = 'hr_event_trigger_assignment_id';
+
     public const PERMISSION_TRIGGER_ID = 'permission_trigger_id';
+
     public const EVENT_TYPE = 'event_type';
+
     public const EMPLOYEE_CATEGORY = 'employee_category';
+
     public const STATUS = 'status';
+
     public const STARTED_AT = 'started_at';
+
     public const COMPLETED_AT = 'completed_at';
+
     public const ERROR_MESSAGE = 'error_message';
+
     public const META = 'meta';
+
     public const RESOLUTION_CONTEXT = 'resolution_context';
+
     public const ACTOR_ID = 'actor_id';
+
     public const CREATED_AT = 'created_at';
+
     public const UPDATED_AT = 'updated_at';
 
     protected $fillable = [

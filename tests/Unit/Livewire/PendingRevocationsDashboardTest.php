@@ -157,4 +157,3 @@ class PendingRevocationsDashboardTest extends TestCase
         return $prop->getValue($instance);
     }
 }
-

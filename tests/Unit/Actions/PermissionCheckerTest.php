@@ -3,9 +3,9 @@
 namespace ArcheeNic\PermissionRegistry\Tests\Unit\Actions;
 
 use ArcheeNic\PermissionRegistry\Actions\PermissionChecker;
+use ArcheeNic\PermissionRegistry\Enums\VirtualUserStatus;
 use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
 use ArcheeNic\PermissionRegistry\Models\Permission;
-use ArcheeNic\PermissionRegistry\Enums\VirtualUserStatus;
 use ArcheeNic\PermissionRegistry\Models\VirtualUser;
 use ArcheeNic\PermissionRegistry\Tests\TestCase;
 
@@ -15,7 +15,7 @@ class PermissionCheckerTest extends TestCase
     {
         $user = VirtualUser::create(['name' => 'Test User', 'status' => VirtualUserStatus::ACTIVE]);
 
-        $checker = new PermissionChecker();
+        $checker = new PermissionChecker;
         $result = $checker->hasPermission($user->id, 'test', 'non-existent-perm');
 
         $this->assertFalse($result);
@@ -30,7 +30,7 @@ class PermissionCheckerTest extends TestCase
         ]);
         $user = VirtualUser::create(['name' => 'Test User', 'status' => VirtualUserStatus::ACTIVE]);
 
-        $checker = new PermissionChecker();
+        $checker = new PermissionChecker;
         $result = $checker->hasPermission($user->id, 'test', 'non-existent-perm');
 
         $this->assertFalse($result);
@@ -45,7 +45,7 @@ class PermissionCheckerTest extends TestCase
         ]);
         $user = VirtualUser::create(['name' => 'Test User', 'status' => VirtualUserStatus::ACTIVE]);
 
-        $checker = new PermissionChecker();
+        $checker = new PermissionChecker;
         $result = $checker->hasPermission($user->id, 'test', 'test-perm');
 
         $this->assertFalse($result);
@@ -66,7 +66,7 @@ class PermissionCheckerTest extends TestCase
             'granted_at' => now(),
         ]);
 
-        $checker = new PermissionChecker();
+        $checker = new PermissionChecker;
         $result = $checker->hasPermission($user->id, 'test', 'test-perm');
 
         $this->assertTrue($result);
@@ -87,7 +87,7 @@ class PermissionCheckerTest extends TestCase
             'granted_at' => now(),
         ]);
 
-        $checker = new PermissionChecker();
+        $checker = new PermissionChecker;
         $result = $checker->hasPermission($user->id, 'test', 'test-perm');
 
         $this->assertFalse($result);
@@ -109,7 +109,7 @@ class PermissionCheckerTest extends TestCase
             'expires_at' => now()->subDay(),
         ]);
 
-        $checker = new PermissionChecker();
+        $checker = new PermissionChecker;
         $result = $checker->hasPermission($user->id, 'test', 'test-perm');
 
         $this->assertFalse($result);

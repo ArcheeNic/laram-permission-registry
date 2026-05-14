@@ -12,11 +12,10 @@ class RetryHrTriggerAction
 {
     public function __construct(
         private HrEventTriggerExecutor $executor
-    ) {
-    }
+    ) {}
 
     /**
-     * @param array<string, mixed> $manualGlobalFields
+     * @param  array<string, mixed>  $manualGlobalFields
      */
     public function execute(int $executionLogId, array $manualGlobalFields = [], ?int $actorId = null): bool
     {

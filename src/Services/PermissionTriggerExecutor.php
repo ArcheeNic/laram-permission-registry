@@ -8,17 +8,17 @@ use ArcheeNic\PermissionRegistry\Enums\GrantedPermissionStatus;
 use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
 use ArcheeNic\PermissionRegistry\Models\PermissionExecutionLog;
 use ArcheeNic\PermissionRegistry\Models\PermissionTriggerAssignment;
-use ArcheeNic\PermissionRegistry\Models\VirtualUserFieldValue;
 use ArcheeNic\PermissionRegistry\ValueObjects\TriggerContext;
 use ArcheeNic\PermissionRegistry\ValueObjects\TriggerResult;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
 class PermissionTriggerExecutor
 {
     public function __construct(
         private TriggerFieldMappingService $mappingService
-    ) {
-    }
+    ) {}
+
     /**
      * Выполнить цепочку триггеров для выданного права
      */
@@ -37,17 +37,18 @@ class PermissionTriggerExecutor
         if ($assignments->isEmpty()) {
             // Нет триггеров - считаем успешным завершением
             $grantedPermission->update([
-                'status' => $eventType === 'grant' 
-                    ? GrantedPermissionStatus::GRANTED->value 
+                'status' => $eventType === 'grant'
+                    ? GrantedPermissionStatus::GRANTED->value
                     : GrantedPermissionStatus::REVOKED->value,
             ]);
+
             return true;
         }
 
         // Обновить статус на "в процессе"
         $grantedPermission->update([
-            'status' => $eventType === 'grant' 
-                ? GrantedPermissionStatus::GRANTING->value 
+            'status' => $eventType === 'grant'
+                ? GrantedPermissionStatus::GRANTING->value
                 : GrantedPermissionStatus::REVOKING->value,
         ]);
 
@@ -66,7 +67,7 @@ class PermissionTriggerExecutor
                 );
                 $result = $this->processTrigger($assignment, $context);
 
-                if (!$result->success) {
+                if (! $result->success) {
                     $allSuccess = false;
                     $failedAssignment = $assignment;
                     $failedIndex = $index;
@@ -102,11 +103,7 @@ class PermissionTriggerExecutor
     /**
      * Выполнить цепочку триггеров начиная с указанного индекса
      *
-     * @param GrantedPermission $grantedPermission
-     * @param \Illuminate\Support\Collection $assignments
-     * @param int $startIndex
-     * @param string $eventType
-     * @return bool
+     * @param  Collection  $assignments
      */
     public function executeChainFromTrigger(
         GrantedPermission $grantedPermission,
@@ -138,7 +135,7 @@ class PermissionTriggerExecutor
                 );
                 $result = $this->processTrigger($assignment, $context);
 
-                if (!$result->success) {
+                if (! $result->success) {
                     $allSuccess = false;
                     $failedAssignment = $assignment;
                     $failedIndex = $i;
@@ -244,7 +241,7 @@ class PermissionTriggerExecutor
 
             // Пауза для визуализации статуса (только для разработки)
             // if (config('app.debug')) {
-                // sleep(5);
+            // sleep(5);
             // }
 
             // Инстанцировать триггер
@@ -276,8 +273,8 @@ class PermissionTriggerExecutor
     /**
      * Построить контекст для выполнения триггера
      *
-     * @param array $manualFieldValues значения для ручного продолжения шага (по имени поля триггера, напр. first_name, password)
-     * @param array $assignmentConfig системные настройки экземпляра триггера (из PermissionTriggerAssignment.config)
+     * @param  array  $manualFieldValues  значения для ручного продолжения шага (по имени поля триггера, напр. first_name, password)
+     * @param  array  $assignmentConfig  системные настройки экземпляра триггера (из PermissionTriggerAssignment.config)
      */
     private function buildContext(
         GrantedPermission $grantedPermission,
@@ -315,13 +312,13 @@ class PermissionTriggerExecutor
      */
     private function instantiateTrigger(string $className): PermissionTriggerInterface
     {
-        if (!class_exists($className)) {
+        if (! class_exists($className)) {
             throw new \RuntimeException("Trigger class not found: {$className}");
         }
 
         $instance = app($className);
 
-        if (!$instance instanceof PermissionTriggerInterface) {
+        if (! $instance instanceof PermissionTriggerInterface) {
             throw new \RuntimeException("Trigger must implement PermissionTriggerInterface: {$className}");
         }
 

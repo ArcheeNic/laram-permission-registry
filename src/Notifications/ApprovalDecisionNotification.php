@@ -15,8 +15,7 @@ class ApprovalDecisionNotification extends Notification
     public function __construct(
         private readonly ApprovalRequest $approvalRequest,
         private readonly ApprovalRequestStatus $result,
-    ) {
-    }
+    ) {}
 
     /** @return array<string> */
     public function via(object $notifiable): array
@@ -31,7 +30,7 @@ class ApprovalDecisionNotification extends Notification
             ? __('permission-registry::notifications.decision_approved')
             : __('permission-registry::notifications.decision_rejected');
 
-        return (new MailMessage())
+        return (new MailMessage)
             ->subject(__('permission-registry::notifications.approval_decision_subject'))
             ->line(__('permission-registry::notifications.approval_decision_line', [
                 'permission' => $permissionName,

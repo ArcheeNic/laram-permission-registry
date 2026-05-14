@@ -13,7 +13,7 @@ class ImportDiscoveryServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new ImportDiscoveryService();
+        $this->service = new ImportDiscoveryService;
     }
 
     public function test_discover_returns_empty_array_when_namespace_config_is_missing(): void
@@ -39,7 +39,7 @@ class ImportDiscoveryServiceTest extends TestCase
     public function test_discover_returns_empty_array_when_directory_does_not_exist(): void
     {
         Config::set('imports.namespace', 'App\\Imports');
-        Config::set('imports.directory', '/non/existent/path/' . uniqid());
+        Config::set('imports.directory', '/non/existent/path/'.uniqid());
 
         $result = $this->service->discover();
 
@@ -48,12 +48,12 @@ class ImportDiscoveryServiceTest extends TestCase
 
     public function test_discover_returns_array_with_expected_metadata_keys(): void
     {
-        $tempDir = sys_get_temp_dir() . '/import_test_' . uniqid();
+        $tempDir = sys_get_temp_dir().'/import_test_'.uniqid();
         mkdir($tempDir, 0755, true);
 
-        $namespace = 'ImportTestNs' . uniqid();
+        $namespace = 'ImportTestNs'.uniqid();
         $className = 'TestImporter';
-        $fqcn = $namespace . '\\' . $className;
+        $fqcn = $namespace.'\\'.$className;
 
         $code = <<<PHP
 <?php
@@ -79,8 +79,8 @@ class {$className} implements PermissionImportInterface
 }
 PHP;
 
-        file_put_contents($tempDir . '/' . $className . '.php', $code);
-        require_once $tempDir . '/' . $className . '.php';
+        file_put_contents($tempDir.'/'.$className.'.php', $code);
+        require_once $tempDir.'/'.$className.'.php';
 
         Config::set('imports.namespace', $namespace);
         Config::set('imports.directory', $tempDir);
@@ -94,16 +94,16 @@ PHP;
         $this->assertSame(['email'], $result[0]['required_fields']);
         $this->assertSame(['api_key'], $result[0]['config_fields']);
 
-        @unlink($tempDir . '/' . $className . '.php');
+        @unlink($tempDir.'/'.$className.'.php');
         @rmdir($tempDir);
     }
 
     public function test_discover_skips_non_implementing_classes(): void
     {
-        $tempDir = sys_get_temp_dir() . '/import_test_' . uniqid();
+        $tempDir = sys_get_temp_dir().'/import_test_'.uniqid();
         mkdir($tempDir, 0755, true);
 
-        $namespace = 'ImportTestNs' . uniqid();
+        $namespace = 'ImportTestNs'.uniqid();
         $className = 'NotAnImporter';
 
         $code = <<<PHP
@@ -116,8 +116,8 @@ class {$className}
 }
 PHP;
 
-        file_put_contents($tempDir . '/' . $className . '.php', $code);
-        require_once $tempDir . '/' . $className . '.php';
+        file_put_contents($tempDir.'/'.$className.'.php', $code);
+        require_once $tempDir.'/'.$className.'.php';
 
         Config::set('imports.namespace', $namespace);
         Config::set('imports.directory', $tempDir);
@@ -126,7 +126,7 @@ PHP;
 
         $this->assertSame([], $result);
 
-        @unlink($tempDir . '/' . $className . '.php');
+        @unlink($tempDir.'/'.$className.'.php');
         @rmdir($tempDir);
     }
 }

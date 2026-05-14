@@ -7,12 +7,12 @@ use ArcheeNic\PermissionRegistry\Enums\ImportMatchStatus;
 use ArcheeNic\PermissionRegistry\Enums\PermissionScope;
 use ArcheeNic\PermissionRegistry\Enums\VirtualUserStatus;
 use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
-use ArcheeNic\PermissionRegistry\Models\Permission;
-use ArcheeNic\PermissionRegistry\Models\PermissionResource;
-use ArcheeNic\PermissionRegistry\Models\VirtualUser;
 use ArcheeNic\PermissionRegistry\Models\ImportExecutionLog;
 use ArcheeNic\PermissionRegistry\Models\ImportStagingRow;
+use ArcheeNic\PermissionRegistry\Models\Permission;
 use ArcheeNic\PermissionRegistry\Models\PermissionImport;
+use ArcheeNic\PermissionRegistry\Models\PermissionResource;
+use ArcheeNic\PermissionRegistry\Models\VirtualUser;
 use ArcheeNic\PermissionRegistry\Services\ImportFieldMappingService;
 use ArcheeNic\PermissionRegistry\Services\ImportTriggerConfigResolver;
 use ArcheeNic\PermissionRegistry\Services\TriggerPermissionMatcherService;
@@ -111,8 +111,8 @@ class ExecuteApprovedImportAction
     }
 
     /**
-     * @param array<string, array{permission_field_id: int, is_internal: bool}> $mapping
-     * @param array{created: int, updated: int, fired: int, synced: int, skipped: int, errors: int} $stats
+     * @param  array<string, array{permission_field_id: int, is_internal: bool}>  $mapping
+     * @param  array{created: int, updated: int, fired: int, synced: int, skipped: int, errors: int}  $stats
      */
     private function processNewRow(
         ImportStagingRow $row,
@@ -154,8 +154,8 @@ class ExecuteApprovedImportAction
     }
 
     /**
-     * @param array<string, array{permission_field_id: int, is_internal: bool}> $mapping
-     * @param array{created: int, updated: int, fired: int, synced: int, skipped: int, errors: int} $stats
+     * @param  array<string, array{permission_field_id: int, is_internal: bool}>  $mapping
+     * @param  array{created: int, updated: int, fired: int, synced: int, skipped: int, errors: int}  $stats
      */
     private function processChangedRow(
         ImportStagingRow $row,
@@ -193,7 +193,7 @@ class ExecuteApprovedImportAction
     }
 
     /**
-     * @param array{created: int, updated: int, fired: int, synced: int, skipped: int, errors: int} $stats
+     * @param  array{created: int, updated: int, fired: int, synced: int, skipped: int, errors: int}  $stats
      */
     private function processExistsRow(
         ImportStagingRow $row,
@@ -226,7 +226,7 @@ class ExecuteApprovedImportAction
     }
 
     /**
-     * @param array{created: int, updated: int, fired: int, synced: int, skipped: int, errors: int} $stats
+     * @param  array{created: int, updated: int, fired: int, synced: int, skipped: int, errors: int}  $stats
      */
     private function processMissingRow(ImportStagingRow $row, array $managedPermissionIds, array &$stats): void
     {
@@ -322,7 +322,7 @@ class ExecuteApprovedImportAction
     }
 
     /**
-     * @param array<string, array{permission_field_id: int, is_internal: bool}> $mapping
+     * @param  array<string, array{permission_field_id: int, is_internal: bool}>  $mapping
      * @return array<int, mixed>
      */
     private function buildGlobalFields(ImportStagingRow $row, array $mapping): array
@@ -338,8 +338,8 @@ class ExecuteApprovedImportAction
      * permission_resources по (service, kind, external_id=department_id). Если ресурса нет —
      * пара пропускается, в лог пишется warning.
      *
-     * @param array<int, string> $triggerClassPatterns
-     * @param array<int, int>    $fallbackPermissionIds
+     * @param  array<int, string>  $triggerClassPatterns
+     * @param  array<int, int>  $fallbackPermissionIds
      * @return array<int, array{permission_id:int, resource_id:?int}>
      */
     private function resolvePermissionPairsFromRow(
@@ -375,7 +375,7 @@ class ExecuteApprovedImportAction
     }
 
     /**
-     * @param array<int, int> $permissionIds
+     * @param  array<int, int>  $permissionIds
      * @return array<int, array{permission_id:int, resource_id:?int}>
      */
     private function pairsForServiceScoped(array $permissionIds): array
@@ -396,16 +396,18 @@ class ExecuteApprovedImportAction
                 Log::warning('Import fallback: skipping resource-scoped permission (no department context)', [
                     'permission_id' => $permissionId,
                 ]);
+
                 continue;
             }
             $pairs[] = ['permission_id' => $permissionId, 'resource_id' => null];
         }
+
         return $pairs;
     }
 
     /**
-     * @param array<int, int> $permissionIds
-     * @param array<int, array{permission_id:int, permission_name:string, department_id:string}> $matched
+     * @param  array<int, int>  $permissionIds
+     * @param  array<int, array{permission_id:int, permission_name:string, department_id:string}>  $matched
      * @return array<int, array{permission_id:int, resource_id:?int}>
      */
     private function buildPairs(array $permissionIds, array $matched): array
@@ -466,13 +468,15 @@ class ExecuteApprovedImportAction
                 }
                 $seen[$key] = true;
                 $pairs[] = ['permission_id' => $permissionId, 'resource_id' => null];
+
                 continue;
             }
 
-            if (!$permission->resource_kind) {
+            if (! $permission->resource_kind) {
                 Log::warning('Import: resource-scoped permission has no resource_kind, skipping', [
                     'permission_id' => $permissionId,
                 ]);
+
                 continue;
             }
 
@@ -485,6 +489,7 @@ class ExecuteApprovedImportAction
                     'kind' => $permission->resource_kind,
                     'external_id' => $departmentExternalId,
                 ]);
+
                 continue;
             }
 
@@ -500,7 +505,7 @@ class ExecuteApprovedImportAction
     }
 
     /**
-     * @param array<int, array{permission_id:int, resource_id:?int}> $pairs
+     * @param  array<int, array{permission_id:int, resource_id:?int}>  $pairs
      * @return array<int, int>
      */
     private function permissionIdsFromPairs(array $pairs): array
@@ -509,7 +514,7 @@ class ExecuteApprovedImportAction
     }
 
     /**
-     * @param array<int, int> $permissionIds
+     * @param  array<int, int>  $permissionIds
      * @return array<string, true>
      */
     private function existingPairKeys(int $userId, array $permissionIds): array
@@ -526,11 +531,12 @@ class ExecuteApprovedImportAction
                 $resourceId = $grant->resource_id !== null ? (int) $grant->resource_id : null;
                 $keys[UserAutoGrantPairsCollector::key((int) $grant->permission_id, $resourceId)] = true;
             });
+
         return $keys;
     }
 
     /**
-     * @param array<int, int> $managedPermissionIds
+     * @param  array<int, int>  $managedPermissionIds
      * @return array<int, array{permission_id:int, resource_id:?int}>
      */
     private function loadCurrentManagedPairs(int $userId, array $managedPermissionIds): array
@@ -538,6 +544,7 @@ class ExecuteApprovedImportAction
         if ($managedPermissionIds === []) {
             return [];
         }
+
         return GrantedPermission::query()
             ->where(GrantedPermission::VIRTUAL_USER_ID, $userId)
             ->whereIn(GrantedPermission::PERMISSION_ID, $managedPermissionIds)

@@ -14,14 +14,21 @@ use Livewire\Component;
 class MyPermissions extends Component
 {
     public ?int $currentUserId = null;
+
     public ?int $virtualUserId = null;
+
     public string $search = '';
+
     public string $statusFilter = '';
+
     public bool $showRequestModal = false;
+
     public ?int $selectedPermissionId = null;
+
     public array $fieldValues = [];
 
     public ?string $flashMessage = null;
+
     public ?string $flashError = null;
 
     public function mount(?int $currentUserId = null): void
@@ -33,7 +40,7 @@ class MyPermissions extends Component
 
     public function getPermissionsProperty()
     {
-        if (!$this->virtualUserId) {
+        if (! $this->virtualUserId) {
             return collect();
         }
 
@@ -46,8 +53,8 @@ class MyPermissions extends Component
 
         if ($this->search) {
             $query->whereHas('permission', function ($q) {
-                $q->where('name', 'like', '%' . $this->search . '%')
-                    ->orWhere('service', 'like', '%' . $this->search . '%');
+                $q->where('name', 'like', '%'.$this->search.'%')
+                    ->orWhere('service', 'like', '%'.$this->search.'%');
             });
         }
 
@@ -75,7 +82,7 @@ class MyPermissions extends Component
         if ($permission) {
             $this->fieldValues = [];
             foreach ($permission->fields as $field) {
-                if (!$field->is_global) {
+                if (! $field->is_global) {
                     $this->fieldValues[$field->id] = $field->default_value ?? '';
                 }
             }
@@ -86,13 +93,14 @@ class MyPermissions extends Component
 
     public function requestPermission(): void
     {
-        if (!$this->virtualUserId || !$this->selectedPermissionId) {
+        if (! $this->virtualUserId || ! $this->selectedPermissionId) {
             return;
         }
 
         $permission = Permission::find($this->selectedPermissionId);
-        if (!$permission) {
+        if (! $permission) {
             $this->flashError = __('permission-registry::messages.permission_not_found');
+
             return;
         }
 
@@ -101,12 +109,14 @@ class MyPermissions extends Component
                 $this->flashError = __('permission-registry::messages.field_value_too_long', [
                     'max' => self::MAX_FIELD_VALUE_LENGTH,
                 ]);
+
                 return;
             }
         }
 
         if (($permission->scope ?? PermissionScope::Service) === PermissionScope::Resource) {
             $this->flashError = __('permission-registry::Self-service request for resource-scoped permissions is not supported. Ask an administrator.');
+
             return;
         }
 
@@ -122,6 +132,7 @@ class MyPermissions extends Component
 
         if ($existing) {
             $this->flashError = __('permission-registry::messages.permission_already_requested');
+
             return;
         }
 
@@ -149,7 +160,7 @@ class MyPermissions extends Component
 
     public function getAvailablePermissionsProperty()
     {
-        if (!$this->virtualUserId) {
+        if (! $this->virtualUserId) {
             return collect();
         }
 

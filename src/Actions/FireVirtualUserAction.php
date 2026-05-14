@@ -13,8 +13,7 @@ class FireVirtualUserAction
         private ReconcileUserPermissionsAction $reconcileUserPermissionsAction,
         private ProcessFireRevocationsAction $processFireRevocationsAction,
         private HrEventTriggerExecutor $hrEventTriggerExecutor
-    ) {
-    }
+    ) {}
 
     public function handle(int $userId, bool $skipHrTriggers = false): VirtualUser
     {
@@ -33,7 +32,7 @@ class FireVirtualUserAction
             return $user->fresh();
         });
 
-        if (!$skipHrTriggers) {
+        if (! $skipHrTriggers) {
             $this->hrEventTriggerExecutor->execute($user->id, 'fire');
         }
 

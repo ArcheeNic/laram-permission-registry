@@ -12,8 +12,7 @@ readonly class SyncReport
         public int $disappeared = 0,
         public int $reappeared = 0,
         public array $errors = [],
-    ) {
-    }
+    ) {}
 
     public function toArray(): array
     {

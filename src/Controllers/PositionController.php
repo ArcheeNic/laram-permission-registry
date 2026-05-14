@@ -12,6 +12,7 @@ use ArcheeNic\PermissionRegistry\Models\Position;
 use ArcheeNic\PermissionRegistry\Models\PositionPermissionResource;
 use ArcheeNic\PermissionRegistry\Services\UserAutoGrantPairsCollector;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
@@ -28,6 +29,7 @@ class PositionController extends Controller
         $resourcesByPermission = $position->permissionResources
             ->groupBy('permission_id')
             ->map(fn ($rows) => $rows->map(fn ($r) => $r->resource)->filter()->values());
+
         return view('permission-registry::positions.show', compact('position', 'resourcesByPermission'));
     }
 
@@ -38,6 +40,7 @@ class PositionController extends Controller
         $groups = PermissionGroup::all();
         $resourceCatalog = $this->buildResourceCatalog($permissions);
         $selectedResources = [];
+
         return view('permission-registry::positions.create', compact('positions', 'permissions', 'groups', 'resourceCatalog', 'selectedResources'));
     }
 
@@ -146,7 +149,7 @@ class PositionController extends Controller
             ];
         });
 
-        if (!empty($diff['userIds']) && (!empty($diff['added']) || !empty($diff['removed']))) {
+        if (! empty($diff['userIds']) && (! empty($diff['added']) || ! empty($diff['removed']))) {
             ApplyMembershipResourceDiffJob::dispatch(
                 'position',
                 $position->id,
@@ -169,14 +172,14 @@ class PositionController extends Controller
     }
 
     /**
-     * @return array<int, \Illuminate\Support\Collection<\ArcheeNic\PermissionRegistry\Models\PermissionResource>>
+     * @return array<int, Collection<PermissionResource>>
      */
     private function buildResourceCatalog($permissions): array
     {
         $byKind = [];
         foreach ($permissions as $permission) {
             $scope = $permission->scope ?? PermissionScope::Service;
-            if ($scope !== PermissionScope::Resource || !$permission->resource_kind) {
+            if ($scope !== PermissionScope::Resource || ! $permission->resource_kind) {
                 continue;
             }
             $byKind[$permission->service.'|'.$permission->resource_kind] = true;
@@ -226,18 +229,18 @@ class PositionController extends Controller
         foreach ($input as $permissionId => $resourceIds) {
             $permissionId = (int) $permissionId;
             $permission = $permissions[$permissionId] ?? null;
-            if (!$permission) {
+            if (! $permission) {
                 continue;
             }
             $scope = $permission->scope ?? PermissionScope::Service;
-            if ($scope !== PermissionScope::Resource || !$permission->resource_kind) {
+            if ($scope !== PermissionScope::Resource || ! $permission->resource_kind) {
                 continue;
             }
 
             foreach ((array) $resourceIds as $resourceId) {
                 $resourceId = (int) $resourceId;
                 $resource = $resources[$resourceId] ?? null;
-                if (!$resource) {
+                if (! $resource) {
                     continue;
                 }
                 if ($resource->service !== $permission->service || $resource->kind !== $permission->resource_kind) {
@@ -252,7 +255,7 @@ class PositionController extends Controller
         }
 
         PositionPermissionResource::query()->where('position_id', $position->id)->delete();
-        if (!empty($desired)) {
+        if (! empty($desired)) {
             $now = now();
             $rows = array_map(fn (array $r) => $r + ['created_at' => $now, 'updated_at' => $now], $desired);
             PositionPermissionResource::query()->insert($rows);
@@ -273,7 +276,7 @@ class PositionController extends Controller
             ])
             ->find($positionId);
 
-        if (!$position) {
+        if (! $position) {
             return $pairs;
         }
 
@@ -295,6 +298,7 @@ class PositionController extends Controller
                         'auto_revoke' => (bool) $permission->auto_revoke,
                     ];
                 }
+
                 continue;
             }
 

@@ -13,20 +13,28 @@ use Illuminate\Support\Facades\Log;
 trait ManagesPermissionStatus
 {
     public array $permissionStatuses = [];
+
     public array $dependentPermissionStatuses = [];
+
     public bool $hasPendingPermissions = false;
+
     public int $totalPermissionsToProcess = 0;
+
     public int $processedPermissions = 0;
 
     public array $processingPermissions = [];
+
     public bool $isProcessing = false;
+
     public array $completedPermissionsWithErrors = [];
+
     public array $continueStepFields = [];
+
     public array $dirtyDependentPermissionSelections = [];
 
     public function checkPermissionStatus()
     {
-        if (!$this->selectedUserId) {
+        if (! $this->selectedUserId) {
             return;
         }
 
@@ -39,7 +47,7 @@ trait ManagesPermissionStatus
         $this->syncDependentPermissionsFromDb($allUserPermissions);
         $this->updatePendingCounts($allUserPermissions);
 
-        if (!$this->isProcessing) {
+        if (! $this->isProcessing) {
             $this->loadPermissionsWithErrors();
         }
 
@@ -111,7 +119,7 @@ trait ManagesPermissionStatus
 
     protected function initializeProcessingTracking(): void
     {
-        if (!$this->selectedUserId) {
+        if (! $this->selectedUserId) {
             return;
         }
 
@@ -124,17 +132,17 @@ trait ManagesPermissionStatus
         $trackedRevokePermissionIds = [];
 
         foreach ($this->selectedPermissions as $permId => $isSelected) {
-            if ($isSelected && !in_array($permId, $currentPermissions)) {
+            if ($isSelected && ! in_array($permId, $currentPermissions)) {
                 $trackedGrantPermissionIds[] = $permId;
-            } elseif (!$isSelected && in_array($permId, $currentPermissions)) {
+            } elseif (! $isSelected && in_array($permId, $currentPermissions)) {
                 $trackedRevokePermissionIds[] = $permId;
             }
         }
 
         foreach ($this->dependentSelectedPermissions as $permId => $isEnabled) {
-            if ($isEnabled && !in_array($permId, $currentPermissions)) {
+            if ($isEnabled && ! in_array($permId, $currentPermissions)) {
                 $trackedGrantPermissionIds[] = $permId;
-            } elseif (!$isEnabled && in_array($permId, $currentPermissions)) {
+            } elseif (! $isEnabled && in_array($permId, $currentPermissions)) {
                 $trackedRevokePermissionIds[] = $permId;
             }
         }
@@ -142,6 +150,7 @@ trait ManagesPermissionStatus
         if (empty($trackedGrantPermissionIds) && empty($trackedRevokePermissionIds)) {
             $this->isProcessing = false;
             $this->processingPermissions = [];
+
             return;
         }
 
@@ -175,7 +184,7 @@ trait ManagesPermissionStatus
             }
         }
 
-        $this->isProcessing = !empty($this->processingPermissions);
+        $this->isProcessing = ! empty($this->processingPermissions);
     }
 
     private function updateDirectPermissionStatuses($allUserPermissions): void
@@ -232,6 +241,7 @@ trait ManagesPermissionStatus
 
         if (empty($trackedPermissionIds)) {
             $this->isProcessing = false;
+
             return;
         }
 
@@ -300,7 +310,7 @@ trait ManagesPermissionStatus
 
     private function loadPermissionsWithErrors(): void
     {
-        if (!$this->selectedUserId) {
+        if (! $this->selectedUserId) {
             return;
         }
 
@@ -310,6 +320,7 @@ trait ManagesPermissionStatus
 
         if ($allUserPermissions->isEmpty()) {
             $this->completedPermissionsWithErrors = [];
+
             return;
         }
 
@@ -342,7 +353,7 @@ trait ManagesPermissionStatus
         foreach ($dependentPermissions as $permission) {
             $permId = $permission['id'];
             $isDirty = (bool) ($this->dirtyDependentPermissionSelections[$permId] ?? false);
-            if ($isDirty && !$this->isProcessing) {
+            if ($isDirty && ! $this->isProcessing) {
                 // Не перетираем локальный выбор пользователя до явного сохранения.
                 continue;
             }
@@ -354,9 +365,9 @@ trait ManagesPermissionStatus
                     'status' => $grantedPermission->status ?? 'granted',
                     'status_message' => $grantedPermission->status_message,
                 ];
-            } elseif ($grantedPermission && !$grantedPermission->enabled) {
+            } elseif ($grantedPermission && ! $grantedPermission->enabled) {
                 $this->dependentSelectedPermissions[$permId] = false;
-            } elseif (!isset($this->dependentSelectedPermissions[$permId])) {
+            } elseif (! isset($this->dependentSelectedPermissions[$permId])) {
                 $this->dependentSelectedPermissions[$permId] = false;
             }
         }
@@ -364,7 +375,7 @@ trait ManagesPermissionStatus
 
     private function refreshPermissionCheckboxes(): void
     {
-        if (!$this->selectedUserId) {
+        if (! $this->selectedUserId) {
             return;
         }
 

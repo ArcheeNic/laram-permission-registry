@@ -10,8 +10,7 @@ class AssignVirtualUserPositionAction
 {
     public function __construct(
         private ReconcileUserPermissionsAction $reconcileUserPermissionsAction
-    ) {
-    }
+    ) {}
 
     public function handle(int $userId, int $positionId): VirtualUserPosition
     {
@@ -22,6 +21,7 @@ class AssignVirtualUserPositionAction
 
         if ($existingPosition) {
             $this->reconcileUserPermissionsAction->handle($userId);
+
             return $existingPosition; // Если должность уже назначена, возвращаем ее
         }
 
@@ -48,7 +48,7 @@ class AssignVirtualUserPositionAction
             ->where('position_id', $positionId)
             ->first();
 
-        if (!$position) {
+        if (! $position) {
             return false;
         }
 

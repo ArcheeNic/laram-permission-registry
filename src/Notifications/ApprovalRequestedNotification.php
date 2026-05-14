@@ -13,8 +13,7 @@ class ApprovalRequestedNotification extends Notification
 
     public function __construct(
         private readonly ApprovalRequest $approvalRequest,
-    ) {
-    }
+    ) {}
 
     /** @return array<string> */
     public function via(object $notifiable): array
@@ -27,7 +26,7 @@ class ApprovalRequestedNotification extends Notification
         $permissionName = $this->approvalRequest->grantedPermission?->permission?->name ?? '';
         $requesterName = $this->approvalRequest->requester?->name ?? '';
 
-        return (new MailMessage())
+        return (new MailMessage)
             ->subject(__('permission-registry::notifications.approval_requested_subject'))
             ->line(__('permission-registry::notifications.approval_requested_line', [
                 'requester' => $requesterName,

@@ -4,6 +4,7 @@ namespace ArcheeNic\PermissionRegistry\Models;
 
 use ArcheeNic\PermissionRegistry\Models\Base\VirtualUserFieldValue as BaseVirtualUserFieldValue;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * Global field values for virtual users
@@ -18,8 +19,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $source
  * @property int|null $created_by
  * @property array<string, mixed>|null $meta
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  */
 class VirtualUserFieldValue extends BaseVirtualUserFieldValue
 {

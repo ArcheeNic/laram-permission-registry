@@ -8,6 +8,5 @@ readonly class VirtualUserPositionChanged
         public int $userId,
         public int $positionId,
         public ?int $oldPositionId = null
-    ) {
-    }
+    ) {}
 }

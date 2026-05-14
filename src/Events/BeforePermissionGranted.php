@@ -10,6 +10,5 @@ readonly class BeforePermissionGranted
         public string $permissionName,
         public string $service,
         public array $fieldValues = []
-    ) {
-    }
+    ) {}
 }

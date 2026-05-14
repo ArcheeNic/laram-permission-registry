@@ -3,6 +3,7 @@
 namespace ArcheeNic\PermissionRegistry\Tests\Feature;
 
 use App\Models\User;
+use App\Triggers\RegruGrantEmailTrigger;
 use ArcheeNic\PermissionRegistry\Enums\EmployeeCategory;
 use ArcheeNic\PermissionRegistry\Models\HrEventTriggerAssignment;
 use ArcheeNic\PermissionRegistry\Models\PermissionTrigger;
@@ -30,7 +31,7 @@ class HrEventTriggerAssignmentControllerTest extends TestCase
     {
         $trigger = PermissionTrigger::create([
             'name' => 'HR Trigger',
-            'class_name' => \App\Triggers\RegruGrantEmailTrigger::class,
+            'class_name' => RegruGrantEmailTrigger::class,
             'type' => 'both',
             'is_active' => true,
         ]);
@@ -50,7 +51,7 @@ class HrEventTriggerAssignmentControllerTest extends TestCase
     {
         $trigger = PermissionTrigger::create([
             'name' => 'HR Trigger',
-            'class_name' => \App\Triggers\RegruGrantEmailTrigger::class,
+            'class_name' => RegruGrantEmailTrigger::class,
             'type' => 'both',
             'is_active' => true,
         ]);
@@ -88,7 +89,7 @@ class HrEventTriggerAssignmentControllerTest extends TestCase
     {
         $trigger = PermissionTrigger::create([
             'name' => 'HR Trigger',
-            'class_name' => \App\Triggers\RegruGrantEmailTrigger::class,
+            'class_name' => RegruGrantEmailTrigger::class,
             'type' => 'both',
             'is_active' => true,
         ]);

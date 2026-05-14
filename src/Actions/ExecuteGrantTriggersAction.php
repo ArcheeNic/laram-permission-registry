@@ -24,6 +24,7 @@ class ExecuteGrantTriggersAction
     ): void {
         if ($skipTriggers) {
             $this->dispatchAfterEvent($grantedPermission, $permission);
+
             return;
         }
 

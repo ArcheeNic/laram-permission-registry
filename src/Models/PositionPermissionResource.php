@@ -8,10 +8,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class PositionPermissionResource extends Model
 {
     public const ID = 'id';
+
     public const POSITION_ID = 'position_id';
+
     public const PERMISSION_ID = 'permission_id';
+
     public const RESOURCE_ID = 'resource_id';
+
     public const CREATED_AT = 'created_at';
+
     public const UPDATED_AT = 'updated_at';
 
     protected $table = 'position_permission_resources';

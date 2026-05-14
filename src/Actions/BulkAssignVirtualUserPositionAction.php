@@ -9,15 +9,15 @@ use Illuminate\Database\QueryException;
 class BulkAssignVirtualUserPositionAction
 {
     private const USER_NOT_FOUND_MESSAGE = 'Virtual user not found';
+
     private const ASSIGN_FAILED_MESSAGE = 'Failed to assign position';
 
     public function __construct(
         private AssignVirtualUserPositionAction $assignVirtualUserPositionAction
-    ) {
-    }
+    ) {}
 
     /**
-     * @param array<int> $virtualUserIds
+     * @param  array<int>  $virtualUserIds
      */
     public function handle(array $virtualUserIds, int $positionId): BulkOperationResult
     {
@@ -33,8 +33,9 @@ class BulkAssignVirtualUserPositionAction
 
         foreach ($virtualUserIds as $virtualUserId) {
             $user = $usersById->get($virtualUserId);
-            if (!$user) {
+            if (! $user) {
                 $result->addFailure($virtualUserId, self::USER_NOT_FOUND_MESSAGE);
+
                 continue;
             }
 
@@ -44,6 +45,7 @@ class BulkAssignVirtualUserPositionAction
             } catch (QueryException $e) {
                 if ($this->isDuplicateKeyException($e)) {
                     $result->addSkipped($virtualUserId);
+
                     continue;
                 }
 

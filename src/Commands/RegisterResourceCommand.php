@@ -41,7 +41,7 @@ class RegisterResourceCommand extends Command
         }
         $result = [];
         foreach ($pairs as $pair) {
-            if (!is_string($pair) || !str_contains($pair, '=')) {
+            if (! is_string($pair) || ! str_contains($pair, '=')) {
                 continue;
             }
             [$k, $v] = explode('=', $pair, 2);

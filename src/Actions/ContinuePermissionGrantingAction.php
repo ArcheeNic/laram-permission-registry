@@ -9,33 +9,31 @@ class ContinuePermissionGrantingAction
 {
     public function __construct(
         private RetryTriggerFromFailedAction $retryAction
-    ) {
-    }
+    ) {}
 
     /**
      * Продолжить выдачу права с последнего упавшего триггера
-     *
-     * @param int $grantedPermissionId
-     * @return bool
      */
     public function execute(int $grantedPermissionId): bool
     {
         $grantedPermission = GrantedPermission::with('executionLogs')->find($grantedPermissionId);
 
-        if (!$grantedPermission) {
+        if (! $grantedPermission) {
             Log::error('GrantedPermission not found for continue granting', [
                 'granted_permission_id' => $grantedPermissionId,
             ]);
+
             return false;
         }
 
         // Получить ID упавшего триггера из meta или из логов
         $failedTriggerId = $this->getFailedTriggerId($grantedPermission);
 
-        if (!$failedTriggerId) {
+        if (! $failedTriggerId) {
             Log::warning('No failed trigger found to continue', [
                 'granted_permission_id' => $grantedPermissionId,
             ]);
+
             return false;
         }
 
@@ -50,7 +48,7 @@ class ContinuePermissionGrantingAction
     {
         // Сначала проверяем meta
         $meta = $grantedPermission->meta ?? [];
-        if (!empty($meta['last_failed_trigger_id'])) {
+        if (! empty($meta['last_failed_trigger_id'])) {
             return (int) $meta['last_failed_trigger_id'];
         }
 

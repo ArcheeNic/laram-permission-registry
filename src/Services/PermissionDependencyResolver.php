@@ -4,7 +4,6 @@ namespace ArcheeNic\PermissionRegistry\Services;
 
 use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
 use ArcheeNic\PermissionRegistry\Models\Permission;
-use ArcheeNic\PermissionRegistry\Models\PermissionField;
 use ArcheeNic\PermissionRegistry\Models\VirtualUserFieldValue;
 use ArcheeNic\PermissionRegistry\ValueObjects\DependencyValidationResult;
 use Illuminate\Support\Facades\Log;
@@ -38,7 +37,7 @@ class PermissionDependencyResolver
                     ->where('status', 'granted')
                     ->exists();
 
-                if (!$hasPermission) {
+                if (! $hasPermission) {
                     $missingPermissions[] = [
                         'id' => $requiredPermission->id,
                         'name' => $requiredPermission->name,
@@ -58,7 +57,7 @@ class PermissionDependencyResolver
                         ->whereNotNull('value')
                         ->exists();
 
-                    if (!$hasValue) {
+                    if (! $hasValue) {
                         $missingPermissions[] = [
                             'id' => $requiredPermission->id,
                             'name' => $requiredPermission->name,
@@ -72,7 +71,7 @@ class PermissionDependencyResolver
             }
         }
 
-        if (!empty($missingPermissions)) {
+        if (! empty($missingPermissions)) {
             return DependencyValidationResult::invalid($missingPermissions);
         }
 
@@ -100,7 +99,7 @@ class PermissionDependencyResolver
                 ->whereNotNull('value')
                 ->exists();
 
-            if (!$hasValue) {
+            if (! $hasValue) {
                 $missingFields[] = [
                     'id' => $field->id,
                     'name' => $field->name,
@@ -108,7 +107,7 @@ class PermissionDependencyResolver
             }
         }
 
-        if (!empty($missingFields)) {
+        if (! empty($missingFields)) {
             return DependencyValidationResult::invalid([], $missingFields);
         }
 
@@ -118,7 +117,7 @@ class PermissionDependencyResolver
     /**
      * Проверить глобальные поля с учётом переданных значений (для валидации перед выдачей)
      *
-     * @param array $fieldValuesByFieldId значения по permission_field_id (из формы)
+     * @param  array  $fieldValuesByFieldId  значения по permission_field_id (из формы)
      */
     public function validateGlobalFieldsWithValues(
         int $virtualUserId,
@@ -140,13 +139,13 @@ class PermissionDependencyResolver
             if (isset($fieldValuesByFieldId[$field->id]) && $fieldValuesByFieldId[$field->id] !== '' && $fieldValuesByFieldId[$field->id] !== null) {
                 $hasValue = true;
             }
-            if (!$hasValue) {
+            if (! $hasValue) {
                 $hasValue = VirtualUserFieldValue::where('virtual_user_id', $virtualUserId)
                     ->where('permission_field_id', $field->id)
                     ->whereNotNull('value')
                     ->exists();
             }
-            if (!$hasValue) {
+            if (! $hasValue) {
                 $missingFields[] = [
                     'id' => $field->id,
                     'name' => $field->name,
@@ -154,7 +153,7 @@ class PermissionDependencyResolver
             }
         }
 
-        if (!empty($missingFields)) {
+        if (! empty($missingFields)) {
             return DependencyValidationResult::invalid([], $missingFields);
         }
 
@@ -180,7 +179,7 @@ class PermissionDependencyResolver
         $reasons = [];
 
         $dependencyResult = $this->validatePermissionDependencies($virtualUserId, $permission);
-        if (!$dependencyResult->isValid) {
+        if (! $dependencyResult->isValid) {
             $reasons[] = [
                 'type' => 'dependencies',
                 'message' => $dependencyResult->getErrorMessage(),
@@ -189,7 +188,7 @@ class PermissionDependencyResolver
         }
 
         $fieldsResult = $this->validateGlobalFields($virtualUserId, $permission);
-        if (!$fieldsResult->isValid) {
+        if (! $fieldsResult->isValid) {
             $reasons[] = [
                 'type' => 'fields',
                 'message' => $fieldsResult->getErrorMessage(),
@@ -208,7 +207,7 @@ class PermissionDependencyResolver
         return $permission->dependents()
             ->with('permission')
             ->get()
-            ->map(fn($dep) => $dep->permission)
+            ->map(fn ($dep) => $dep->permission)
             ->unique('id')
             ->values()
             ->toArray();
@@ -216,12 +215,13 @@ class PermissionDependencyResolver
 
     /**
      * Сортировать права по зависимостям (топологическая сортировка)
-     * 
-     * @param array $permissionIds Массив ID прав для сортировки
-     * @param string $eventType Тип события: 'grant' или 'revoke'
+     *
+     * @param  array  $permissionIds  Массив ID прав для сортировки
+     * @param  string  $eventType  Тип события: 'grant' или 'revoke'
      * @return array Отсортированный массив ID прав
      *               - grant: сначала права без зависимостей (базовые → зависимые)
      *               - revoke: сначала зависимые права (зависимые → базовые)
+     *
      * @throws \RuntimeException При обнаружении циклических зависимостей
      */
     public function sortByDependencies(array $permissionIds, string $eventType = 'grant'): array
@@ -232,7 +232,7 @@ class PermissionDependencyResolver
 
         Log::debug('sortByDependencies: начало', [
             'permissionIds' => $permissionIds,
-            'eventType' => $eventType
+            'eventType' => $eventType,
         ]);
 
         // Загрузить права с их зависимостями для указанного event_type
@@ -249,7 +249,7 @@ class PermissionDependencyResolver
             'permissions' => $permissions->pluck('name', 'id')->toArray(),
             'dependencies' => $permissions->mapWithKeys(function ($perm) {
                 return [$perm->id => $perm->dependencies->pluck('required_permission_id')->toArray()];
-            })->toArray()
+            })->toArray(),
         ]);
 
         // Построить граф: для каждого права - список его зависимостей
@@ -265,7 +265,7 @@ class PermissionDependencyResolver
         foreach ($permissions as $permission) {
             foreach ($permission->dependencies as $dependency) {
                 $requiredId = $dependency->required_permission_id;
-                
+
                 // Добавить ребро: requiredId -> permission->id
                 if (isset($graph[$requiredId])) {
                     $graph[$requiredId][] = $permission->id;
@@ -285,14 +285,14 @@ class PermissionDependencyResolver
             }
         }
 
-        while (!empty($queue)) {
+        while (! empty($queue)) {
             $current = array_shift($queue);
             $result[] = $current;
 
             // Уменьшить степень для всех зависимых прав
             foreach ($graph[$current] as $dependent) {
                 $inDegree[$dependent]--;
-                
+
                 if ($inDegree[$dependent] === 0) {
                     $queue[] = $dependent;
                 }
@@ -303,9 +303,9 @@ class PermissionDependencyResolver
         if (count($result) !== count($permissionIds)) {
             $unsorted = array_diff($permissionIds, $result);
             $unsortedNames = Permission::whereIn('id', $unsorted)->pluck('name', 'id')->toArray();
-            
+
             throw new \RuntimeException(
-                'Обнаружены циклические зависимости между правами: ' . 
+                'Обнаружены циклические зависимости между правами: '.
                 implode(', ', $unsortedNames)
             );
         }
@@ -316,13 +316,13 @@ class PermissionDependencyResolver
         }
 
         $resultNames = Permission::whereIn('id', $result)->get()->pluck('name', 'id')->toArray();
-        $sortedNames = array_map(fn($id) => $resultNames[$id] ?? $id, $result);
-        
+        $sortedNames = array_map(fn ($id) => $resultNames[$id] ?? $id, $result);
+
         Log::debug('sortByDependencies: результат', [
             'original' => $permissionIds,
             'sorted' => $result,
             'sorted_names' => $sortedNames,
-            'eventType' => $eventType
+            'eventType' => $eventType,
         ]);
 
         return $result;

@@ -26,31 +26,31 @@ class PositionTest extends TestCase
 
     public function test_parent_relationship(): void
     {
-        $position = new Position();
+        $position = new Position;
         $this->assertInstanceOf(BelongsTo::class, $position->parent());
     }
 
     public function test_children_relationship(): void
     {
-        $position = new Position();
+        $position = new Position;
         $this->assertInstanceOf(HasMany::class, $position->children());
     }
 
     public function test_permissions_relationship(): void
     {
-        $position = new Position();
+        $position = new Position;
         $this->assertInstanceOf(BelongsToMany::class, $position->permissions());
     }
 
     public function test_groups_relationship(): void
     {
-        $position = new Position();
+        $position = new Position;
         $this->assertInstanceOf(BelongsToMany::class, $position->groups());
     }
 
     public function test_users_relationship(): void
     {
-        $position = new Position();
+        $position = new Position;
         $this->assertInstanceOf(BelongsToMany::class, $position->users());
     }
 }

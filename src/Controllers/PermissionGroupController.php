@@ -10,12 +10,12 @@ use ArcheeNic\PermissionRegistry\Models\PermissionGroup;
 use ArcheeNic\PermissionRegistry\Models\PermissionGroupResource;
 use ArcheeNic\PermissionRegistry\Models\PermissionResource;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class PermissionGroupController extends Controller
 {
-
     public function index()
     {
         return view('permission-registry::groups.index');
@@ -27,6 +27,7 @@ class PermissionGroupController extends Controller
         $resourcesByPermission = $group->permissionResources
             ->groupBy('permission_id')
             ->map(fn ($rows) => $rows->map(fn ($r) => $r->resource)->filter()->values());
+
         return view('permission-registry::groups.show', compact('group', 'resourcesByPermission'));
     }
 
@@ -35,6 +36,7 @@ class PermissionGroupController extends Controller
         $permissions = Permission::all();
         $resourceCatalog = $this->buildResourceCatalog($permissions);
         $selectedResources = [];
+
         return view('permission-registry::groups.create', compact('permissions', 'resourceCatalog', 'selectedResources'));
     }
 
@@ -121,7 +123,7 @@ class PermissionGroupController extends Controller
             ];
         });
 
-        if (!empty($diff['userIds']) && (!empty($diff['added']) || !empty($diff['removed']))) {
+        if (! empty($diff['userIds']) && (! empty($diff['added']) || ! empty($diff['removed']))) {
             ApplyMembershipResourceDiffJob::dispatch(
                 'group',
                 $group->id,
@@ -144,14 +146,14 @@ class PermissionGroupController extends Controller
     }
 
     /**
-     * @return array<int, \Illuminate\Support\Collection<\ArcheeNic\PermissionRegistry\Models\PermissionResource>>
+     * @return array<int, Collection<PermissionResource>>
      */
     private function buildResourceCatalog($permissions): array
     {
         $byKind = [];
         foreach ($permissions as $permission) {
             $scope = $permission->scope ?? PermissionScope::Service;
-            if ($scope !== PermissionScope::Resource || !$permission->resource_kind) {
+            if ($scope !== PermissionScope::Resource || ! $permission->resource_kind) {
                 continue;
             }
             $byKind[$permission->service.'|'.$permission->resource_kind] = true;
@@ -201,18 +203,18 @@ class PermissionGroupController extends Controller
         foreach ($input as $permissionId => $resourceIds) {
             $permissionId = (int) $permissionId;
             $permission = $permissions[$permissionId] ?? null;
-            if (!$permission) {
+            if (! $permission) {
                 continue;
             }
             $scope = $permission->scope ?? PermissionScope::Service;
-            if ($scope !== PermissionScope::Resource || !$permission->resource_kind) {
+            if ($scope !== PermissionScope::Resource || ! $permission->resource_kind) {
                 continue;
             }
 
             foreach ((array) $resourceIds as $resourceId) {
                 $resourceId = (int) $resourceId;
                 $resource = $resources[$resourceId] ?? null;
-                if (!$resource) {
+                if (! $resource) {
                     continue;
                 }
                 if ($resource->service !== $permission->service || $resource->kind !== $permission->resource_kind) {
@@ -227,7 +229,7 @@ class PermissionGroupController extends Controller
         }
 
         PermissionGroupResource::query()->where('permission_group_id', $group->id)->delete();
-        if (!empty($desired)) {
+        if (! empty($desired)) {
             $now = now();
             $rows = array_map(fn (array $r) => $r + ['created_at' => $now, 'updated_at' => $now], $desired);
             PermissionGroupResource::query()->insert($rows);
@@ -248,7 +250,7 @@ class PermissionGroupController extends Controller
             ])
             ->find($groupId);
 
-        if (!$group) {
+        if (! $group) {
             return $pairs;
         }
 
@@ -270,6 +272,7 @@ class PermissionGroupController extends Controller
                         'auto_revoke' => (bool) $permission->auto_revoke,
                     ];
                 }
+
                 continue;
             }
 
@@ -306,7 +309,7 @@ class PermissionGroupController extends Controller
             $this->collectChildrenIds((int) $positionId, $tree);
         }
 
-        if (!empty($tree)) {
+        if (! empty($tree)) {
             $positionUsers = DB::table('virtual_user_positions')
                 ->whereIn('position_id', $tree)
                 ->pluck('virtual_user_id')

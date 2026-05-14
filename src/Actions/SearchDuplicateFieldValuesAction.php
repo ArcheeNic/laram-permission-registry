@@ -20,9 +20,9 @@ class SearchDuplicateFieldValuesAction
         $query = VirtualUserFieldValue::where('permission_field_id', $fieldId);
 
         if (DB::getDriverName() === 'pgsql') {
-            $query->whereRaw("value ILIKE ? ESCAPE '\\'", [$escaped . '%']);
+            $query->whereRaw("value ILIKE ? ESCAPE '\\'", [$escaped.'%']);
         } else {
-            $query->whereRaw("LOWER(value) LIKE ? ESCAPE '\\'", [mb_strtolower($escaped) . '%']);
+            $query->whereRaw("LOWER(value) LIKE ? ESCAPE '\\'", [mb_strtolower($escaped).'%']);
         }
 
         return $query->distinct('virtual_user_id')

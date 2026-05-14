@@ -3,7 +3,6 @@
 namespace ArcheeNic\PermissionRegistry\Tests\Unit\Actions;
 
 use ArcheeNic\PermissionRegistry\Actions\CheckApprovalRequiredAction;
-use ArcheeNic\PermissionRegistry\Actions\CreateApprovalRequestAction;
 use ArcheeNic\PermissionRegistry\Actions\GetPendingApprovalsAction;
 use ArcheeNic\PermissionRegistry\Actions\GrantPermissionAction;
 use ArcheeNic\PermissionRegistry\Actions\ProcessApprovalDecisionAction;
@@ -12,19 +11,16 @@ use ArcheeNic\PermissionRegistry\Enums\ApprovalDecisionType;
 use ArcheeNic\PermissionRegistry\Enums\ApprovalRequestStatus;
 use ArcheeNic\PermissionRegistry\Enums\ApprovalType;
 use ArcheeNic\PermissionRegistry\Enums\ApproverType;
-use ArcheeNic\PermissionRegistry\Enums\VirtualUserStatus;
 use ArcheeNic\PermissionRegistry\Enums\GrantedPermissionStatus;
-use ArcheeNic\PermissionRegistry\Models\ApprovalDecision;
+use ArcheeNic\PermissionRegistry\Enums\VirtualUserStatus;
 use ArcheeNic\PermissionRegistry\Models\ApprovalPolicy;
 use ArcheeNic\PermissionRegistry\Models\ApprovalPolicyApprover;
 use ArcheeNic\PermissionRegistry\Models\ApprovalRequest;
-use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
 use ArcheeNic\PermissionRegistry\Models\Permission;
 use ArcheeNic\PermissionRegistry\Models\Position;
 use ArcheeNic\PermissionRegistry\Models\VirtualUser;
 use ArcheeNic\PermissionRegistry\Models\VirtualUserPosition;
 use ArcheeNic\PermissionRegistry\Services\PermissionDependencyResolver;
-use ArcheeNic\PermissionRegistry\Services\PermissionTriggerExecutor;
 use ArcheeNic\PermissionRegistry\Tests\TestCase;
 use ArcheeNic\PermissionRegistry\ValueObjects\DependencyValidationResult;
 use Illuminate\Support\Facades\Event;
@@ -34,7 +30,9 @@ use Mockery;
 class ApprovalFlowTest extends TestCase
 {
     private VirtualUser $user;
+
     private VirtualUser $approver;
+
     private Permission $permission;
 
     /** Application user id used as approver in tests (resolver maps this to $this->approver) */

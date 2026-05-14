@@ -3,8 +3,8 @@
 namespace ArcheeNic\PermissionRegistry\Tests\Unit\Actions;
 
 use ArcheeNic\PermissionRegistry\Actions\GenerateDisplayNameAction;
-use ArcheeNic\PermissionRegistry\Models\PermissionField;
 use ArcheeNic\PermissionRegistry\Enums\VirtualUserStatus;
+use ArcheeNic\PermissionRegistry\Models\PermissionField;
 use ArcheeNic\PermissionRegistry\Models\VirtualUser;
 use ArcheeNic\PermissionRegistry\Models\VirtualUserFieldValue;
 use ArcheeNic\PermissionRegistry\Tests\TestCase;
@@ -30,7 +30,7 @@ class GenerateDisplayNameActionTest extends TestCase
             'value' => 'Doe',
         ]);
 
-        $action = new GenerateDisplayNameAction();
+        $action = new GenerateDisplayNameAction;
         $result = $action->execute($user->id);
 
         $this->assertSame('John Doe', $result);
@@ -49,7 +49,7 @@ class GenerateDisplayNameActionTest extends TestCase
             'value' => 'John',
         ]);
 
-        $action = new GenerateDisplayNameAction();
+        $action = new GenerateDisplayNameAction;
         $result = $action->execute($user->id);
 
         $this->assertSame('John', $result);
@@ -61,9 +61,9 @@ class GenerateDisplayNameActionTest extends TestCase
 
         $user = VirtualUser::create(['name' => 'Test User', 'status' => VirtualUserStatus::ACTIVE]);
 
-        $action = new GenerateDisplayNameAction();
+        $action = new GenerateDisplayNameAction;
         $result = $action->execute($user->id);
 
-        $this->assertSame('User #' . $user->id, $result);
+        $this->assertSame('User #'.$user->id, $result);
     }
 }

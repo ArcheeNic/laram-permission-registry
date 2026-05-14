@@ -10,6 +10,5 @@ readonly class ApprovalDecisionMade
     public function __construct(
         public ApprovalRequest $approvalRequest,
         public ApprovalDecision $decision,
-    ) {
-    }
+    ) {}
 }

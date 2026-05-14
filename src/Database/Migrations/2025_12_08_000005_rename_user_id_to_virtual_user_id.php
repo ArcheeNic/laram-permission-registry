@@ -6,7 +6,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         // granted_permissions
@@ -14,11 +15,11 @@ return new class extends Migration {
             $table->dropUnique(['user_id', 'permission_id']);
             $table->dropForeign(['user_id']);
         });
-        
+
         Schema::table('granted_permissions', function (Blueprint $table) {
             $table->renameColumn('user_id', 'virtual_user_id');
         });
-        
+
         Schema::table('granted_permissions', function (Blueprint $table) {
             $table->foreign('virtual_user_id')->references('id')->on('virtual_users')->onDelete('cascade');
             $table->unique(['virtual_user_id', 'permission_id']);
@@ -62,11 +63,11 @@ return new class extends Migration {
             $table->dropUnique(['virtual_user_id', 'permission_id']);
             $table->dropForeign(['virtual_user_id']);
         });
-        
+
         Schema::table('granted_permissions', function (Blueprint $table) {
             $table->renameColumn('virtual_user_id', 'user_id');
         });
-        
+
         Schema::table('granted_permissions', function (Blueprint $table) {
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->unique(['user_id', 'permission_id']);

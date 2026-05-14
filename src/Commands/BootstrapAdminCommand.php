@@ -18,10 +18,10 @@ class BootstrapAdminCommand extends Command
 
     public function handle(): int
     {
-        (new SystemPermissionSeeder())->setContainer($this->getLaravel())->run();
+        (new SystemPermissionSeeder)->setContainer($this->getLaravel())->run();
 
         $virtualUser = $this->resolveVirtualUser((string) $this->argument('virtual_user'));
-        if (!$virtualUser) {
+        if (! $virtualUser) {
             return self::FAILURE;
         }
 
@@ -33,8 +33,9 @@ class BootstrapAdminCommand extends Command
                 ->where('name', $name)
                 ->first();
 
-            if (!$permission) {
+            if (! $permission) {
                 $this->warn("Permission permission-registry/$name not found, skipping.");
+
                 continue;
             }
 
@@ -75,6 +76,7 @@ class BootstrapAdminCommand extends Command
                     return $vu;
                 }
                 $this->error("App user '$arg' (id={$user->id}) found, but no VirtualUser is linked (virtual_users.user_id).");
+
                 return null;
             }
         }
@@ -91,6 +93,7 @@ class BootstrapAdminCommand extends Command
 
         if ($candidates->isEmpty()) {
             $this->error("No virtual user matches '$arg'. Pass id, app-user email or unique name fragment.");
+
             return null;
         }
 
@@ -98,6 +101,7 @@ class BootstrapAdminCommand extends Command
         foreach ($candidates as $c) {
             $this->line(sprintf('  id=%d name=%s user_id=%s', $c->id, $c->name, $c->user_id ?? 'null'));
         }
+
         return null;
     }
 }

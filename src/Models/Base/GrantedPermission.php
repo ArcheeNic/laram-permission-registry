@@ -7,21 +7,37 @@ use Illuminate\Database\Eloquent\Model;
 class GrantedPermission extends Model
 {
     public const ID = 'id';
+
     public const VIRTUAL_USER_ID = 'virtual_user_id';
+
     public const PERMISSION_ID = 'permission_id';
+
     public const RESOURCE_ID = 'resource_id';
+
     public const RESOURCE_NAME_AT_GRANT = 'resource_name_at_grant';
+
     public const SOURCE = 'source';
+
     public const STATUS = 'status';
+
     public const STATUS_MESSAGE = 'status_message';
+
     public const ENABLED = 'enabled';
+
     public const META = 'meta';
+
     public const GRANTED_AT = 'granted_at';
+
     public const EXPIRES_AT = 'expires_at';
+
     public const REQUESTED_BY = 'requested_by';
+
     public const CONFIRMED_BY = 'confirmed_by';
+
     public const CONFIRMED_AT = 'confirmed_at';
+
     public const CREATED_AT = 'created_at';
+
     public const UPDATED_AT = 'updated_at';
 
     protected $fillable = [

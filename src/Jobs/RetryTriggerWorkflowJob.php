@@ -18,8 +18,7 @@ class RetryTriggerWorkflowJob implements ShouldQueue
         private int $grantedPermissionId,
         private int $failedTriggerId,
         private array $manualFieldValues = []
-    ) {
-    }
+    ) {}
 
     public function handle(RetryTriggerFromFailedAction $action): void
     {
@@ -30,7 +29,7 @@ class RetryTriggerWorkflowJob implements ShouldQueue
                 $this->manualFieldValues
             );
 
-            if (!$success) {
+            if (! $success) {
                 Log::warning('Retry trigger workflow completed with failure', [
                     'granted_permission_id' => $this->grantedPermissionId,
                     'failed_trigger_id' => $this->failedTriggerId,

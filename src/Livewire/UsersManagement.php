@@ -2,19 +2,19 @@
 
 namespace ArcheeNic\PermissionRegistry\Livewire;
 
+use ArcheeNic\PermissionRegistry\Enums\HrTriggerExecutionStatus;
 use ArcheeNic\PermissionRegistry\Livewire\Concerns\HasFlashMessages;
+use ArcheeNic\PermissionRegistry\Livewire\Concerns\ManagesAppUserLink;
 use ArcheeNic\PermissionRegistry\Livewire\Concerns\ManagesBulkSelection;
 use ArcheeNic\PermissionRegistry\Livewire\Concerns\ManagesGlobalFields;
 use ArcheeNic\PermissionRegistry\Livewire\Concerns\ManagesGroups;
+use ArcheeNic\PermissionRegistry\Livewire\Concerns\ManagesHiring;
+use ArcheeNic\PermissionRegistry\Livewire\Concerns\ManagesHiringConflicts;
 use ArcheeNic\PermissionRegistry\Livewire\Concerns\ManagesManualGrant;
 use ArcheeNic\PermissionRegistry\Livewire\Concerns\ManagesPermissions;
 use ArcheeNic\PermissionRegistry\Livewire\Concerns\ManagesPermissionStatus;
-use ArcheeNic\PermissionRegistry\Livewire\Concerns\ManagesAppUserLink;
-use ArcheeNic\PermissionRegistry\Livewire\Concerns\ManagesHiringConflicts;
-use ArcheeNic\PermissionRegistry\Livewire\Concerns\ManagesHiring;
 use ArcheeNic\PermissionRegistry\Livewire\Concerns\ManagesPositions;
 use ArcheeNic\PermissionRegistry\Livewire\Concerns\ManagesUserCreation;
-use ArcheeNic\PermissionRegistry\Enums\HrTriggerExecutionStatus;
 use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
 use ArcheeNic\PermissionRegistry\Models\PermissionGroup;
 use ArcheeNic\PermissionRegistry\Models\Position;
@@ -25,20 +25,20 @@ use Livewire\WithPagination;
 
 class UsersManagement extends Component
 {
-    use WithPagination;
     use AuthorizesRequests;
     use HasFlashMessages;
-    use ManagesBulkSelection;
-    use ManagesUserCreation;
     use ManagesAppUserLink;
+    use ManagesBulkSelection;
+    use ManagesGlobalFields;
+    use ManagesGroups;
     use ManagesHiring;
     use ManagesHiringConflicts;
-    use ManagesGroups;
-    use ManagesPositions;
-    use ManagesGlobalFields;
     use ManagesManualGrant;
     use ManagesPermissions;
     use ManagesPermissionStatus;
+    use ManagesPositions;
+    use ManagesUserCreation;
+    use WithPagination;
 
     private const ALLOWED_SORT_FIELDS = [
         'id', 'name', 'created_at', 'updated_at', 'status', 'employee_category',
@@ -47,16 +47,25 @@ class UsersManagement extends Component
     private const ALLOWED_PER_PAGE = [12, 25, 50];
 
     public $search = '';
+
     public $viewMode = 'table';
+
     public $selectedUser = null;
+
     public $selectedUserId = null;
+
     public $showEditModal = false;
 
     public $sortField = 'created_at';
+
     public $sortDirection = 'desc';
+
     public $filterStatus = '';
+
     public $filterCategory = '';
+
     public $filterGroup = '';
+
     public $perPage = 12;
 
     protected $queryString = [
@@ -353,7 +362,7 @@ class UsersManagement extends Component
             }
 
             foreach ($granted->fieldValues as $fieldValue) {
-                if (!$fieldValue->field->is_global) {
+                if (! $fieldValue->field->is_global) {
                     $this->permissionFields[$granted->permission_id][$fieldValue->permission_field_id] = $fieldValue->value;
                 }
             }

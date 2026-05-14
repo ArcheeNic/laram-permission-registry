@@ -13,8 +13,7 @@ class CreateApprovalRequestAction
 {
     public function __construct(
         private ResolveApproversAction $resolveApprovers
-    ) {
-    }
+    ) {}
 
     public function handle(
         GrantedPermission $grantedPermission,

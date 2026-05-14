@@ -13,7 +13,7 @@ class TriggerDiscoveryServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new TriggerDiscoveryService();
+        $this->service = new TriggerDiscoveryService;
     }
 
     public function test_discover_returns_empty_array_when_namespace_config_is_missing(): void
@@ -39,7 +39,7 @@ class TriggerDiscoveryServiceTest extends TestCase
     public function test_discover_returns_empty_array_when_directory_does_not_exist(): void
     {
         Config::set('triggers.namespace', 'App\\Triggers');
-        Config::set('triggers.directory', '/non/existent/path/' . uniqid());
+        Config::set('triggers.directory', '/non/existent/path/'.uniqid());
 
         $result = $this->service->discover();
 

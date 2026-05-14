@@ -21,8 +21,7 @@ class GrantMultiplePermissionsJob implements ShouldQueue
     public function __construct(
         private int $userId,
         private array $permissionsData
-    ) {
-    }
+    ) {}
 
     public function handle(
         GrantPermissionAction $grantAction,
@@ -39,23 +38,24 @@ class GrantMultiplePermissionsJob implements ShouldQueue
         }
 
         $permissionIds = array_column($this->permissionsData, 'permissionId');
-        
+
         Log::debug('GrantMultiplePermissionsJob: начало', [
             'user_id' => $this->userId,
-            'permission_ids' => $permissionIds
+            'permission_ids' => $permissionIds,
         ]);
-        
+
         // Sort permissions ONCE; iterate all entries per permission (each entry may be a different resource).
         try {
             $sortedIds = $dependencyResolver->sortByDependencies(array_values(array_unique($permissionIds)), 'grant');
         } catch (\RuntimeException $e) {
             Log::error('Failed to sort permissions by dependencies', [
                 'user_id' => $this->userId,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return;
         }
-        
+
         // Выдать права последовательно с синхронным выполнением триггеров
         foreach ($sortedIds as $permId) {
             $entries = collect($this->permissionsData)

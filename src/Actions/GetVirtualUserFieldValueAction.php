@@ -13,9 +13,8 @@ class GetVirtualUserFieldValueAction
     /**
      * Получить значение конкретного глобального поля пользователя
      *
-     * @param int $virtualUserId ID виртуального пользователя
-     * @param int $fieldId ID поля
-     * @return string|null
+     * @param  int  $virtualUserId  ID виртуального пользователя
+     * @param  int  $fieldId  ID поля
      */
     public function execute(int $virtualUserId, int $fieldId): ?string
     {
@@ -29,7 +28,7 @@ class GetVirtualUserFieldValueAction
     /**
      * Получить все значения глобальных полей пользователя
      *
-     * @param int $virtualUserId ID виртуального пользователя
+     * @param  int  $virtualUserId  ID виртуального пользователя
      * @return Collection<int, VirtualUserFieldValue>
      */
     public function executeAll(int $virtualUserId): Collection

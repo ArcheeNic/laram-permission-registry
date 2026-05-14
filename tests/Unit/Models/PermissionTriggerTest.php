@@ -27,19 +27,19 @@ class PermissionTriggerTest extends TestCase
 
     public function test_assignments_relationship(): void
     {
-        $trigger = new PermissionTrigger();
+        $trigger = new PermissionTrigger;
         $this->assertInstanceOf(HasMany::class, $trigger->assignments());
     }
 
     public function test_execution_logs_relationship(): void
     {
-        $trigger = new PermissionTrigger();
+        $trigger = new PermissionTrigger;
         $this->assertInstanceOf(HasMany::class, $trigger->executionLogs());
     }
 
     public function test_field_mappings_relationship(): void
     {
-        $trigger = new PermissionTrigger();
+        $trigger = new PermissionTrigger;
         $this->assertInstanceOf(HasMany::class, $trigger->fieldMappings());
     }
 

@@ -12,7 +12,7 @@ class SendApprovalRequestedNotification
     public function handle(ApprovalRequested $event): void
     {
         $userModel = config('permission-registry.user_model');
-        if (!$userModel) {
+        if (! $userModel) {
             return;
         }
 
@@ -22,7 +22,7 @@ class SendApprovalRequestedNotification
 
         foreach ($virtualUsers as $virtualUser) {
             $user = $userModel::find($virtualUser->user_id);
-            if (!$user) {
+            if (! $user) {
                 continue;
             }
 

@@ -33,7 +33,7 @@ class ReconcileUserPermissionsAction
 
         $permissionsToRevoke = array_values(array_diff($autoGrantedEnabledPermissionIds, $targetPermissionIds));
 
-        if (!empty($permissionsToGrant)) {
+        if (! empty($permissionsToGrant)) {
             $permissionsData = array_map(static fn (int $permissionId): array => [
                 'permissionId' => $permissionId,
                 'fieldValues' => [],
@@ -47,7 +47,7 @@ class ReconcileUserPermissionsAction
             GrantMultiplePermissionsJob::dispatch($userId, $permissionsData);
         }
 
-        if (!empty($permissionsToRevoke)) {
+        if (! empty($permissionsToRevoke)) {
             RevokeMultiplePermissionsJob::dispatch($userId, $permissionsToRevoke);
         }
     }
@@ -81,8 +81,8 @@ class ReconcileUserPermissionsAction
     }
 
     /**
-     * @param array<int> $permissionIds
-     * @param array<int> $processedPositions
+     * @param  array<int>  $permissionIds
+     * @param  array<int>  $processedPositions
      */
     private function collectPositionPermissionIds(
         int $positionId,
@@ -103,7 +103,7 @@ class ReconcileUserPermissionsAction
             ])
             ->find($positionId);
 
-        if (!$position) {
+        if (! $position) {
             return;
         }
 
@@ -123,7 +123,7 @@ class ReconcileUserPermissionsAction
     }
 
     /**
-     * @param array<int> $permissionIds
+     * @param  array<int>  $permissionIds
      */
     private function collectGroupPermissionIds(int $groupId, array &$permissionIds): void
     {
@@ -131,7 +131,7 @@ class ReconcileUserPermissionsAction
             ->with(['permissions' => fn ($query) => $query->where('auto_grant', true)])
             ->find($groupId);
 
-        if (!$group) {
+        if (! $group) {
             return;
         }
 

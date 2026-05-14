@@ -13,11 +13,10 @@ class GetPendingApprovalsAction
 {
     public function __construct(
         private UserToVirtualUserResolver $userResolver
-    ) {
-    }
+    ) {}
 
     /**
-     * @param int $userId Application user id (users.id)
+     * @param  int  $userId  Application user id (users.id)
      * @return Collection<int, ApprovalRequest>
      */
     public function handle(int $userId): Collection

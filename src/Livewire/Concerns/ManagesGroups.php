@@ -40,7 +40,7 @@ trait ManagesGroups
 
     public function getGroupsProperty()
     {
-        if (!$this->selectedUserId) {
+        if (! $this->selectedUserId) {
             return collect();
         }
 

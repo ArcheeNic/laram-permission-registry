@@ -30,7 +30,7 @@ class AssignVirtualUserGroupAction
             ->where('permission_group_id', $groupId)
             ->first();
 
-        if (!$userGroup) {
+        if (! $userGroup) {
             return false;
         }
 

@@ -3,7 +3,6 @@
 namespace ArcheeNic\PermissionRegistry\Commands;
 
 use ArcheeNic\PermissionRegistry\Enums\PermissionScope;
-use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
 use ArcheeNic\PermissionRegistry\Models\Permission;
 use ArcheeNic\PermissionRegistry\Models\PermissionResource;
 use Illuminate\Console\Command;
@@ -22,8 +21,9 @@ class MigrateToResourceModelCommand extends Command
         $configKey = $this->option('config') ?: 'permission-registry-migration';
         $config = config($configKey);
 
-        if (!is_array($config)) {
+        if (! is_array($config)) {
             $this->error("Migration config not found at [$configKey]");
+
             return self::FAILURE;
         }
 
@@ -32,6 +32,7 @@ class MigrateToResourceModelCommand extends Command
 
         if ($actions === [] || $mappings === []) {
             $this->error('Migration config must contain non-empty "actions" and "permission_mappings"');
+
             return self::FAILURE;
         }
 
@@ -46,7 +47,7 @@ class MigrateToResourceModelCommand extends Command
                 $this->softDeleteLegacyPermissions($mappings, $actionMap, $isDry);
 
                 if ($isDry) {
-                    throw new DryRunRollback();
+                    throw new DryRunRollback;
                 }
             });
         } catch (DryRunRollback) {
@@ -98,6 +99,7 @@ class MigrateToResourceModelCommand extends Command
 
             $map[$this->actionKey($service, $name)] = $action->id;
         }
+
         return $map;
     }
 
@@ -111,6 +113,7 @@ class MigrateToResourceModelCommand extends Command
             $resource = $target['resource'] ?? null;
             if ($resource === null) {
                 $map[(int) $legacyId] = null;
+
                 continue;
             }
 
@@ -140,6 +143,7 @@ class MigrateToResourceModelCommand extends Command
 
             $map[(int) $legacyId] = $resourceRow->id;
         }
+
         return $map;
     }
 
@@ -152,6 +156,7 @@ class MigrateToResourceModelCommand extends Command
 
             if ($actionId === null) {
                 $this->warn(sprintf('  legacy permission %d: action %s not found in actionMap, skipping', $legacyId, $actionKey));
+
                 continue;
             }
 
@@ -186,7 +191,7 @@ class MigrateToResourceModelCommand extends Command
                 continue;
             }
             $permission = Permission::find($legacyId);
-            if ($permission && !$permission->trashed()) {
+            if ($permission && ! $permission->trashed()) {
                 $permission->delete();
                 $this->line(sprintf('  legacy permission %d soft-deleted', $legacyId));
             }
@@ -199,6 +204,4 @@ class MigrateToResourceModelCommand extends Command
     }
 }
 
-class DryRunRollback extends \RuntimeException
-{
-}
+class DryRunRollback extends \RuntimeException {}

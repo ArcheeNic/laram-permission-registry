@@ -3,15 +3,14 @@
 namespace ArcheeNic\PermissionRegistry\Tests\Unit\Triggers;
 
 use ArcheeNic\PermissionRegistry\Models\Permission;
+use ArcheeNic\PermissionRegistry\Tests\TestCase;
 use ArcheeNic\PermissionRegistry\Triggers\BaseTrigger;
 use ArcheeNic\PermissionRegistry\ValueObjects\TriggerContext;
 use ArcheeNic\PermissionRegistry\ValueObjects\TriggerResult;
-use ArcheeNic\PermissionRegistry\Tests\TestCase;
 use Mockery;
 
 class BaseTriggerTest extends TestCase
 {
-
     private function makeContext(array $globalFields = [], array $config = []): TriggerContext
     {
         return new TriggerContext(

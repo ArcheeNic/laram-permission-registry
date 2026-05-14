@@ -5,10 +5,11 @@ namespace ArcheeNic\PermissionRegistry\Controllers;
 use ArcheeNic\PermissionRegistry\Models\Permission;
 use ArcheeNic\PermissionRegistry\Models\PermissionTrigger;
 use ArcheeNic\PermissionRegistry\Models\PermissionTriggerAssignment;
-use ArcheeNic\PermissionRegistry\Services\TriggerOverlapDetectorService;
 use ArcheeNic\PermissionRegistry\Services\TriggerDiscoveryService;
+use ArcheeNic\PermissionRegistry\Services\TriggerOverlapDetectorService;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 
@@ -41,7 +42,7 @@ class PermissionTriggerAssignmentController extends Controller
         ));
     }
 
-    private function groupTriggersByService(\Illuminate\Support\Collection $triggers): \Illuminate\Support\Collection
+    private function groupTriggersByService(Collection $triggers): Collection
     {
         $lookup = $this->triggerDiscoveryService->getServiceLookup();
         $fallback = __('permission-registry::messages.other_service');

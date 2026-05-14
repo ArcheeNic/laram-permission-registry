@@ -37,8 +37,8 @@ class UsersManagementDuplicateHintsTest extends TestCase
 
         Livewire::test(UsersManagement::class)
             ->call('toggleCreateForm')
-            ->set('newUserFields.' . $this->nameField->id, 'Anna')
-            ->assertSet('duplicateHints.' . $this->nameField->id, 1);
+            ->set('newUserFields.'.$this->nameField->id, 'Anna')
+            ->assertSet('duplicateHints.'.$this->nameField->id, 1);
     }
 
     public function test_duplicate_hints_cleared_when_value_empty(): void
@@ -52,9 +52,9 @@ class UsersManagementDuplicateHintsTest extends TestCase
 
         Livewire::test(UsersManagement::class)
             ->call('toggleCreateForm')
-            ->set('newUserFields.' . $this->nameField->id, 'Anna')
-            ->assertSet('duplicateHints.' . $this->nameField->id, 1)
-            ->set('newUserFields.' . $this->nameField->id, '')
+            ->set('newUserFields.'.$this->nameField->id, 'Anna')
+            ->assertSet('duplicateHints.'.$this->nameField->id, 1)
+            ->set('newUserFields.'.$this->nameField->id, '')
             ->assertSet('duplicateHints', []);
     }
 
@@ -69,8 +69,8 @@ class UsersManagementDuplicateHintsTest extends TestCase
 
         Livewire::test(UsersManagement::class)
             ->call('toggleCreateForm')
-            ->set('newUserFields.' . $this->nameField->id, 'Anna')
-            ->assertSet('duplicateHints.' . $this->nameField->id, 1)
+            ->set('newUserFields.'.$this->nameField->id, 'Anna')
+            ->assertSet('duplicateHints.'.$this->nameField->id, 1)
             ->call('toggleCreateForm')
             ->assertSet('duplicateHints', []);
     }
@@ -79,7 +79,7 @@ class UsersManagementDuplicateHintsTest extends TestCase
     {
         Livewire::test(UsersManagement::class)
             ->call('toggleCreateForm')
-            ->set('newUserFields.' . $this->nameField->id, 'UniqueNameXYZ')
+            ->set('newUserFields.'.$this->nameField->id, 'UniqueNameXYZ')
             ->assertSet('duplicateHints', []);
     }
 }

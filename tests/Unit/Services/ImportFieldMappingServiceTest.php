@@ -17,7 +17,7 @@ class ImportFieldMappingServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new ImportFieldMappingService();
+        $this->service = new ImportFieldMappingService;
 
         $this->import = PermissionImport::create([
             'name' => 'Test Import',

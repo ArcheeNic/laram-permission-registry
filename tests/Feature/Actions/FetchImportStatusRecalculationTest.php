@@ -273,7 +273,7 @@ class FetchImportStatusRecalculationTest extends TestCase
     private function registerImporter(array $users): void
     {
         StatusRecalcTestImporter::$usersToReturn = $users;
-        $this->app->bind(StatusRecalcTestImporter::class, fn () => new StatusRecalcTestImporter());
+        $this->app->bind(StatusRecalcTestImporter::class, fn () => new StatusRecalcTestImporter);
     }
 }
 

@@ -2,7 +2,6 @@
 
 namespace ArcheeNic\PermissionRegistry\Actions;
 
-use ArcheeNic\PermissionRegistry\Actions\AuditLogger;
 use ArcheeNic\PermissionRegistry\Enums\GrantedPermissionStatus;
 use ArcheeNic\PermissionRegistry\Events\AfterPermissionRevoked;
 use ArcheeNic\PermissionRegistry\Events\BeforePermissionRevoked;
@@ -18,8 +17,7 @@ class RevokePermissionAction
     public function __construct(
         private PermissionTriggerExecutor $triggerExecutor,
         private AuditLogger $auditLogger
-    ) {
-    }
+    ) {}
 
     public function handle(
         int $userId,
@@ -37,7 +35,7 @@ class RevokePermissionAction
             $resourceId
         );
 
-        if (!$grantedPermission) {
+        if (! $grantedPermission) {
             return false;
         }
 
@@ -78,7 +76,7 @@ class RevokePermissionAction
             // Синхронное выполнение триггеров
             try {
                 $success = $this->triggerExecutor->executeChain($grantedPermission, 'revoke');
-                
+
                 if ($success) {
                     $this->deleteGrantedPermissionAndFinalize(
                         $grantedPermission,
@@ -88,24 +86,25 @@ class RevokePermissionAction
                         $permission->service
                     );
                 }
-                
+
                 return $success;
             } catch (\Exception $e) {
                 Log::error('Revoke permission workflow failed (sync)', [
                     'granted_permission_id' => $grantedPermission->id,
                     'error' => $e->getMessage(),
                 ]);
-                
+
                 $grantedPermission->update([
                     'status' => 'failed',
                     'status_message' => $e->getMessage(),
                 ]);
-                
+
                 throw $e;
             }
         } else {
             // Асинхронное выполнение через очередь
             RevokePermissionWorkflowJob::dispatch($grantedPermission->id);
+
             return true;
         }
     }

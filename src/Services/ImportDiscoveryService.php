@@ -15,7 +15,7 @@ class ImportDiscoveryService
         $namespace = config('imports.namespace');
         $directory = config('imports.directory');
 
-        if (!$namespace || !$directory || !File::isDirectory($directory)) {
+        if (! $namespace || ! $directory || ! File::isDirectory($directory)) {
             return [];
         }
 
@@ -29,7 +29,7 @@ class ImportDiscoveryService
 
             $className = $this->getClassNameFromFile($file, $namespace, $directory);
 
-            if (!$className || !class_exists($className)) {
+            if (! $className || ! class_exists($className)) {
                 continue;
             }
 
@@ -40,7 +40,7 @@ class ImportDiscoveryService
                     continue;
                 }
 
-                if (!$reflection->implementsInterface(PermissionImportInterface::class)) {
+                if (! $reflection->implementsInterface(PermissionImportInterface::class)) {
                     continue;
                 }
 
@@ -76,7 +76,7 @@ class ImportDiscoveryService
         $relativePath = str_replace('.php', '', $relativePath);
         $relativePath = str_replace(DIRECTORY_SEPARATOR, '\\', $relativePath);
 
-        return $namespace . '\\' . $relativePath;
+        return $namespace.'\\'.$relativePath;
     }
 
     /**
@@ -84,14 +84,14 @@ class ImportDiscoveryService
      */
     public function getImportMetadata(string $className): ?array
     {
-        if (!class_exists($className)) {
+        if (! class_exists($className)) {
             return null;
         }
 
         try {
             $reflection = new \ReflectionClass($className);
 
-            if (!$reflection->implementsInterface(PermissionImportInterface::class)) {
+            if (! $reflection->implementsInterface(PermissionImportInterface::class)) {
                 return null;
             }
 

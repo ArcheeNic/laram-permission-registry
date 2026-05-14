@@ -10,11 +10,17 @@ use Illuminate\Support\Facades\Auth;
 trait ManagesHiringConflicts
 {
     public bool $showHireConflictModal = false;
+
     public ?int $selectedHrConflictLogId = null;
+
     public array $selectedHrConflictMeta = [];
+
     public string $hireConflictStrategy = 'increment';
+
     public string $hireConflictCustomEmail = '';
+
     public bool $selectedUserHasPendingHrConflict = false;
+
     public int $selectedUserPendingHrConflictsCount = 0;
 
     public function openHireConflictModal(): void

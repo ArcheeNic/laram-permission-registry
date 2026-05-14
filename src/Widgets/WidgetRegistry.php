@@ -19,7 +19,7 @@ class WidgetRegistry
         if (is_string($widget)) {
             if (! is_subclass_of($widget, WidgetInterface::class)) {
                 throw new \InvalidArgumentException(
-                    "Widget class {$widget} must implement " . WidgetInterface::class
+                    "Widget class {$widget} must implement ".WidgetInterface::class
                 );
             }
             $this->instances[$widget] = $this->container->make($widget);

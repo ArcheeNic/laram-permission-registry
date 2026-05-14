@@ -17,7 +17,7 @@ class CheckPermissionFieldsAction
             ->where('name', $permissionName)
             ->first();
 
-        if (!$permission) {
+        if (! $permission) {
             return false;
         }
 
@@ -26,7 +26,7 @@ class CheckPermissionFieldsAction
             ->where('name', $fieldName)
             ->first();
 
-        if (!$field) {
+        if (! $field) {
             return false;
         }
 

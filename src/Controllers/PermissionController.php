@@ -21,12 +21,14 @@ class PermissionController extends Controller
     public function show(Permission $permission)
     {
         $permission->load(['fields', 'groups', 'positions.parent']);
+
         return view('permission-registry::permissions.show', compact('permission'));
     }
 
     public function create()
     {
         $fields = PermissionField::all();
+
         return view('permission-registry::permissions.create', compact('fields'));
     }
 
@@ -73,6 +75,7 @@ class PermissionController extends Controller
     {
         $permission->load(['fields', 'groups']);
         $fields = PermissionField::all();
+
         return view('permission-registry::permissions.edit', compact('permission', 'fields'));
     }
 

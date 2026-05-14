@@ -8,6 +8,5 @@ readonly class VirtualUserGroupChanged
         public int $userId,
         public int $groupId,
         public bool $added
-    ) {
-    }
+    ) {}
 }

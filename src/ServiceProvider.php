@@ -2,12 +2,31 @@
 
 namespace ArcheeNic\PermissionRegistry;
 
+use ArcheeNic\PermissionRegistry\Actions\CheckPermissionFieldsAction;
+use ArcheeNic\PermissionRegistry\Actions\GetUserPermissionsAction;
+use ArcheeNic\PermissionRegistry\Actions\GrantPermissionAction;
+use ArcheeNic\PermissionRegistry\Actions\PermissionChecker;
+use ArcheeNic\PermissionRegistry\Actions\RevokePermissionAction;
+use ArcheeNic\PermissionRegistry\Actions\SyncUserPermissionsAction;
 use ArcheeNic\PermissionRegistry\Commands\BootstrapAdminCommand;
 use ArcheeNic\PermissionRegistry\Commands\MigrateToResourceModelCommand;
 use ArcheeNic\PermissionRegistry\Commands\RegisterResourceCommand;
 use ArcheeNic\PermissionRegistry\Commands\SyncResourcesCommand;
 use ArcheeNic\PermissionRegistry\Console\ExpireApprovalRequestsCommand;
-use ArcheeNic\PermissionRegistry\Services\ResourceSyncerRegistry;
+use ArcheeNic\PermissionRegistry\Contracts\UserToVirtualUserResolver;
+use ArcheeNic\PermissionRegistry\Events\AfterPermissionGranted;
+use ArcheeNic\PermissionRegistry\Events\AfterPermissionRevoked;
+use ArcheeNic\PermissionRegistry\Events\ApprovalCompleted;
+use ArcheeNic\PermissionRegistry\Events\ApprovalRequested;
+use ArcheeNic\PermissionRegistry\Events\VirtualUserGroupChanged;
+use ArcheeNic\PermissionRegistry\Events\VirtualUserPositionChanged;
+use ArcheeNic\PermissionRegistry\Facades\PermissionRegistry;
+use ArcheeNic\PermissionRegistry\Listeners\HandleVirtualUserGroupChanged;
+use ArcheeNic\PermissionRegistry\Listeners\HandleVirtualUserPositionChanged;
+use ArcheeNic\PermissionRegistry\Listeners\SendApprovalDecisionNotification;
+use ArcheeNic\PermissionRegistry\Listeners\SendApprovalRequestedNotification;
+use ArcheeNic\PermissionRegistry\Listeners\SendPermissionGrantedNotification;
+use ArcheeNic\PermissionRegistry\Listeners\SendPermissionRevokedNotification;
 use ArcheeNic\PermissionRegistry\Livewire\ApprovalPolicyManager;
 use ArcheeNic\PermissionRegistry\Livewire\AttestationsList;
 use ArcheeNic\PermissionRegistry\Livewire\FieldsList;
@@ -25,35 +44,16 @@ use ArcheeNic\PermissionRegistry\Livewire\PositionsList;
 use ArcheeNic\PermissionRegistry\Livewire\ResourcesList;
 use ArcheeNic\PermissionRegistry\Livewire\UserPermissions;
 use ArcheeNic\PermissionRegistry\Livewire\UsersManagement;
-use Illuminate\Support\ServiceProvider as BaseServiceProvider;
-use ArcheeNic\PermissionRegistry\Actions\CheckPermissionFieldsAction;
-use ArcheeNic\PermissionRegistry\Actions\GetUserPermissionsAction;
-use ArcheeNic\PermissionRegistry\Actions\GrantPermissionAction;
-use ArcheeNic\PermissionRegistry\Actions\PermissionChecker;
-use ArcheeNic\PermissionRegistry\Actions\RevokePermissionAction;
-use ArcheeNic\PermissionRegistry\Actions\SyncUserPermissionsAction;
-use ArcheeNic\PermissionRegistry\Events\AfterPermissionGranted;
-use ArcheeNic\PermissionRegistry\Events\AfterPermissionRevoked;
-use ArcheeNic\PermissionRegistry\Events\ApprovalCompleted;
-use ArcheeNic\PermissionRegistry\Events\ApprovalRequested;
-use ArcheeNic\PermissionRegistry\Events\VirtualUserGroupChanged;
-use ArcheeNic\PermissionRegistry\Events\VirtualUserPositionChanged;
-use ArcheeNic\PermissionRegistry\Facades\PermissionRegistry;
-use ArcheeNic\PermissionRegistry\Listeners\HandleVirtualUserGroupChanged;
-use ArcheeNic\PermissionRegistry\Listeners\HandleVirtualUserPositionChanged;
-use ArcheeNic\PermissionRegistry\Listeners\SendApprovalDecisionNotification;
-use ArcheeNic\PermissionRegistry\Listeners\SendApprovalRequestedNotification;
-use ArcheeNic\PermissionRegistry\Listeners\SendPermissionGrantedNotification;
-use ArcheeNic\PermissionRegistry\Listeners\SendPermissionRevokedNotification;
-use ArcheeNic\PermissionRegistry\Contracts\UserToVirtualUserResolver;
 use ArcheeNic\PermissionRegistry\Middleware\CheckPermission;
 use ArcheeNic\PermissionRegistry\Services\HrEventTriggerExecutor;
+use ArcheeNic\PermissionRegistry\Services\ResourceSyncerRegistry;
 use ArcheeNic\PermissionRegistry\Support\FieldMetaOptionRegistry;
 use ArcheeNic\PermissionRegistry\Widgets\WidgetRegistry;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\ServiceProvider as BaseServiceProvider;
 use Livewire\Livewire;
 
 class ServiceProvider extends BaseServiceProvider
@@ -77,12 +77,13 @@ class ServiceProvider extends BaseServiceProvider
 
         // Регистрация конфигурации
         $this->mergeConfigFrom(
-            __DIR__ . '/config/permission-registry.php',
+            __DIR__.'/config/permission-registry.php',
             'permission-registry'
         );
 
         $this->app->bind(UserToVirtualUserResolver::class, function ($app) {
             $resolverClass = config('permission-registry.user_resolver');
+
             return $app->make($resolverClass);
         });
 
@@ -101,31 +102,31 @@ class ServiceProvider extends BaseServiceProvider
     {
         // Публикация конфигурации
         $this->publishes([
-            __DIR__ . '/config/permission-registry.php' => config_path('permission-registry.php'),
+            __DIR__.'/config/permission-registry.php' => config_path('permission-registry.php'),
         ], 'permission-registry-config');
 
         // Публикация миграций
         $this->publishes([
-            __DIR__ . '/Database/Migrations/' => database_path('migrations'),
+            __DIR__.'/Database/Migrations/' => database_path('migrations'),
         ], 'permission-registry-migrations');
 
         // Загрузка миграций
-        $this->loadMigrationsFrom(__DIR__ . '/Database/Migrations');
+        $this->loadMigrationsFrom(__DIR__.'/Database/Migrations');
 
         // Загрузка маршрутов
         $this->loadRoutes();
 
         // Загрузка представлений
-        $this->loadViewsFrom(__DIR__ . '/Views', 'permission-registry');
+        $this->loadViewsFrom(__DIR__.'/Views', 'permission-registry');
 
         // Публикация представлений
         $this->publishes([
-            __DIR__ . '/Views' => resource_path('views/vendor/permission-registry'),
+            __DIR__.'/Views' => resource_path('views/vendor/permission-registry'),
         ], 'permission-registry-views');
 
         // Загрузка языковых файлов
-        $this->loadTranslationsFrom(__DIR__ . '/lang', 'permission-registry');
-        $this->loadJsonTranslationsFrom(__DIR__ . '/Lang');
+        $this->loadTranslationsFrom(__DIR__.'/lang', 'permission-registry');
+        $this->loadJsonTranslationsFrom(__DIR__.'/Lang');
 
         // Регистрация middleware
         Route::aliasMiddleware('permission', CheckPermission::class);
@@ -178,13 +179,13 @@ class ServiceProvider extends BaseServiceProvider
         Route::prefix('permission-registry')
             ->name('permission-registry::')
             ->middleware(config('permission-registry.middlewares', ['web', 'auth']))
-            ->group(__DIR__ . '/Routes/web.php');
+            ->group(__DIR__.'/Routes/web.php');
 
         // API routes
-        if (file_exists(__DIR__ . '/Routes/api.php')) {
+        if (file_exists(__DIR__.'/Routes/api.php')) {
             Route::prefix('api')
                 ->middleware(['throttle:60,1'])
-                ->group(__DIR__ . '/Routes/api.php');
+                ->group(__DIR__.'/Routes/api.php');
         }
     }
 
@@ -238,9 +239,10 @@ class ServiceProvider extends BaseServiceProvider
             $resolver = app(UserToVirtualUserResolver::class);
             $checker = app(PermissionChecker::class);
             $virtualUserId = $resolver->resolve($user->id);
-            if (!$virtualUserId) {
+            if (! $virtualUserId) {
                 return false;
             }
+
             return $checker->hasPermission($virtualUserId, 'permission-registry', 'manage');
         });
 
@@ -248,9 +250,10 @@ class ServiceProvider extends BaseServiceProvider
             $resolver = app(UserToVirtualUserResolver::class);
             $checker = app(PermissionChecker::class);
             $virtualUserId = $resolver->resolve($user->id);
-            if (!$virtualUserId) {
+            if (! $virtualUserId) {
                 return false;
             }
+
             return $checker->hasPermission($virtualUserId, 'permission-registry', 'manage')
                 || $checker->hasPermission($virtualUserId, 'permission-registry', 'approve');
         });
@@ -258,6 +261,7 @@ class ServiceProvider extends BaseServiceProvider
         Gate::define('permission-registry.self-service', function ($user) {
             $resolver = app(UserToVirtualUserResolver::class);
             $virtualUserId = $resolver->resolve($user->id);
+
             return $virtualUserId !== null;
         });
 

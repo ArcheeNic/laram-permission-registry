@@ -10,7 +10,7 @@ class TriggerEventTypeTest extends TestCase
     public function test_all_cases_exist(): void
     {
         $cases = TriggerEventType::cases();
-        $values = array_map(fn($c) => $c->value, $cases);
+        $values = array_map(fn ($c) => $c->value, $cases);
 
         $this->assertContains('grant', $values);
         $this->assertContains('revoke', $values);

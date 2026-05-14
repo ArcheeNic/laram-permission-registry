@@ -7,16 +7,17 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         $driver = Schema::getConnection()->getDriverName();
 
         if ($driver === 'sqlite') {
             // SQLite doesn't support ALTER COLUMN, recreate check constraint
-            DB::statement("
+            DB::statement('
                 CREATE TABLE granted_permissions_tmp AS SELECT * FROM granted_permissions
-            ");
+            ');
             Schema::drop('granted_permissions');
 
             Schema::create('granted_permissions', function (Blueprint $table) {
@@ -45,13 +46,13 @@ return new class extends Migration {
                 $table->timestamps();
             });
 
-            DB::statement("
+            DB::statement('
                 INSERT INTO granted_permissions SELECT * FROM granted_permissions_tmp
-            ");
-            DB::statement("DROP TABLE granted_permissions_tmp");
+            ');
+            DB::statement('DROP TABLE granted_permissions_tmp');
         } else {
             // PostgreSQL/MySQL: alter the column type
-            DB::statement("ALTER TABLE granted_permissions DROP CONSTRAINT IF EXISTS granted_permissions_status_check");
+            DB::statement('ALTER TABLE granted_permissions DROP CONSTRAINT IF EXISTS granted_permissions_status_check');
             DB::statement("
                 ALTER TABLE granted_permissions 
                 ADD CONSTRAINT granted_permissions_status_check 
@@ -65,7 +66,7 @@ return new class extends Migration {
         $driver = Schema::getConnection()->getDriverName();
 
         if ($driver !== 'sqlite') {
-            DB::statement("ALTER TABLE granted_permissions DROP CONSTRAINT IF EXISTS granted_permissions_status_check");
+            DB::statement('ALTER TABLE granted_permissions DROP CONSTRAINT IF EXISTS granted_permissions_status_check');
             DB::statement("
                 ALTER TABLE granted_permissions 
                 ADD CONSTRAINT granted_permissions_status_check 

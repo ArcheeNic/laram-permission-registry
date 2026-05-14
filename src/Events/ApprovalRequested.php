@@ -9,6 +9,5 @@ readonly class ApprovalRequested
     public function __construct(
         public ApprovalRequest $approvalRequest,
         public array $approverIds,
-    ) {
-    }
+    ) {}
 }

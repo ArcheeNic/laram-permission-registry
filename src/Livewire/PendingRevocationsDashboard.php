@@ -146,4 +146,3 @@ class PendingRevocationsDashboard extends Component
             ->exists();
     }
 }
-

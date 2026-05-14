@@ -2,6 +2,7 @@
 
 namespace ArcheeNic\PermissionRegistry\Tests\Unit\Services;
 
+use App\Imports\Bitrix24Import;
 use ArcheeNic\PermissionRegistry\Models\PermissionImport;
 use ArcheeNic\PermissionRegistry\Services\ImportTriggerConfigResolver;
 use ArcheeNic\PermissionRegistry\Tests\TestCase;
@@ -29,7 +30,7 @@ class ImportTriggerConfigResolverTest extends TestCase
         $resolver = app(ImportTriggerConfigResolver::class);
         $import = PermissionImport::create([
             'name' => 'Bitrix',
-            'class_name' => \App\Imports\Bitrix24Import::class,
+            'class_name' => Bitrix24Import::class,
             'description' => 'Test',
             'is_active' => true,
         ]);

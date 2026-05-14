@@ -8,6 +8,7 @@ use ArcheeNic\PermissionRegistry\Models\PermissionTrigger;
 use ArcheeNic\PermissionRegistry\Services\TriggerDiscoveryService;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -16,8 +17,7 @@ class HrEventTriggerAssignmentController extends Controller
 {
     public function __construct(
         private TriggerDiscoveryService $triggerDiscoveryService
-    ) {
-    }
+    ) {}
 
     public function index()
     {
@@ -58,7 +58,7 @@ class HrEventTriggerAssignmentController extends Controller
         ));
     }
 
-    private function groupTriggersByService(\Illuminate\Support\Collection $triggers): \Illuminate\Support\Collection
+    private function groupTriggersByService(Collection $triggers): Collection
     {
         $lookup = $this->triggerDiscoveryService->getServiceLookup();
         $fallback = __('permission-registry::messages.other_service');
@@ -76,7 +76,7 @@ class HrEventTriggerAssignmentController extends Controller
                 Rule::exists('permission_triggers', 'id')->where('is_active', true),
             ],
             'event_type' => 'required|in:hire,fire',
-            'employee_category' => 'required|in:' . implode(',', array_column(EmployeeCategory::cases(), 'value')),
+            'employee_category' => 'required|in:'.implode(',', array_column(EmployeeCategory::cases(), 'value')),
             'order' => 'required|integer|min:0',
             'is_enabled' => 'boolean',
             'config' => 'nullable|array',

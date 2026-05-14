@@ -11,8 +11,11 @@ class GroupsList extends Component
     use WithPagination;
 
     public $search = '';
+
     public $perPage = 15;
+
     public $confirmingDelete = false;
+
     public $groupToDelete = null;
 
     protected $queryString = [

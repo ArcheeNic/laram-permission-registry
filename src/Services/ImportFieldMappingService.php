@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\Cache;
 class ImportFieldMappingService
 {
     /**
-     * @param int $permissionImportId
      * @return array<string, array{permission_field_id: int, is_internal: bool}>
      */
     public function getMapping(int $permissionImportId): array
@@ -35,8 +34,8 @@ class ImportFieldMappingService
     }
 
     /**
-     * @param array<string, mixed> $externalFields
-     * @param array<string, array{permission_field_id: int, is_internal: bool}> $mapping
+     * @param  array<string, mixed>  $externalFields
+     * @param  array<string, array{permission_field_id: int, is_internal: bool}>  $mapping
      * @return array<int, mixed> permission_field_id => value
      */
     public function applyMapping(array $externalFields, array $mapping): array

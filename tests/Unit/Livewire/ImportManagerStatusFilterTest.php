@@ -12,6 +12,7 @@ use Illuminate\Support\Str;
 class ImportManagerStatusFilterTest extends TestCase
 {
     private string $runId;
+
     private ImportManager $component;
 
     protected function setUp(): void
@@ -39,7 +40,7 @@ class ImportManagerStatusFilterTest extends TestCase
 
     private function makeComponent(): ImportManager
     {
-        $component = new ImportManager();
+        $component = new ImportManager;
         $component->currentRunId = $this->runId;
         $component->step = 'staging';
 

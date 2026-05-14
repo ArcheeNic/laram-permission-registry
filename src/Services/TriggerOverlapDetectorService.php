@@ -8,8 +8,7 @@ use Illuminate\Support\Collection;
 class TriggerOverlapDetectorService
 {
     /**
-     * @param int|null $permissionId
-     * @param array<int, string> $triggerClassPatterns
+     * @param  array<int, string>  $triggerClassPatterns
      * @return array<string, array<int, array{permission_id: int, permission_name: string, assignment_id: int}>>
      */
     public function detectOverlaps(?int $permissionId = null, array $triggerClassPatterns = ['App\\Triggers\\Bitrix24%']): array

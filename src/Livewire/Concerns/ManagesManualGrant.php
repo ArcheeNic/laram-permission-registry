@@ -10,8 +10,11 @@ use ArcheeNic\PermissionRegistry\Models\Permission;
 trait ManagesManualGrant
 {
     public bool $showManualGrantModal = false;
+
     public ?int $manualGrantPermissionId = null;
+
     public array $manualGrantMissingFields = [];
+
     public array $manualGrantFieldValues = [];
 
     public function openManualGrantModal(int $permissionId): void
@@ -20,7 +23,7 @@ trait ManagesManualGrant
         $this->manualGrantFieldValues = [];
 
         $permission = Permission::with('fields')->find($permissionId);
-        if (!$permission) {
+        if (! $permission) {
             return;
         }
 
@@ -52,20 +55,21 @@ trait ManagesManualGrant
     {
         $this->clearFlashMessages();
 
-        if (!$this->selectedUserId || !$this->manualGrantPermissionId) {
+        if (! $this->selectedUserId || ! $this->manualGrantPermissionId) {
             $this->closeManualGrantModal();
+
             return;
         }
 
         $fieldsToSave = [];
         foreach ($this->manualGrantFieldValues as $fieldId => $value) {
-            if (!empty($value)) {
+            if (! empty($value)) {
                 $fieldsToSave[$fieldId] = $value;
                 $this->globalFields[$fieldId] = $value;
             }
         }
 
-        if (!empty($fieldsToSave)) {
+        if (! empty($fieldsToSave)) {
             $updateAction = app(UpdateVirtualUserGlobalFieldsAction::class);
             $updateAction->execute($this->selectedUserId, $fieldsToSave);
         }
@@ -88,7 +92,7 @@ trait ManagesManualGrant
                 'fieldValues' => $fieldValues,
                 'meta' => [],
                 'expiresAt' => null,
-            ]
+            ],
         ]);
 
         $this->closeManualGrantModal();

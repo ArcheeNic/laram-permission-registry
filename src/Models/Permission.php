@@ -2,16 +2,17 @@
 
 namespace ArcheeNic\PermissionRegistry\Models;
 
+use ArcheeNic\PermissionRegistry\Database\Factories\PermissionFactory;
 use ArcheeNic\PermissionRegistry\Enums\ManagementMode;
 use ArcheeNic\PermissionRegistry\Enums\PermissionScope;
 use ArcheeNic\PermissionRegistry\Enums\RiskLevel;
 use ArcheeNic\PermissionRegistry\Models\Base\Permission as BasePermission;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Permission extends BasePermission
 {
@@ -20,7 +21,7 @@ class Permission extends BasePermission
 
     protected static function newFactory()
     {
-        return \ArcheeNic\PermissionRegistry\Database\Factories\PermissionFactory::new();
+        return PermissionFactory::new();
     }
 
     protected $casts = [

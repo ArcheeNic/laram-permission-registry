@@ -11,7 +11,6 @@ class TriggerFieldMappingService
     /**
      * Получить маппинг полей для триггера
      *
-     * @param int $permissionTriggerId
      * @return array Массив вида ['trigger_field' => 'global_field']
      */
     public function getMapping(int $permissionTriggerId): array
@@ -25,9 +24,6 @@ class TriggerFieldMappingService
 
     /**
      * Очистить кеш маппинга для триггера
-     *
-     * @param int $permissionTriggerId
-     * @return void
      */
     public function clearCache(int $permissionTriggerId): void
     {
@@ -39,8 +35,8 @@ class TriggerFieldMappingService
      * Применить маппинг к глобальным полям
      * Преобразует глобальные поля согласно маппингу триггера
      *
-     * @param int $virtualUserId ID виртуального пользователя
-     * @param array $mapping Маппинг триггера
+     * @param  int  $virtualUserId  ID виртуального пользователя
+     * @param  array  $mapping  Маппинг триггера
      * @return array Преобразованные поля
      */
     public function applyMapping(int $virtualUserId, array $mapping): array
@@ -74,4 +70,3 @@ class TriggerFieldMappingService
         return $mappedFields;
     }
 }
-

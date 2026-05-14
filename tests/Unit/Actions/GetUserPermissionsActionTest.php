@@ -3,11 +3,11 @@
 namespace ArcheeNic\PermissionRegistry\Tests\Unit\Actions;
 
 use ArcheeNic\PermissionRegistry\Actions\GetUserPermissionsAction;
+use ArcheeNic\PermissionRegistry\Enums\VirtualUserStatus;
 use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
 use ArcheeNic\PermissionRegistry\Models\GrantedPermissionFieldValue;
 use ArcheeNic\PermissionRegistry\Models\Permission;
 use ArcheeNic\PermissionRegistry\Models\PermissionField;
-use ArcheeNic\PermissionRegistry\Enums\VirtualUserStatus;
 use ArcheeNic\PermissionRegistry\Models\VirtualUser;
 use ArcheeNic\PermissionRegistry\Tests\TestCase;
 
@@ -17,7 +17,7 @@ class GetUserPermissionsActionTest extends TestCase
     {
         $user = VirtualUser::create(['name' => 'Test User', 'status' => VirtualUserStatus::ACTIVE]);
 
-        $action = new GetUserPermissionsAction();
+        $action = new GetUserPermissionsAction;
         $result = $action->handle($user->id);
 
         $this->assertIsArray($result);
@@ -46,7 +46,7 @@ class GetUserPermissionsActionTest extends TestCase
             'value' => 'user@test.com',
         ]);
 
-        $action = new GetUserPermissionsAction();
+        $action = new GetUserPermissionsAction;
         $result = $action->handle($user->id);
 
         $this->assertCount(1, $result);
@@ -78,7 +78,7 @@ class GetUserPermissionsActionTest extends TestCase
             'granted_at' => now(),
         ]);
 
-        $action = new GetUserPermissionsAction();
+        $action = new GetUserPermissionsAction;
         $result = $action->handle($user->id, 'service-a');
 
         $this->assertCount(1, $result);

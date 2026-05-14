@@ -33,7 +33,7 @@ class CheckPermissionTest extends TestCase
 
         $this->expectException(HttpException::class);
 
-        $middleware->handle($request, fn () => new Response(), 'service', 'perm');
+        $middleware->handle($request, fn () => new Response, 'service', 'perm');
     }
 
     public function test_aborts_403_when_virtual_user_not_found(): void
@@ -48,7 +48,7 @@ class CheckPermissionTest extends TestCase
 
         $this->expectException(HttpException::class);
 
-        $middleware->handle($request, fn () => new Response(), 'service', 'perm');
+        $middleware->handle($request, fn () => new Response, 'service', 'perm');
     }
 
     public function test_aborts_403_when_no_permission(): void
@@ -66,7 +66,7 @@ class CheckPermissionTest extends TestCase
 
         $this->expectException(HttpException::class);
 
-        $middleware->handle($request, fn () => new Response(), 'service', 'perm');
+        $middleware->handle($request, fn () => new Response, 'service', 'perm');
     }
 
     public function test_passes_when_has_permission(): void

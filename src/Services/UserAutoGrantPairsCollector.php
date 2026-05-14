@@ -14,7 +14,7 @@ class UserAutoGrantPairsCollector
      * которые получает пользователь через свои текущие группы и должности,
      * за исключением указанной группы/должности.
      *
-     * @return array<string, true>  ключ: "permission_id|resource_id" (resource_id="" если null)
+     * @return array<string, true> ключ: "permission_id|resource_id" (resource_id="" если null)
      */
     public function collect(int $userId, ?int $excludeGroupId = null, ?int $excludePositionId = null): array
     {
@@ -27,7 +27,7 @@ class UserAutoGrantPairsCollector
             ])
             ->find($userId);
 
-        if (!$user) {
+        if (! $user) {
             return $pairs;
         }
 
@@ -46,7 +46,7 @@ class UserAutoGrantPairsCollector
     }
 
     /**
-     * @param array<string, true> $pairs
+     * @param  array<string, true>  $pairs
      */
     private function collectFromGroup(int $groupId, array &$pairs): void
     {
@@ -57,7 +57,7 @@ class UserAutoGrantPairsCollector
             ])
             ->find($groupId);
 
-        if (!$group) {
+        if (! $group) {
             return;
         }
 
@@ -72,7 +72,7 @@ class UserAutoGrantPairsCollector
     }
 
     /**
-     * @param array<string, true> $pairs
+     * @param  array<string, true>  $pairs
      */
     private function collectFromPosition(
         int $positionId,
@@ -90,6 +90,7 @@ class UserAutoGrantPairsCollector
             if (($position = Position::query()->with('parent')->find($positionId)) && $position->parent) {
                 $this->collectFromPosition($position->parent->id, $pairs, $excludeGroupId, $excludePositionId, $processed);
             }
+
             return;
         }
 
@@ -102,7 +103,7 @@ class UserAutoGrantPairsCollector
             ])
             ->find($positionId);
 
-        if (!$position) {
+        if (! $position) {
             return;
         }
 
@@ -128,8 +129,8 @@ class UserAutoGrantPairsCollector
     }
 
     /**
-     * @param array<int, array<int>> $resourcesByPermission
-     * @param array<string, true>    $pairs
+     * @param  array<int, array<int>>  $resourcesByPermission
+     * @param  array<string, true>  $pairs
      */
     private function addPermissionPairs(
         $permission,
@@ -142,6 +143,7 @@ class UserAutoGrantPairsCollector
             foreach ($resourcesByPermission[$permission->id] ?? [] as $resourceId) {
                 $pairs[$permission->id.'|'.$resourceId] = true;
             }
+
             return;
         }
 

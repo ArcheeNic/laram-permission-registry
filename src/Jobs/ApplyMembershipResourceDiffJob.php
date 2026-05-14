@@ -17,13 +17,14 @@ class ApplyMembershipResourceDiffJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 1;
+
     public int $timeout = 600;
 
     /**
-     * @param 'group'|'position' $contextType
-     * @param array<int, array{permission_id:int, resource_id:?int, auto_grant?:bool, auto_revoke?:bool}> $addedPairs
-     * @param array<int, array{permission_id:int, resource_id:?int, auto_grant?:bool, auto_revoke?:bool}> $removedPairs
-     * @param array<int, int> $userIds
+     * @param  'group'|'position'  $contextType
+     * @param  array<int, array{permission_id:int, resource_id:?int, auto_grant?:bool, auto_revoke?:bool}>  $addedPairs
+     * @param  array<int, array{permission_id:int, resource_id:?int, auto_grant?:bool, auto_revoke?:bool}>  $removedPairs
+     * @param  array<int, int>  $userIds
      */
     public function __construct(
         public string $contextType,
@@ -31,8 +32,7 @@ class ApplyMembershipResourceDiffJob implements ShouldQueue
         public array $addedPairs,
         public array $removedPairs,
         public array $userIds,
-    ) {
-    }
+    ) {}
 
     public function handle(
         GrantPermissionAction $grantAction,

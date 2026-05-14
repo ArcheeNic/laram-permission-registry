@@ -91,12 +91,12 @@ class TriggerPermissionMatcherServiceTest extends TestCase
     ): array {
         $permissionA = $existingPermission ?? Permission::create([
             'service' => 'b24',
-            'name' => 'Perm ' . $firstDept,
+            'name' => 'Perm '.$firstDept,
             'description' => 'Test permission',
         ]);
 
         $triggerA = PermissionTrigger::create([
-            'name' => 'Bitrix24 Add A ' . uniqid(),
+            'name' => 'Bitrix24 Add A '.uniqid(),
             'class_name' => 'App\\Triggers\\Bitrix24AddToDepartmentTrigger',
             'description' => 'Test',
             'type' => 'both',
@@ -119,12 +119,12 @@ class TriggerPermissionMatcherServiceTest extends TestCase
 
         $permissionB = Permission::create([
             'service' => 'b24',
-            'name' => 'Perm ' . $secondDept,
+            'name' => 'Perm '.$secondDept,
             'description' => 'Test permission',
         ]);
 
         $triggerB = PermissionTrigger::create([
-            'name' => 'Bitrix24 Invite B ' . uniqid(),
+            'name' => 'Bitrix24 Invite B '.uniqid(),
             'class_name' => 'App\\Triggers\\Bitrix24InviteUserTrigger',
             'description' => 'Test',
             'type' => 'both',

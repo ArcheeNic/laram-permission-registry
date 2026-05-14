@@ -5,7 +5,6 @@ namespace ArcheeNic\PermissionRegistry\Triggers;
 use ArcheeNic\PermissionRegistry\Contracts\PermissionTriggerInterface;
 use ArcheeNic\PermissionRegistry\ValueObjects\TriggerContext;
 use ArcheeNic\PermissionRegistry\ValueObjects\TriggerResult;
-use Illuminate\Support\Facades\Log;
 
 /**
  * Пример триггера для добавления корпоративной почты
@@ -20,17 +19,16 @@ class ExampleEmailAddTrigger implements PermissionTriggerInterface
             $firstName = $context->globalFields['first_name'] ?? null;
             $lastName = $context->globalFields['last_name'] ?? null;
 
-            if (!$email) {
+            if (! $email) {
                 return TriggerResult::failure('Email не заполнен');
             }
-
 
             // Здесь должна быть реальная логика создания почтового ящика
             // Например, вызов API почтового сервера
 
             // Имитируем успешное создание
             return TriggerResult::success([
-                'email_account_id' => 'example_' . $context->virtualUserId,
+                'email_account_id' => 'example_'.$context->virtualUserId,
                 'created_at' => now()->toIso8601String(),
             ]);
         } catch (\Exception $e) {
@@ -58,7 +56,6 @@ class ExampleEmailAddTrigger implements PermissionTriggerInterface
 
         if ($log && isset($log->meta['email_account_id'])) {
             $accountId = $log->meta['email_account_id'];
-
 
             // Здесь должна быть реальная логика удаления почтового ящика
         }

@@ -19,15 +19,15 @@ class GrantPermissionWorkflowJob implements ShouldQueue
 
     public function __construct(
         private int $grantedPermissionId
-    ) {
-    }
+    ) {}
 
     public function handle(PermissionTriggerExecutor $executor): void
     {
         $grantedPermission = GrantedPermission::with('permission')->find($this->grantedPermissionId);
 
-        if (!$grantedPermission) {
+        if (! $grantedPermission) {
             Log::error('GrantedPermission not found', ['id' => $this->grantedPermissionId]);
+
             return;
         }
 

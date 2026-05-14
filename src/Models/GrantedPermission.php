@@ -2,10 +2,12 @@
 
 namespace ArcheeNic\PermissionRegistry\Models;
 
+use ArcheeNic\PermissionRegistry\Database\Factories\GrantedPermissionFactory;
 use ArcheeNic\PermissionRegistry\Models\Base\GrantedPermission as BaseGrantedPermission;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * Granted Permission Model
@@ -20,7 +22,7 @@ class GrantedPermission extends BaseGrantedPermission
 
     protected static function newFactory()
     {
-        return \ArcheeNic\PermissionRegistry\Database\Factories\GrantedPermissionFactory::new();
+        return GrantedPermissionFactory::new();
     }
 
     protected $casts = [
@@ -75,7 +77,7 @@ class GrantedPermission extends BaseGrantedPermission
         return $this->hasMany(ApprovalRequest::class);
     }
 
-    public function latestApprovalRequest(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function latestApprovalRequest(): HasOne
     {
         return $this->hasOne(ApprovalRequest::class)->latestOfMany();
     }
@@ -95,7 +97,7 @@ class GrantedPermission extends BaseGrantedPermission
         return $this->hasMany(AccessAttestation::class);
     }
 
-    public function latestAttestation(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function latestAttestation(): HasOne
     {
         return $this->hasOne(AccessAttestation::class)->latestOfMany();
     }

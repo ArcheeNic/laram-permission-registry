@@ -7,8 +7,7 @@ readonly class ImportResult
     public function __construct(
         public array $users,
         public array $errors = [],
-    ) {
-    }
+    ) {}
 
     public static function success(array $users): self
     {

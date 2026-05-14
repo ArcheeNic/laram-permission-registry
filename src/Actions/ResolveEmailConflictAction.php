@@ -11,11 +11,10 @@ class ResolveEmailConflictAction
 {
     public function __construct(
         private RetryHrTriggerAction $retryHrTriggerAction
-    ) {
-    }
+    ) {}
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     public function execute(int $executionLogId, string $strategy, array $payload = [], ?int $actorId = null): bool
     {
@@ -51,7 +50,7 @@ class ResolveEmailConflictAction
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     private function retryWithEmail(
         HrTriggerExecutionLog $logEntry,
@@ -81,7 +80,7 @@ class ResolveEmailConflictAction
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     private function cancelConflict(HrTriggerExecutionLog $logEntry, array $payload, ?int $actorId): bool
     {
@@ -96,7 +95,7 @@ class ResolveEmailConflictAction
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     private function markResolutionAttempt(HrTriggerExecutionLog $logEntry, string $strategy, array $payload, ?int $actorId): void
     {

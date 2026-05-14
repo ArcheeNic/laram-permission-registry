@@ -6,7 +6,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         // user_groups -> virtual_user_groups
@@ -15,9 +16,9 @@ return new class extends Migration {
             $table->dropForeign(['virtual_user_id']);
             $table->dropForeign(['permission_group_id']);
         });
-        
+
         Schema::rename('user_groups', 'virtual_user_groups');
-        
+
         Schema::table('virtual_user_groups', function (Blueprint $table) {
             $table->foreign('virtual_user_id')->references('id')->on('virtual_users')->onDelete('cascade');
             $table->foreign('permission_group_id')->references('id')->on('permission_groups')->onDelete('cascade');
@@ -30,9 +31,9 @@ return new class extends Migration {
             $table->dropForeign(['virtual_user_id']);
             $table->dropForeign(['position_id']);
         });
-        
+
         Schema::rename('user_positions', 'virtual_user_positions');
-        
+
         Schema::table('virtual_user_positions', function (Blueprint $table) {
             $table->foreign('virtual_user_id')->references('id')->on('virtual_users')->onDelete('cascade');
             $table->foreign('position_id')->references('id')->on('positions')->onDelete('cascade');
@@ -48,9 +49,9 @@ return new class extends Migration {
             $table->dropForeign(['virtual_user_id']);
             $table->dropForeign(['permission_group_id']);
         });
-        
+
         Schema::rename('virtual_user_groups', 'user_groups');
-        
+
         Schema::table('user_groups', function (Blueprint $table) {
             $table->foreign('virtual_user_id')->references('id')->on('virtual_users')->onDelete('cascade');
             $table->foreign('permission_group_id')->references('id')->on('permission_groups')->onDelete('cascade');
@@ -63,9 +64,9 @@ return new class extends Migration {
             $table->dropForeign(['virtual_user_id']);
             $table->dropForeign(['position_id']);
         });
-        
+
         Schema::rename('virtual_user_positions', 'user_positions');
-        
+
         Schema::table('user_positions', function (Blueprint $table) {
             $table->foreign('virtual_user_id')->references('id')->on('virtual_users')->onDelete('cascade');
             $table->foreign('position_id')->references('id')->on('positions')->onDelete('cascade');

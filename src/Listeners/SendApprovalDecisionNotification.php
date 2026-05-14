@@ -11,17 +11,17 @@ class SendApprovalDecisionNotification
     public function handle(ApprovalCompleted $event): void
     {
         $userModel = config('permission-registry.user_model');
-        if (!$userModel) {
+        if (! $userModel) {
             return;
         }
 
         $requester = $event->approvalRequest->requester;
-        if (!$requester || !$requester->user_id) {
+        if (! $requester || ! $requester->user_id) {
             return;
         }
 
         $user = $userModel::find($requester->user_id);
-        if (!$user) {
+        if (! $user) {
             return;
         }
 

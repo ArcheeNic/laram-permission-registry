@@ -11,13 +11,16 @@ use ArcheeNic\PermissionRegistry\Models\VirtualUser;
 trait ManagesUserCreation
 {
     public $showCreateForm = false;
+
     public $newUserFields = [];
+
     public $requiredFields = null;
+
     public array $duplicateHints = [];
 
     public function toggleCreateForm()
     {
-        $this->showCreateForm = !$this->showCreateForm;
+        $this->showCreateForm = ! $this->showCreateForm;
         $this->duplicateHints = [];
 
         if ($this->showCreateForm) {
@@ -60,28 +63,29 @@ trait ManagesUserCreation
     {
         $this->clearFlashMessages();
 
-        if (!$this->requiredFields || empty($this->requiredFields)) {
+        if (! $this->requiredFields || empty($this->requiredFields)) {
             $this->setFlashError(__('permission-registry::No required fields configured. Please add global fields with "Required on user create" option.'));
+
             return;
         }
 
         $rules = [];
         foreach ($this->requiredFields as $field) {
-            $rules['newUserFields.' . $field['id']] = 'required';
+            $rules['newUserFields.'.$field['id']] = 'required';
         }
 
-        if (!empty($rules)) {
+        if (! empty($rules)) {
             $this->validate($rules, [
                 'newUserFields.*.required' => __('permission-registry::This field is required'),
             ]);
         }
 
         $user = VirtualUser::create([
-            'name' => 'User #' . uniqid(),
+            'name' => 'User #'.uniqid(),
             'status' => VirtualUserStatus::DEACTIVATED,
         ]);
 
-        if (!empty($this->newUserFields)) {
+        if (! empty($this->newUserFields)) {
             $updateAction = app(UpdateVirtualUserGlobalFieldsAction::class);
             $updateAction->execute($user->id, $this->newUserFields);
         }

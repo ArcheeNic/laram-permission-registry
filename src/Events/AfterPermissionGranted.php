@@ -9,6 +9,5 @@ readonly class AfterPermissionGranted
         public int $permissionId,
         public string $permissionName,
         public string $service
-    ) {
-    }
+    ) {}
 }

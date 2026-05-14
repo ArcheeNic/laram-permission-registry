@@ -7,12 +7,19 @@ use Illuminate\Database\Eloquent\Model;
 class PermissionField extends Model
 {
     public const ID = 'id';
+
     public const NAME = 'name';
+
     public const TYPE = 'type';
+
     public const DEFAULT_VALUE = 'default_value';
+
     public const IS_GLOBAL = 'is_global';
+
     public const REQUIRED_ON_USER_CREATE = 'required_on_user_create';
+
     public const CREATED_AT = 'created_at';
+
     public const UPDATED_AT = 'updated_at';
 
     protected $fillable = [

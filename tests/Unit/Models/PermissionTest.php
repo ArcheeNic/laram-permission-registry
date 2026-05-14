@@ -32,61 +32,61 @@ class PermissionTest extends TestCase
 
     public function test_fields_relationship(): void
     {
-        $permission = new Permission();
+        $permission = new Permission;
         $this->assertInstanceOf(BelongsToMany::class, $permission->fields());
     }
 
     public function test_groups_relationship(): void
     {
-        $permission = new Permission();
+        $permission = new Permission;
         $this->assertInstanceOf(BelongsToMany::class, $permission->groups());
     }
 
     public function test_positions_relationship(): void
     {
-        $permission = new Permission();
+        $permission = new Permission;
         $this->assertInstanceOf(BelongsToMany::class, $permission->positions());
     }
 
     public function test_trigger_assignments_relationship(): void
     {
-        $permission = new Permission();
+        $permission = new Permission;
         $this->assertInstanceOf(HasMany::class, $permission->triggerAssignments());
     }
 
     public function test_grant_triggers_relationship(): void
     {
-        $permission = new Permission();
+        $permission = new Permission;
         $this->assertInstanceOf(HasMany::class, $permission->grantTriggers());
     }
 
     public function test_revoke_triggers_relationship(): void
     {
-        $permission = new Permission();
+        $permission = new Permission;
         $this->assertInstanceOf(HasMany::class, $permission->revokeTriggers());
     }
 
     public function test_dependencies_relationship(): void
     {
-        $permission = new Permission();
+        $permission = new Permission;
         $this->assertInstanceOf(HasMany::class, $permission->dependencies());
     }
 
     public function test_dependents_relationship(): void
     {
-        $permission = new Permission();
+        $permission = new Permission;
         $this->assertInstanceOf(HasMany::class, $permission->dependents());
     }
 
     public function test_grant_dependencies_relationship(): void
     {
-        $permission = new Permission();
+        $permission = new Permission;
         $this->assertInstanceOf(HasMany::class, $permission->grantDependencies());
     }
 
     public function test_revoke_dependencies_relationship(): void
     {
-        $permission = new Permission();
+        $permission = new Permission;
         $this->assertInstanceOf(HasMany::class, $permission->revokeDependencies());
     }
 

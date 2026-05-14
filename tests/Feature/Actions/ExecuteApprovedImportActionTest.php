@@ -2,8 +2,8 @@
 
 namespace ArcheeNic\PermissionRegistry\Tests\Feature\Actions;
 
-use ArcheeNic\PermissionRegistry\Actions\CreateVirtualUserAction;
 use ArcheeNic\PermissionRegistry\Actions\CleanupImportRunAction;
+use ArcheeNic\PermissionRegistry\Actions\CreateVirtualUserAction;
 use ArcheeNic\PermissionRegistry\Actions\ExecuteApprovedImportAction;
 use ArcheeNic\PermissionRegistry\Actions\FireVirtualUserAction;
 use ArcheeNic\PermissionRegistry\Actions\GrantPermissionAction;
@@ -19,10 +19,10 @@ use ArcheeNic\PermissionRegistry\Models\ImportStagingRow;
 use ArcheeNic\PermissionRegistry\Models\Permission;
 use ArcheeNic\PermissionRegistry\Models\PermissionField;
 use ArcheeNic\PermissionRegistry\Models\PermissionImport;
+use ArcheeNic\PermissionRegistry\Models\VirtualUser;
 use ArcheeNic\PermissionRegistry\Services\ImportFieldMappingService;
 use ArcheeNic\PermissionRegistry\Services\ImportTriggerConfigResolver;
 use ArcheeNic\PermissionRegistry\Services\TriggerPermissionMatcherService;
-use ArcheeNic\PermissionRegistry\Models\VirtualUser;
 use ArcheeNic\PermissionRegistry\Tests\TestCase;
 use Illuminate\Support\Str;
 use Mockery;
@@ -105,7 +105,7 @@ class ExecuteApprovedImportActionTest extends TestCase
 
         $grantMock->shouldReceive('handle')
             ->twice()
-            ->andReturn(Mockery::mock(\ArcheeNic\PermissionRegistry\Models\GrantedPermission::class));
+            ->andReturn(Mockery::mock(GrantedPermission::class));
 
         $matcherMock->shouldReceive('matchByDepartments')
             ->once()

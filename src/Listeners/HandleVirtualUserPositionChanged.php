@@ -8,9 +8,6 @@ class HandleVirtualUserPositionChanged
 {
     /**
      * Обработка события изменения должности пользователя
-     *
-     * @param VirtualUserPositionChanged $event
-     * @return void
      */
     public function handle(VirtualUserPositionChanged $event): void
     {

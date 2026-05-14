@@ -9,15 +9,15 @@ use Illuminate\Database\QueryException;
 class BulkAssignVirtualUserGroupAction
 {
     private const USER_NOT_FOUND_MESSAGE = 'Virtual user not found';
+
     private const ASSIGN_FAILED_MESSAGE = 'Failed to assign group';
 
     public function __construct(
         private AssignVirtualUserGroupAction $assignVirtualUserGroupAction
-    ) {
-    }
+    ) {}
 
     /**
-     * @param array<int> $virtualUserIds
+     * @param  array<int>  $virtualUserIds
      */
     public function handle(array $virtualUserIds, int $groupId): BulkOperationResult
     {
@@ -33,8 +33,9 @@ class BulkAssignVirtualUserGroupAction
 
         foreach ($virtualUserIds as $virtualUserId) {
             $user = $usersById->get($virtualUserId);
-            if (!$user) {
+            if (! $user) {
                 $result->addFailure($virtualUserId, self::USER_NOT_FOUND_MESSAGE);
+
                 continue;
             }
 
@@ -44,6 +45,7 @@ class BulkAssignVirtualUserGroupAction
             } catch (QueryException $e) {
                 if ($this->isDuplicateKeyException($e)) {
                     $result->addSkipped($virtualUserId);
+
                     continue;
                 }
 

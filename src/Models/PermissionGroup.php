@@ -2,6 +2,7 @@
 
 namespace ArcheeNic\PermissionRegistry\Models;
 
+use ArcheeNic\PermissionRegistry\Database\Factories\PermissionGroupFactory;
 use ArcheeNic\PermissionRegistry\Models\Base\PermissionGroup as BasePermissionGroup;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -13,7 +14,7 @@ class PermissionGroup extends BasePermissionGroup
 
     protected static function newFactory()
     {
-        return \ArcheeNic\PermissionRegistry\Database\Factories\PermissionGroupFactory::new();
+        return PermissionGroupFactory::new();
     }
 
     public function permissions(): BelongsToMany

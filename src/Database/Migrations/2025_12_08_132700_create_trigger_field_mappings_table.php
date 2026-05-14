@@ -26,4 +26,3 @@ return new class extends Migration
         Schema::dropIfExists('trigger_field_mappings');
     }
 };
-

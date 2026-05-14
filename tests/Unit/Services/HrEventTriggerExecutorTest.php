@@ -338,6 +338,7 @@ class HrEventSuccessTestTrigger implements PermissionTriggerInterface
     public function execute(TriggerContext $context): TriggerResult
     {
         self::$executed = true;
+
         return TriggerResult::success();
     }
 
@@ -346,20 +347,20 @@ class HrEventSuccessTestTrigger implements PermissionTriggerInterface
         return false;
     }
 
-    public function rollback(TriggerContext $context): void
-    {
-    }
+    public function rollback(TriggerContext $context): void {}
 }
 
 class HrEventSecondSuccessTestTrigger implements PermissionTriggerInterface
 {
     public static bool $executed = false;
+
     public static array $lastGlobalFields = [];
 
     public function execute(TriggerContext $context): TriggerResult
     {
         self::$executed = true;
         self::$lastGlobalFields = $context->globalFields;
+
         return TriggerResult::success();
     }
 
@@ -368,9 +369,7 @@ class HrEventSecondSuccessTestTrigger implements PermissionTriggerInterface
         return false;
     }
 
-    public function rollback(TriggerContext $context): void
-    {
-    }
+    public function rollback(TriggerContext $context): void {}
 }
 
 class HrEventFailTestTrigger implements PermissionTriggerInterface
@@ -380,6 +379,7 @@ class HrEventFailTestTrigger implements PermissionTriggerInterface
     public function execute(TriggerContext $context): TriggerResult
     {
         self::$executed = true;
+
         return TriggerResult::failure('Forced failure');
     }
 
@@ -388,9 +388,7 @@ class HrEventFailTestTrigger implements PermissionTriggerInterface
         return false;
     }
 
-    public function rollback(TriggerContext $context): void
-    {
-    }
+    public function rollback(TriggerContext $context): void {}
 }
 
 class HrEventAwaitingResolutionTestTrigger implements PermissionTriggerInterface
@@ -400,6 +398,7 @@ class HrEventAwaitingResolutionTestTrigger implements PermissionTriggerInterface
     public function execute(TriggerContext $context): TriggerResult
     {
         self::$executed = true;
+
         return TriggerResult::awaitingResolution('Needs manual resolution', ['reason' => 'duplicate_email']);
     }
 
@@ -408,7 +407,5 @@ class HrEventAwaitingResolutionTestTrigger implements PermissionTriggerInterface
         return false;
     }
 
-    public function rollback(TriggerContext $context): void
-    {
-    }
+    public function rollback(TriggerContext $context): void {}
 }

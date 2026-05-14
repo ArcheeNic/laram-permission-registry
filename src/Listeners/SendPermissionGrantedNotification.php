@@ -12,17 +12,17 @@ class SendPermissionGrantedNotification
     public function handle(AfterPermissionGranted $event): void
     {
         $userModel = config('permission-registry.user_model');
-        if (!$userModel) {
+        if (! $userModel) {
             return;
         }
 
         $virtualUser = VirtualUser::find($event->userId);
-        if (!$virtualUser || !$virtualUser->user_id) {
+        if (! $virtualUser || ! $virtualUser->user_id) {
             return;
         }
 
         $user = $userModel::find($virtualUser->user_id);
-        if (!$user) {
+        if (! $user) {
             return;
         }
 

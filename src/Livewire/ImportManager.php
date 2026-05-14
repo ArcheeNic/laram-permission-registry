@@ -360,7 +360,7 @@ class ImportManager extends Component
             return collect();
         }
 
-        return \ArcheeNic\PermissionRegistry\Models\Permission::query()
+        return Permission::query()
             ->whereIn('id', $managedIds)
             ->orderBy('name')
             ->get(['id', 'name']);
@@ -408,7 +408,7 @@ class ImportManager extends Component
             return [];
         }
 
-        return \ArcheeNic\PermissionRegistry\Models\Permission::query()
+        return Permission::query()
             ->whereIn('id', $managedIds)
             ->orderBy('name')
             ->pluck('name')
@@ -657,16 +657,16 @@ class ImportManager extends Component
     }
 
     /**
-     * @param array<int, int> $fallbackPermissionIds
-     * @return \Illuminate\Support\Collection<int, array{permission_id: int, permission_name: string, department_id: string}>
+     * @param  array<int, int>  $fallbackPermissionIds
+     * @return Collection<int, array{permission_id: int, permission_name: string, department_id: string}>
      */
-    private function buildFallbackMatches(array $fallbackPermissionIds): \Illuminate\Support\Collection
+    private function buildFallbackMatches(array $fallbackPermissionIds): Collection
     {
         if ($fallbackPermissionIds === []) {
             return collect();
         }
 
-        return \ArcheeNic\PermissionRegistry\Models\Permission::query()
+        return Permission::query()
             ->whereIn('id', $fallbackPermissionIds)
             ->get()
             ->map(static fn ($permission): array => [
@@ -678,7 +678,7 @@ class ImportManager extends Component
     }
 
     /**
-     * @param array<int, array{permission_id:int, label:string}> $pairs
+     * @param  array<int, array{permission_id:int, label:string}>  $pairs
      */
     private function buildNewAction(array $pairs): array
     {
@@ -698,7 +698,7 @@ class ImportManager extends Component
     }
 
     /**
-     * @param array{added: array<int, string>, removed: array<int, string>} $permissionDiff
+     * @param  array{added: array<int, string>, removed: array<int, string>}  $permissionDiff
      */
     private function buildChangedAction(array $diffs, array $permissionDiff): array
     {
@@ -733,7 +733,7 @@ class ImportManager extends Component
     }
 
     /**
-     * @param array{added: array<int, string>, removed: array<int, string>} $permissionDiff
+     * @param  array{added: array<int, string>, removed: array<int, string>}  $permissionDiff
      */
     private function buildExistsAction(array $permissionDiff): array
     {
@@ -946,7 +946,7 @@ class ImportManager extends Component
      * Обогащает матч-коллекцию ресурсами из каталога. Для resource-scoped прав
      * пара получает resource_id + resource_name; для service-scoped — null.
      *
-     * @param  \Illuminate\Support\Collection<int, array{permission_id:int, permission_name:string, department_id:string}>  $matchedPermissions
+     * @param  Collection<int, array{permission_id:int, permission_name:string, department_id:string}>  $matchedPermissions
      * @return array<int, array{permission_id:int, resource_id:?int, label:string, key:string}>
      */
     private function enrichWithResources($matchedPermissions): array
@@ -962,11 +962,11 @@ class ImportManager extends Component
         $resourceLookupKeys = [];
         foreach ($items as $item) {
             $permission = $permissions[(int) $item['permission_id']] ?? null;
-            if (!$permission) {
+            if (! $permission) {
                 continue;
             }
             $scope = $permission->scope ?? PermissionScope::Service;
-            if ($scope !== PermissionScope::Resource || !$permission->resource_kind) {
+            if ($scope !== PermissionScope::Resource || ! $permission->resource_kind) {
                 continue;
             }
             $resourceLookupKeys[$permission->service.'|'.$permission->resource_kind][] = (string) $item['department_id'];
@@ -994,14 +994,16 @@ class ImportManager extends Component
         foreach ($items as $item) {
             $permissionId = (int) $item['permission_id'];
             $permission = $permissions[$permissionId] ?? null;
-            if (!$permission) {
+            if (! $permission) {
                 continue;
             }
             $scope = $permission->scope ?? PermissionScope::Service;
 
             if ($scope !== PermissionScope::Resource) {
                 $key = $permissionId.'|';
-                if (isset($seen[$key])) continue;
+                if (isset($seen[$key])) {
+                    continue;
+                }
                 $seen[$key] = true;
                 $pairs[] = [
                     'permission_id' => $permissionId,
@@ -1009,16 +1011,23 @@ class ImportManager extends Component
                     'label' => (string) $permission->name,
                     'key' => $key,
                 ];
+
                 continue;
             }
 
-            if (!$permission->resource_kind) continue;
+            if (! $permission->resource_kind) {
+                continue;
+            }
 
             $resource = $resourceMap[$permission->service.'|'.$permission->resource_kind.'|'.((string) $item['department_id'])] ?? null;
-            if ($resource === null) continue;
+            if ($resource === null) {
+                continue;
+            }
 
             $key = $permissionId.'|'.$resource->id;
-            if (isset($seen[$key])) continue;
+            if (isset($seen[$key])) {
+                continue;
+            }
             $seen[$key] = true;
             $pairs[] = [
                 'permission_id' => $permissionId,
@@ -1060,6 +1069,7 @@ class ImportManager extends Component
 
         $sort = static function (array $arr): array {
             sort($arr);
+
             return $arr;
         };
 
@@ -1071,7 +1081,7 @@ class ImportManager extends Component
 
     /**
      * @param  array<int, int>  $managedPermissionIds
-     * @return array<string, string>  ключ "permission_id|resource_id" → label
+     * @return array<string, string> ключ "permission_id|resource_id" → label
      */
     private function loadCurrentGrantsAsLabels(int $virtualUserId, array $managedPermissionIds): array
     {
@@ -1096,14 +1106,19 @@ class ImportManager extends Component
         $map = [];
         foreach ($grants as $g) {
             $permission = $permissions[(int) $g->permission_id] ?? null;
-            if (!$permission) continue;
+            if (! $permission) {
+                continue;
+            }
 
             $resourceId = $g->resource_id !== null ? (int) $g->resource_id : null;
             $key = $g->permission_id.'|'.($resourceId ?? '');
-            if (isset($map[$key])) continue;
+            if (isset($map[$key])) {
+                continue;
+            }
 
             if ($resourceId === null) {
                 $map[$key] = (string) $permission->name;
+
                 continue;
             }
 
@@ -1126,6 +1141,7 @@ class ImportManager extends Component
     {
         $labels = array_values($this->loadCurrentGrantsAsLabels($virtualUserId, $managedPermissionIds));
         sort($labels);
+
         return $labels;
     }
 

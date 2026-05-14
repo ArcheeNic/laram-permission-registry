@@ -24,11 +24,10 @@ class ProcessApprovalDecisionAction
         private GrantPermissionAction $grantPermission,
         private UserToVirtualUserResolver $userResolver,
         private AuditLogger $auditLogger
-    ) {
-    }
+    ) {}
 
     /**
-     * @param int $approverId Application user id (users.id) of the person making the decision
+     * @param  int  $approverId  Application user id (users.id) of the person making the decision
      */
     public function handle(
         ApprovalRequest $approvalRequest,
@@ -86,7 +85,7 @@ class ProcessApprovalDecisionAction
 
             Event::dispatch(new ApprovalDecisionMade($approvalRequest, $approvalDecision));
 
-            $this->auditLogger->log('approval.' . $decision->value, $approverId, [
+            $this->auditLogger->log('approval.'.$decision->value, $approverId, [
                 'approval_request_id' => $approvalRequest->id,
                 'granted_permission_id' => $approvalRequest->granted_permission_id,
                 'comment' => $comment,
@@ -106,6 +105,7 @@ class ProcessApprovalDecisionAction
         $rejections = $decisions->where('decision', ApprovalDecisionType::REJECTED->value)->count();
         if ($rejections > 0) {
             $this->reject($request);
+
             return;
         }
 

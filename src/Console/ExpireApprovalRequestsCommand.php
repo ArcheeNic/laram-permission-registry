@@ -10,6 +10,7 @@ use Illuminate\Console\Command;
 class ExpireApprovalRequestsCommand extends Command
 {
     protected $signature = 'permission-registry:expire-approvals {--days=30 : Days before expiration}';
+
     protected $description = 'Expire pending approval requests older than specified days';
 
     public function handle(): int

@@ -156,4 +156,3 @@ class GetPendingRevocationsActionTest extends TestCase
         $this->assertSame(0, $summary['declarative_count']);
     }
 }
-

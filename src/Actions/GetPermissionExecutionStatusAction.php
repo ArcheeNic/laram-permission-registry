@@ -4,17 +4,13 @@ namespace ArcheeNic\PermissionRegistry\Actions;
 
 use ArcheeNic\PermissionRegistry\DataTransferObjects\TriggerStatusDto;
 use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
-use ArcheeNic\PermissionRegistry\Models\PermissionExecutionLog;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Log;
 
 class GetPermissionExecutionStatusAction
 {
     /**
      * Получить статусы выполнения триггеров для выданных прав пользователя
      *
-     * @param int $userId
-     * @param array $permissionIds - массив ID прав для проверки
+     * @param  array  $permissionIds  - массив ID прав для проверки
      * @return array ['permission_id' => ['status' => string, 'permission_name' => string, 'triggers' => [TriggerStatusDto]]]
      */
     public function execute(int $userId, array $permissionIds): array
@@ -30,7 +26,7 @@ class GetPermissionExecutionStatusAction
                 $query->with('trigger')
                     ->orderBy('created_at', 'desc')
                     ->orderBy('id', 'desc'); // Для стабильной сортировки
-            }
+            },
         ])
             ->where('virtual_user_id', $userId)
             ->whereIn('permission_id', $permissionIds)
@@ -72,12 +68,12 @@ class GetPermissionExecutionStatusAction
                 $logsWithErrors = $grantedPermission->executionLogs
                     ->where('event_type', $eventType)
                     ->where('status', 'failed');
-                
+
                 if ($logsWithErrors->isEmpty()) {
                     // Нет триггеров и нет ошибок - право уже выдано успешно
                     continue;
                 }
-                
+
                 // Есть логи с ошибками, показываем их
                 foreach ($logsWithErrors as $log) {
                     $hasFailedTriggers = true;
@@ -103,7 +99,7 @@ class GetPermissionExecutionStatusAction
 
                     if ($latestLog) {
                         $status = $latestLog->status;
-                        
+
                         if ($status === 'running') {
                             $hasRunningTriggers = true;
                         } elseif ($status === 'failed') {
@@ -145,7 +141,7 @@ class GetPermissionExecutionStatusAction
                 'event_type' => $eventType,
                 'permission_name' => $grantedPermission->permission->name,
                 'granted_permission_status' => $grantedPermission->status,
-                'triggers' => array_map(fn($dto) => $dto->toArray(), $triggerStatuses),
+                'triggers' => array_map(fn ($dto) => $dto->toArray(), $triggerStatuses),
             ];
         }
 

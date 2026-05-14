@@ -5,6 +5,7 @@ namespace ArcheeNic\PermissionRegistry\Tests\Feature\Actions;
 use ArcheeNic\PermissionRegistry\Actions\FetchImportAction;
 use ArcheeNic\PermissionRegistry\Contracts\PermissionImportInterface;
 use ArcheeNic\PermissionRegistry\Enums\ImportMatchStatus;
+use ArcheeNic\PermissionRegistry\Enums\PermissionFieldType;
 use ArcheeNic\PermissionRegistry\Enums\VirtualUserStatus;
 use ArcheeNic\PermissionRegistry\Models\ImportFieldMapping;
 use ArcheeNic\PermissionRegistry\Models\ImportStagingRow;
@@ -29,7 +30,7 @@ class FetchImportActionTest extends TestCase
 
         $this->emailField = PermissionField::create([
             'name' => 'email',
-            'type' => \ArcheeNic\PermissionRegistry\Enums\PermissionFieldType::EMAIL->value,
+            'type' => PermissionFieldType::EMAIL->value,
             'is_global' => true,
         ]);
 
@@ -258,7 +259,7 @@ class FetchImportActionTest extends TestCase
     private function registerImporter(array $users): void
     {
         FetchImportTestImporter::$usersToReturn = $users;
-        $this->app->bind(FetchImportTestImporter::class, fn () => new FetchImportTestImporter());
+        $this->app->bind(FetchImportTestImporter::class, fn () => new FetchImportTestImporter);
     }
 }
 

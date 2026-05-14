@@ -8,9 +8,7 @@ use ArcheeNic\PermissionRegistry\Models\Permission;
 
 class DeletePermissionAction
 {
-    public function __construct(private RevokePermissionAction $revokeAction)
-    {
-    }
+    public function __construct(private RevokePermissionAction $revokeAction) {}
 
     public function handle(Permission $permission, bool $invokeTriggers = true): void
     {
@@ -44,7 +42,7 @@ class DeletePermissionAction
                 $this->revokeAction->handle(
                     userId: $granted->virtual_user_id,
                     permissionId: $granted->permission_id,
-                    skipTriggers: !$invokeTriggers,
+                    skipTriggers: ! $invokeTriggers,
                     executeTriggersSync: $invokeTriggers,
                     resourceId: $granted->resource_id,
                 );

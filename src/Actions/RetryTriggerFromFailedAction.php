@@ -10,16 +10,12 @@ class RetryTriggerFromFailedAction
 {
     public function __construct(
         private PermissionTriggerExecutor $executor
-    ) {
-    }
+    ) {}
 
     /**
      * Продолжить выполнение триггеров с упавшего шага (ручное продолжение с введёнными полями)
      *
-     * @param int $grantedPermissionId
-     * @param int $failedTriggerId
-     * @param array $manualFieldValues значения полей по имени триггера (напр. first_name, password)
-     * @return bool
+     * @param  array  $manualFieldValues  значения полей по имени триггера (напр. first_name, password)
      */
     public function execute(int $grantedPermissionId, int $failedTriggerId, array $manualFieldValues = []): bool
     {
@@ -27,10 +23,11 @@ class RetryTriggerFromFailedAction
         $grantedPermission = GrantedPermission::with('permission.triggerAssignments.trigger')
             ->find($grantedPermissionId);
 
-        if (!$grantedPermission) {
+        if (! $grantedPermission) {
             Log::error('GrantedPermission not found for retry', [
                 'granted_permission_id' => $grantedPermissionId,
             ]);
+
             return false;
         }
 
@@ -56,17 +53,19 @@ class RetryTriggerFromFailedAction
                 'granted_permission_id' => $grantedPermissionId,
                 'event_type' => $eventType,
             ]);
+
             return false;
         }
 
         // Найти позицию упавшего триггера
-        $startIndex = $assignments->search(fn($a) => $a->permission_trigger_id === $failedTriggerId);
+        $startIndex = $assignments->search(fn ($a) => $a->permission_trigger_id === $failedTriggerId);
 
         if ($startIndex === false) {
             Log::error('Failed trigger not found in assignments', [
                 'granted_permission_id' => $grantedPermissionId,
                 'failed_trigger_id' => $failedTriggerId,
             ]);
+
             return false;
         }
 

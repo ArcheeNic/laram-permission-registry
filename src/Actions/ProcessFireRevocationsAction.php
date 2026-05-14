@@ -12,8 +12,7 @@ class ProcessFireRevocationsAction
 {
     public function __construct(
         private CreateManualProvisionTaskAction $createManualProvisionTaskAction
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{automated_revokes_dispatched:int, manual_tasks_created:int, remaining_permissions_count:int}
@@ -23,8 +22,7 @@ class ProcessFireRevocationsAction
         bool $dispatchAutomatedRevokes = true,
         bool $createManualTasks = true,
         bool $includeAutoGranted = false
-    ): array
-    {
+    ): array {
         $remainingPermissionsQuery = GrantedPermission::query()
             ->where('virtual_user_id', $userId)
             ->where('enabled', true)
@@ -53,6 +51,7 @@ class ProcessFireRevocationsAction
                     'permissionId' => $grantedPermission->permission_id,
                     'resourceId' => $grantedPermission->resource_id,
                 ];
+
                 continue;
             }
 
@@ -111,4 +110,3 @@ class ProcessFireRevocationsAction
             ->exists();
     }
 }
-

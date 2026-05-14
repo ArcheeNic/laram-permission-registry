@@ -179,7 +179,7 @@ class SyncResourcesAction
                 return ['external_id' => $externalId, 'created' => true, 'reappeared' => false];
             }
 
-            $wasMissing = !$existing->present_in_source;
+            $wasMissing = ! $existing->present_in_source;
             $existing->name = $name;
             $existing->metadata = $metadata;
             $existing->synced_at = $now;

@@ -13,8 +13,7 @@ class AutoRevokePermissionsForGroupAction
     public function __construct(
         private RevokePermissionAction $revokePermissionAction,
         private UserAutoGrantPairsCollector $pairsCollector,
-    ) {
-    }
+    ) {}
 
     /**
      * Автоотзыв прав с флагом auto_revoke при отзыве группы.
@@ -31,7 +30,7 @@ class AutoRevokePermissionsForGroupAction
             ])
             ->find($groupId);
 
-        if (!$group) {
+        if (! $group) {
             return;
         }
 
@@ -49,6 +48,7 @@ class AutoRevokePermissionsForGroupAction
                 foreach ($resourcesByPermission[$permission->id] ?? [] as $resourceId) {
                     $this->revokePair($userId, $permission->id, $resourceId, $remainingPairs);
                 }
+
                 continue;
             }
 
@@ -57,7 +57,7 @@ class AutoRevokePermissionsForGroupAction
     }
 
     /**
-     * @param array<string, true> $remainingPairs
+     * @param  array<string, true>  $remainingPairs
      */
     private function revokePair(int $userId, int $permissionId, ?int $resourceId, array $remainingPairs): void
     {
@@ -74,7 +74,7 @@ class AutoRevokePermissionsForGroupAction
             ->where('enabled', true)
             ->exists();
 
-        if (!$exists) {
+        if (! $exists) {
             return;
         }
 

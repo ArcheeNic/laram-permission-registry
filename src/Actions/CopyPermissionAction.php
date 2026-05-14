@@ -65,11 +65,11 @@ class CopyPermissionAction
     {
         $suffix = __('permission-registry::(copy)');
         $baseName = $source->name;
-        $candidate = $baseName . ' ' . $suffix;
+        $candidate = $baseName.' '.$suffix;
 
         $index = 2;
         while ($this->nameExists($source->service, $candidate)) {
-            $candidate = $baseName . ' ' . $this->numberedSuffix($suffix, $index);
+            $candidate = $baseName.' '.$this->numberedSuffix($suffix, $index);
             $index++;
         }
 
@@ -79,10 +79,10 @@ class CopyPermissionAction
     private function numberedSuffix(string $suffix, int $index): string
     {
         if (preg_match('/^\((.*)\)$/u', $suffix, $matches) === 1) {
-            return '(' . trim($matches[1]) . ' ' . $index . ')';
+            return '('.trim($matches[1]).' '.$index.')';
         }
 
-        return $suffix . ' ' . $index;
+        return $suffix.' '.$index;
     }
 
     private function nameExists(string $service, string $name): bool

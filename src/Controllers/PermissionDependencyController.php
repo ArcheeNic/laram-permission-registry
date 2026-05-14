@@ -30,7 +30,7 @@ class PermissionDependencyController extends Controller
         // Проверка на циклическую зависимость
         if ($this->wouldCreateCircularDependency($permission->id, $request->required_permission_id, $request->event_type)) {
             return response()->json([
-                'errors' => ['required_permission_id' => ['Циклическая зависимость запрещена']]
+                'errors' => ['required_permission_id' => ['Циклическая зависимость запрещена']],
             ], 422);
         }
 

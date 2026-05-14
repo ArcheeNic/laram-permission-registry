@@ -1,15 +1,15 @@
 <?php
+
 /**
  * Скрипт для обновления миграций пакета.
  * Заменяет названия таблиц конфигурационными значениями
  */
-
-$migrationsDir = __DIR__ . '/Migrations';
+$migrationsDir = __DIR__.'/Migrations';
 $files = scandir($migrationsDir);
 
 foreach ($files as $file) {
-    if (is_file($migrationsDir . '/' . $file) && pathinfo($file, PATHINFO_EXTENSION) === 'php') {
-        $content = file_get_contents($migrationsDir . '/' . $file);
+    if (is_file($migrationsDir.'/'.$file) && pathinfo($file, PATHINFO_EXTENSION) === 'php') {
+        $content = file_get_contents($migrationsDir.'/'.$file);
 
         // Замена Schema::create на конфигурационную переменную
         $content = preg_replace(
@@ -26,7 +26,7 @@ foreach ($files as $file) {
         );
 
         // Обновляем файл
-        file_put_contents($migrationsDir . '/' . $file, $content);
+        file_put_contents($migrationsDir.'/'.$file, $content);
 
         echo "Обновлен файл: $file\n";
     }

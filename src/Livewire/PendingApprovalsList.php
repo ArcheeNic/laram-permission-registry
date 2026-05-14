@@ -6,15 +6,19 @@ use ArcheeNic\PermissionRegistry\Actions\GetPendingApprovalsAction;
 use ArcheeNic\PermissionRegistry\Actions\ProcessApprovalDecisionAction;
 use ArcheeNic\PermissionRegistry\Enums\ApprovalDecisionType;
 use ArcheeNic\PermissionRegistry\Models\ApprovalRequest;
+use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 
 class PendingApprovalsList extends Component
 {
     public ?int $currentUserId = null;
+
     public ?int $selectedRequestId = null;
+
     public string $comment = '';
 
     public ?string $flashMessage = null;
+
     public ?string $flashError = null;
 
     protected $listeners = ['refreshApprovals' => '$refresh'];
@@ -64,7 +68,7 @@ class PendingApprovalsList extends Component
             $this->flashMessage = __('permission-registry::Decision saved');
             $this->selectedRequestId = null;
             $this->comment = '';
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             $this->flashError = $e->validator->errors()->first();
         } catch (\Exception $e) {
             $this->flashError = __('permission-registry::approvals.error_generic');

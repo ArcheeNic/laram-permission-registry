@@ -7,6 +7,7 @@ use ArcheeNic\PermissionRegistry\Contracts\UserToVirtualUserResolver;
 use ArcheeNic\PermissionRegistry\Enums\EvidenceType;
 use ArcheeNic\PermissionRegistry\Enums\ManualTaskStatus;
 use ArcheeNic\PermissionRegistry\Models\ManualProvisionTask;
+use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -103,7 +104,7 @@ class ManualTasksList extends Component
 
             $this->flashMessage = __('permission-registry::governance.complete_task').' ✓';
             $this->closeModal();
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             $this->flashError = $e->validator->errors()->first();
         } catch (\Exception $e) {
             $this->flashError = $e->getMessage();

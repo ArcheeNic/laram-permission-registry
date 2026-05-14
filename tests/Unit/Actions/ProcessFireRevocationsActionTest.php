@@ -141,4 +141,3 @@ class ProcessFireRevocationsActionTest extends TestCase
         return $prop->getValue($instance);
     }
 }
-

@@ -3,8 +3,8 @@
 namespace ArcheeNic\PermissionRegistry\Tests\Unit\Actions;
 
 use ArcheeNic\PermissionRegistry\Actions\GetVirtualUserFieldValueAction;
-use ArcheeNic\PermissionRegistry\Models\PermissionField;
 use ArcheeNic\PermissionRegistry\Enums\VirtualUserStatus;
+use ArcheeNic\PermissionRegistry\Models\PermissionField;
 use ArcheeNic\PermissionRegistry\Models\VirtualUser;
 use ArcheeNic\PermissionRegistry\Models\VirtualUserFieldValue;
 use ArcheeNic\PermissionRegistry\Tests\TestCase;
@@ -17,7 +17,7 @@ class GetVirtualUserFieldValueActionTest extends TestCase
         $user = VirtualUser::create(['name' => 'Test User', 'status' => VirtualUserStatus::ACTIVE]);
         $field = PermissionField::create(['name' => 'email']);
 
-        $action = new GetVirtualUserFieldValueAction();
+        $action = new GetVirtualUserFieldValueAction;
         $result = $action->execute($user->id, $field->id);
 
         $this->assertNull($result);
@@ -33,7 +33,7 @@ class GetVirtualUserFieldValueActionTest extends TestCase
             'value' => 'user@test.com',
         ]);
 
-        $action = new GetVirtualUserFieldValueAction();
+        $action = new GetVirtualUserFieldValueAction;
         $result = $action->execute($user->id, $field->id);
 
         $this->assertSame('user@test.com', $result);
@@ -55,7 +55,7 @@ class GetVirtualUserFieldValueActionTest extends TestCase
             'value' => '+79001234567',
         ]);
 
-        $action = new GetVirtualUserFieldValueAction();
+        $action = new GetVirtualUserFieldValueAction;
         $result = $action->executeAll($user->id);
 
         $this->assertInstanceOf(Collection::class, $result);
@@ -69,7 +69,7 @@ class GetVirtualUserFieldValueActionTest extends TestCase
     {
         $user = VirtualUser::create(['name' => 'Test User', 'status' => VirtualUserStatus::ACTIVE]);
 
-        $action = new GetVirtualUserFieldValueAction();
+        $action = new GetVirtualUserFieldValueAction;
         $result = $action->executeAll($user->id);
 
         $this->assertInstanceOf(Collection::class, $result);

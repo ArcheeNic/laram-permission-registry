@@ -14,8 +14,7 @@ class TriggerStatusDto
         public ?Carbon $startedAt = null,
         public ?Carbon $completedAt = null,
         public ?array $meta = null,
-    ) {
-    }
+    ) {}
 
     public function toArray(): array
     {

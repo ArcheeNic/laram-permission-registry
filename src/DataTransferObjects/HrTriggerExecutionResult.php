@@ -12,8 +12,7 @@ class HrTriggerExecutionResult
         public ?int $permissionTriggerId = null,
         public bool $awaitingResolution = false,
         public bool $crashed = false,
-    ) {
-    }
+    ) {}
 
     public static function ok(): self
     {

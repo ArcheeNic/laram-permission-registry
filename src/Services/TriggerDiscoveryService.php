@@ -21,7 +21,7 @@ class TriggerDiscoveryService
         $namespace = config('triggers.namespace');
         $directory = config('triggers.directory');
 
-        if (!$namespace || !$directory || !File::isDirectory($directory)) {
+        if (! $namespace || ! $directory || ! File::isDirectory($directory)) {
             return $this->cachedTriggers = [];
         }
 
@@ -36,7 +36,7 @@ class TriggerDiscoveryService
 
             $className = $this->getClassNameFromFile($file, $namespace, $directory);
 
-            if (!$className || !class_exists($className)) {
+            if (! $className || ! class_exists($className)) {
                 continue;
             }
 
@@ -47,7 +47,7 @@ class TriggerDiscoveryService
                     continue;
                 }
 
-                if (!$reflection->implementsInterface(PermissionTriggerInterface::class)) {
+                if (! $reflection->implementsInterface(PermissionTriggerInterface::class)) {
                     continue;
                 }
 
@@ -117,7 +117,7 @@ class TriggerDiscoveryService
         $relativePath = str_replace('.php', '', $relativePath);
         $relativePath = str_replace(DIRECTORY_SEPARATOR, '\\', $relativePath);
 
-        return $namespace . '\\' . $relativePath;
+        return $namespace.'\\'.$relativePath;
     }
 
     /**
@@ -125,14 +125,14 @@ class TriggerDiscoveryService
      */
     public function getTriggerMetadata(string $className): ?array
     {
-        if (!class_exists($className)) {
+        if (! class_exists($className)) {
             return null;
         }
 
         try {
             $reflection = new \ReflectionClass($className);
-            
-            if (!$reflection->implementsInterface(PermissionTriggerInterface::class)) {
+
+            if (! $reflection->implementsInterface(PermissionTriggerInterface::class)) {
                 return null;
             }
 
@@ -161,4 +161,3 @@ class TriggerDiscoveryService
         }
     }
 }
-

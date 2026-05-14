@@ -9,10 +9,15 @@ use Livewire\Component;
 class PermissionDependencies extends Component
 {
     public Permission $permission;
+
     public string $activeTab = 'grant';
+
     public ?int $selectedPermissionId = null;
+
     public bool $isStrict = false;
+
     public ?string $flashMessage = null;
+
     public ?string $flashError = null;
 
     public function mount(Permission $permission)
@@ -30,14 +35,16 @@ class PermissionDependencies extends Component
     {
         $this->clearFlashMessages();
 
-        if (!$this->selectedPermissionId) {
+        if (! $this->selectedPermissionId) {
             $this->flashError = __('permission-registry::Please select a permission');
+
             return;
         }
 
         // Проверка на циклическую зависимость
         if ($this->wouldCreateCircularDependency($this->permission->id, $this->selectedPermissionId, $this->activeTab)) {
             $this->flashError = __('permission-registry::Circular dependency is not allowed');
+
             return;
         }
 
@@ -49,6 +56,7 @@ class PermissionDependencies extends Component
 
         if ($exists) {
             $this->flashError = __('permission-registry::This dependency already exists');
+
             return;
         }
 
@@ -67,14 +75,14 @@ class PermissionDependencies extends Component
     {
         $dependency = PermissionDependency::find($dependencyId);
         if ($dependency && $dependency->permission_id === $this->permission->id) {
-            $dependency->update(['is_strict' => !$dependency->is_strict]);
+            $dependency->update(['is_strict' => ! $dependency->is_strict]);
         }
     }
 
     public function removeDependency(int $dependencyId)
     {
         $this->clearFlashMessages();
-        
+
         $dependency = PermissionDependency::find($dependencyId);
         if ($dependency && $dependency->permission_id === $this->permission->id) {
             $dependency->delete();

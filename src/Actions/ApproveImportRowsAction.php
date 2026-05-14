@@ -7,7 +7,7 @@ use ArcheeNic\PermissionRegistry\Models\ImportStagingRow;
 class ApproveImportRowsAction
 {
     /**
-     * @param int[] $approvedRowIds
+     * @param  int[]  $approvedRowIds
      */
     public function handle(string $importRunId, array $approvedRowIds): int
     {

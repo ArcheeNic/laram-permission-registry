@@ -5,16 +5,15 @@ namespace ArcheeNic\PermissionRegistry\DataTransferObjects;
 class BulkOperationResult
 {
     /**
-     * @param array<int> $successVirtualUserIds
-     * @param array<int> $skippedVirtualUserIds
-     * @param array<int, array{virtual_user_id:int, message:string}> $failures
+     * @param  array<int>  $successVirtualUserIds
+     * @param  array<int>  $skippedVirtualUserIds
+     * @param  array<int, array{virtual_user_id:int, message:string}>  $failures
      */
     public function __construct(
         public array $successVirtualUserIds = [],
         public array $skippedVirtualUserIds = [],
         public array $failures = [],
-    ) {
-    }
+    ) {}
 
     public function addSuccess(int $virtualUserId): void
     {

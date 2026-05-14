@@ -12,14 +12,10 @@ class HandleVirtualUserGroupChanged
     public function __construct(
         private AutoGrantPermissionsForGroupAction $autoGrantAction,
         private AutoRevokePermissionsForGroupAction $autoRevokeAction
-    ) {
-    }
+    ) {}
 
     /**
      * Обработка события изменения группы пользователя
-     *
-     * @param VirtualUserGroupChanged $event
-     * @return void
      */
     public function handle(VirtualUserGroupChanged $event): void
     {

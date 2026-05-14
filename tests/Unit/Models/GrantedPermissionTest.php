@@ -2,13 +2,14 @@
 
 namespace ArcheeNic\PermissionRegistry\Tests\Unit\Models;
 
+use ArcheeNic\PermissionRegistry\Enums\VirtualUserStatus;
 use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
 use ArcheeNic\PermissionRegistry\Models\Permission;
-use ArcheeNic\PermissionRegistry\Enums\VirtualUserStatus;
 use ArcheeNic\PermissionRegistry\Models\VirtualUser;
 use ArcheeNic\PermissionRegistry\Tests\TestCase;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 class GrantedPermissionTest extends TestCase
 {
@@ -36,25 +37,25 @@ class GrantedPermissionTest extends TestCase
 
     public function test_user_relationship(): void
     {
-        $granted = new GrantedPermission();
+        $granted = new GrantedPermission;
         $this->assertInstanceOf(BelongsTo::class, $granted->user());
     }
 
     public function test_permission_relationship(): void
     {
-        $granted = new GrantedPermission();
+        $granted = new GrantedPermission;
         $this->assertInstanceOf(BelongsTo::class, $granted->permission());
     }
 
     public function test_field_values_relationship(): void
     {
-        $granted = new GrantedPermission();
+        $granted = new GrantedPermission;
         $this->assertInstanceOf(HasMany::class, $granted->fieldValues());
     }
 
     public function test_execution_logs_relationship(): void
     {
-        $granted = new GrantedPermission();
+        $granted = new GrantedPermission;
         $this->assertInstanceOf(HasMany::class, $granted->executionLogs());
     }
 
@@ -103,6 +104,6 @@ class GrantedPermissionTest extends TestCase
         ]);
 
         $granted->refresh();
-        $this->assertInstanceOf(\Illuminate\Support\Carbon::class, $granted->granted_at);
+        $this->assertInstanceOf(Carbon::class, $granted->granted_at);
     }
 }

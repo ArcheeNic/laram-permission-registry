@@ -10,7 +10,7 @@ class ExecutionLogStatusTest extends TestCase
     public function test_all_cases_exist(): void
     {
         $cases = ExecutionLogStatus::cases();
-        $values = array_map(fn($c) => $c->value, $cases);
+        $values = array_map(fn ($c) => $c->value, $cases);
 
         $this->assertContains('pending', $values);
         $this->assertContains('running', $values);

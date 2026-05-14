@@ -75,7 +75,7 @@ class TriggerOverlapDetectorServiceTest extends TestCase
         ]);
 
         $trigger = PermissionTrigger::create([
-            'name' => 'Bitrix Trigger ' . $name,
+            'name' => 'Bitrix Trigger '.$name,
             'class_name' => 'App\\Triggers\\Bitrix24AddToDepartmentTrigger',
             'description' => 'Test',
             'type' => 'both',

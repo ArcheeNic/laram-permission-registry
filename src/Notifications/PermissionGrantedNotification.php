@@ -12,8 +12,7 @@ class PermissionGrantedNotification extends Notification
     public function __construct(
         private readonly string $permissionName,
         private readonly string $service,
-    ) {
-    }
+    ) {}
 
     /** @return array<string> */
     public function via(object $notifiable): array

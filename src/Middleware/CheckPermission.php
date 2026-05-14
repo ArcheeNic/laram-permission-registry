@@ -18,7 +18,7 @@ class CheckPermission
     public function handle(Request $request, Closure $next, string $service, string $permission): Response
     {
         $userId = auth()->id();
-        if (!$userId) {
+        if (! $userId) {
             abort(401);
         }
 
@@ -27,7 +27,7 @@ class CheckPermission
             abort(403);
         }
 
-        if (!$this->permissionChecker->hasPermission($virtualUserId, $service, $permission)) {
+        if (! $this->permissionChecker->hasPermission($virtualUserId, $service, $permission)) {
             abort(403);
         }
 

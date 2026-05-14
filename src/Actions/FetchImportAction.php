@@ -7,7 +7,6 @@ use ArcheeNic\PermissionRegistry\Enums\ImportMatchStatus;
 use ArcheeNic\PermissionRegistry\Enums\PermissionFieldType;
 use ArcheeNic\PermissionRegistry\Enums\VirtualUserStatus;
 use ArcheeNic\PermissionRegistry\Models\ImportExecutionLog;
-use ArcheeNic\PermissionRegistry\Models\ImportFieldMapping;
 use ArcheeNic\PermissionRegistry\Models\ImportStagingRow;
 use ArcheeNic\PermissionRegistry\Models\PermissionField;
 use ArcheeNic\PermissionRegistry\Models\PermissionImport;
@@ -117,7 +116,7 @@ class FetchImportAction
     }
 
     /**
-     * @param array<string, array{permission_field_id: int, is_internal: bool}> $fieldMappingSchema
+     * @param  array<string, array{permission_field_id: int, is_internal: bool}>  $fieldMappingSchema
      * @return array<int, int>
      */
     private function resolveMappedEmailFieldIds(int $permissionImportId, array $fieldMappingSchema): array
@@ -150,9 +149,9 @@ class FetchImportAction
     }
 
     /**
-     * @param array<string, mixed> $userData
-     * @param array<string, array{permission_field_id: int, is_internal: bool}> $fieldMappingSchema
-     * @param array<int, int> $emailFieldIds
+     * @param  array<string, mixed>  $userData
+     * @param  array<string, array{permission_field_id: int, is_internal: bool}>  $fieldMappingSchema
+     * @param  array<int, int>  $emailFieldIds
      * @return array<int, string>
      */
     private function extractEmails(array $userData, array $fieldMappingSchema, array $emailFieldIds): array
@@ -182,11 +181,11 @@ class FetchImportAction
     }
 
     /**
-     * @param array<int, string> $emails
-     * @param array<int, int> $allEmailFieldIds
-     * @param array<string, mixed> $userData
-     * @param array<string, array{permission_field_id: int, is_internal: bool}> $fieldMappingSchema
-     * @param array<int, int> $mappedEmailFieldIds
+     * @param  array<int, string>  $emails
+     * @param  array<int, int>  $allEmailFieldIds
+     * @param  array<string, mixed>  $userData
+     * @param  array<string, array{permission_field_id: int, is_internal: bool}>  $fieldMappingSchema
+     * @param  array<int, int>  $mappedEmailFieldIds
      * @return array{status: ImportMatchStatus, virtual_user_id: int|null}
      */
     private function matchByEmails(
@@ -219,9 +218,9 @@ class FetchImportAction
     }
 
     /**
-     * @param array<string, mixed> $userData
-     * @param array<string, array{permission_field_id: int, is_internal: bool}> $fieldMappingSchema
-     * @param array<int, int> $mappedEmailFieldIds
+     * @param  array<string, mixed>  $userData
+     * @param  array<string, array{permission_field_id: int, is_internal: bool}>  $fieldMappingSchema
+     * @param  array<int, int>  $mappedEmailFieldIds
      */
     private function hasFieldChanges(int $virtualUserId, array $userData, array $fieldMappingSchema, array $mappedEmailFieldIds): bool
     {
@@ -249,9 +248,9 @@ class FetchImportAction
     }
 
     /**
-     * @param array<int, int> $allEmailFieldIds
-     * @param array<int, int> $matchedVirtualUserIds
-     * @param array<string, array{permission_field_id: int, is_internal: bool}> $fieldMappingSchema
+     * @param  array<int, int>  $allEmailFieldIds
+     * @param  array<int, int>  $matchedVirtualUserIds
+     * @param  array<string, array{permission_field_id: int, is_internal: bool}>  $fieldMappingSchema
      */
     private function createMissingStagingRows(
         string $importRunId,
@@ -295,7 +294,7 @@ class FetchImportAction
     }
 
     /**
-     * @param array<string, array{permission_field_id: int, is_internal: bool}> $fieldMappingSchema
+     * @param  array<string, array{permission_field_id: int, is_internal: bool}>  $fieldMappingSchema
      * @return array<int, string> permission_field_id => import_field_name
      */
     private function buildReverseFieldMap(array $fieldMappingSchema): array
@@ -309,7 +308,7 @@ class FetchImportAction
     }
 
     /**
-     * @param array<int, string> $reverseMap permission_field_id => import_field_name
+     * @param  array<int, string>  $reverseMap  permission_field_id => import_field_name
      * @return array<string, string> import_field_name => value
      */
     private function buildFieldsFromExistingUser(int $virtualUserId, array $reverseMap): array
@@ -346,7 +345,7 @@ class FetchImportAction
     }
 
     /**
-     * @param array<int, string> $values
+     * @param  array<int, string>  $values
      */
     private function applyLowerWhereIn($query, string $column, array $values): void
     {

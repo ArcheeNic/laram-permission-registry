@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -16,12 +16,12 @@ return new class extends Migration
 
         // Шаг 2: Конвертировать данные - найти ID по имени
         $mappings = DB::table('trigger_field_mappings')->get();
-        
+
         foreach ($mappings as $mapping) {
             $field = DB::table('permission_fields')
                 ->where('name', $mapping->global_field_name)
                 ->first();
-            
+
             if ($field) {
                 DB::table('trigger_field_mappings')
                     ->where('id', $mapping->id)
@@ -62,12 +62,12 @@ return new class extends Migration
 
         // Восстановить данные - записать имя поля из permission_fields
         $mappings = DB::table('trigger_field_mappings')->get();
-        
+
         foreach ($mappings as $mapping) {
             $field = DB::table('permission_fields')
                 ->where('id', $mapping->permission_field_id)
                 ->first();
-            
+
             if ($field) {
                 DB::table('trigger_field_mappings')
                     ->where('id', $mapping->id)
@@ -82,4 +82,3 @@ return new class extends Migration
         });
     }
 };
-

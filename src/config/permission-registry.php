@@ -1,5 +1,7 @@
 <?php
 
+use ArcheeNic\PermissionRegistry\Support\DefaultUserToVirtualUserResolver;
+
 return [
     /*
     |--------------------------------------------------------------------------
@@ -59,7 +61,7 @@ return [
     | but the actual approver stored in DB is the real user (users.id).
     |
     */
-    'user_resolver' => \ArcheeNic\PermissionRegistry\Support\DefaultUserToVirtualUserResolver::class,
+    'user_resolver' => DefaultUserToVirtualUserResolver::class,
 
     /*
     |--------------------------------------------------------------------------

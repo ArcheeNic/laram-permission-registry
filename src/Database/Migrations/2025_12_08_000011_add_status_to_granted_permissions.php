@@ -6,7 +6,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         Schema::table('granted_permissions', function (Blueprint $table) {
@@ -17,7 +18,7 @@ return new class extends Migration {
                 'revoking',
                 'revoked',
                 'failed',
-                'partially_granted'
+                'partially_granted',
             ])->default('granted')->after('permission_id');
             $table->text('status_message')->nullable()->after('status');
         });

@@ -18,8 +18,7 @@ class PermissionRevokedNotification extends Notification
     public function __construct(
         private readonly string $permissionName,
         private readonly string $service,
-    ) {
-    }
+    ) {}
 
     /** @return array<string, mixed> */
     public function toArray(object $notifiable): array

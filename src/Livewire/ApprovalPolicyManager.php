@@ -17,16 +17,23 @@ class ApprovalPolicyManager extends Component
     public int $permissionId;
 
     public bool $hasPolicy = false;
+
     public ?int $policyId = null;
+
     public string $approvalType = 'single';
+
     public int $requiredCount = 1;
+
     public bool $isActive = true;
+
     public array $approvers = [];
 
     public string $newApproverType = 'virtual_user';
+
     public ?int $newApproverId = null;
 
     public ?string $flashMessage = null;
+
     public ?string $flashError = null;
 
     public function mount(int $permissionId): void
@@ -145,6 +152,7 @@ class ApprovalPolicyManager extends Component
 
         if ($exists) {
             $this->flashError = __('permission-registry::Approver already added');
+
             return;
         }
 

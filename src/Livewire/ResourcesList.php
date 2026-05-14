@@ -15,17 +15,27 @@ class ResourcesList extends Component
     use WithPagination;
 
     public string $search = '';
+
     public string $service = '';
+
     public string $kind = '';
+
     public string $presence = 'present';
+
     public int $perPage = 25;
 
     public bool $showFormModal = false;
+
     public ?int $editingResourceId = null;
+
     public string $formService = '';
+
     public string $formKind = '';
+
     public string $formExternalId = '';
+
     public string $formName = '';
+
     public string $formMetadata = '';
 
     protected $queryString = [
@@ -35,10 +45,25 @@ class ResourcesList extends Component
         'presence' => ['except' => 'present'],
     ];
 
-    public function updatingSearch(): void { $this->resetPage(); }
-    public function updatingService(): void { $this->resetPage(); }
-    public function updatingKind(): void { $this->resetPage(); }
-    public function updatingPresence(): void { $this->resetPage(); }
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingService(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingKind(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingPresence(): void
+    {
+        $this->resetPage();
+    }
 
     public function openCreate(): void
     {
@@ -52,8 +77,9 @@ class ResourcesList extends Component
     {
         $this->authorize('permission-registry.manage');
         $resource = PermissionResource::query()->find($resourceId);
-        if (!$resource) {
+        if (! $resource) {
             session()->flash('error', __('permission-registry::Resource not found'));
+
             return;
         }
         $this->editingResourceId = $resource->id;
@@ -88,8 +114,9 @@ class ResourcesList extends Component
         try {
             if ($this->editingResourceId !== null) {
                 $resource = PermissionResource::query()->find($this->editingResourceId);
-                if (!$resource) {
+                if (! $resource) {
                     session()->flash('error', __('permission-registry::Resource not found'));
+
                     return;
                 }
                 $resource->fill([
@@ -112,6 +139,7 @@ class ResourcesList extends Component
             }
         } catch (\Throwable $e) {
             session()->flash('error', $e->getMessage());
+
             return;
         }
 
@@ -122,12 +150,14 @@ class ResourcesList extends Component
     {
         $this->authorize('permission-registry.manage');
         $resource = PermissionResource::query()->withCount('grantedPermissions')->find($resourceId);
-        if (!$resource) {
+        if (! $resource) {
             session()->flash('error', __('permission-registry::Resource not found'));
+
             return;
         }
         if ($resource->granted_permissions_count > 0) {
             session()->flash('error', __('permission-registry::Cannot delete resource with active grants'));
+
             return;
         }
         $resource->delete();
@@ -158,18 +188,19 @@ class ResourcesList extends Component
         $result = [];
         foreach (preg_split('/\r?\n/', $raw) as $line) {
             $line = trim($line);
-            if ($line === '' || !str_contains($line, '=')) {
+            if ($line === '' || ! str_contains($line, '=')) {
                 continue;
             }
             [$k, $v] = explode('=', $line, 2);
             $result[trim($k)] = trim($v);
         }
+
         return $result === [] ? null : $result;
     }
 
     private function encodeMetadata(mixed $metadata): string
     {
-        if (!is_array($metadata) || $metadata === []) {
+        if (! is_array($metadata) || $metadata === []) {
             return '';
         }
         $lines = [];
@@ -180,6 +211,7 @@ class ResourcesList extends Component
                 return (string) json_encode($metadata, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
             }
         }
+
         return implode("\n", $lines);
     }
 
@@ -190,6 +222,7 @@ class ResourcesList extends Component
         $syncers = $service === '' ? $registry->all() : $registry->forService($service);
         if ($syncers === []) {
             session()->flash('error', __('permission-registry::No syncers registered for this service'));
+
             return;
         }
 
@@ -204,6 +237,7 @@ class ResourcesList extends Component
                 $totals['errors'] += count($report->errors);
             } catch (\Throwable $e) {
                 session()->flash('error', $syncer->service().'/'.$syncer->kind().': '.$e->getMessage());
+
                 return;
             }
         }
@@ -223,8 +257,9 @@ class ResourcesList extends Component
         $this->authorize('permission-registry.manage');
 
         $resource = PermissionResource::query()->find($resourceId);
-        if (!$resource) {
+        if (! $resource) {
             session()->flash('error', __('permission-registry::Resource not found'));
+
             return;
         }
 
@@ -238,6 +273,7 @@ class ResourcesList extends Component
 
         if ($matched === null) {
             session()->flash('error', __('permission-registry::No syncers registered for this service'));
+
             return;
         }
 
@@ -245,6 +281,7 @@ class ResourcesList extends Component
             $report = $action->handleSelective($matched, [(string) $resource->external_id]);
         } catch (\Throwable $e) {
             session()->flash('error', $matched->service().'/'.$matched->kind().': '.$e->getMessage());
+
             return;
         }
 

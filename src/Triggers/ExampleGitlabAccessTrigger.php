@@ -5,7 +5,6 @@ namespace ArcheeNic\PermissionRegistry\Triggers;
 use ArcheeNic\PermissionRegistry\Contracts\PermissionTriggerInterface;
 use ArcheeNic\PermissionRegistry\ValueObjects\TriggerContext;
 use ArcheeNic\PermissionRegistry\ValueObjects\TriggerResult;
-use Illuminate\Support\Facades\Log;
 
 /**
  * Пример триггера для добавления доступа в GitLab
@@ -24,17 +23,16 @@ class ExampleGitlabAccessTrigger implements PermissionTriggerInterface
             $sshKeyFieldId = $context->permission->fields()
                 ->where('name', 'ssh_key')
                 ->value('id');
-            
+
             $sshKey = $context->fieldValues[$sshKeyFieldId] ?? null;
 
-            if (!$email) {
+            if (! $email) {
                 return TriggerResult::failure('Email обязателен для создания пользователя GitLab');
             }
 
-            if (!$sshKey) {
+            if (! $sshKey) {
                 return TriggerResult::failure('SSH ключ обязателен для доступа к GitLab');
             }
-
 
             // Здесь должна быть реальная логика:
             // 1. Создание пользователя в GitLab
@@ -42,11 +40,11 @@ class ExampleGitlabAccessTrigger implements PermissionTriggerInterface
             // 3. Добавление в нужные проекты/группы
 
             // Имитируем успешное создание
-            $gitlabUserId = 'gitlab_user_' . $context->virtualUserId;
+            $gitlabUserId = 'gitlab_user_'.$context->virtualUserId;
 
             return TriggerResult::success([
                 'gitlab_user_id' => $gitlabUserId,
-                'gitlab_username' => strtolower($firstName . '.' . $lastName),
+                'gitlab_username' => strtolower($firstName.'.'.$lastName),
                 'gitlab_profile_url' => "https://gitlab.example.com/users/{$gitlabUserId}",
                 'ssh_key_added' => true,
                 'created_at' => now()->toIso8601String(),
@@ -76,7 +74,6 @@ class ExampleGitlabAccessTrigger implements PermissionTriggerInterface
 
         if ($log && isset($log->meta['gitlab_user_id'])) {
             $gitlabUserId = $log->meta['gitlab_user_id'];
-
 
             // Здесь должна быть реальная логика удаления пользователя из GitLab
         }

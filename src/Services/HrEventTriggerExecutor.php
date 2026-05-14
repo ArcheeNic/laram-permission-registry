@@ -2,10 +2,10 @@
 
 namespace ArcheeNic\PermissionRegistry\Services;
 
+use ArcheeNic\PermissionRegistry\Contracts\PermissionTriggerInterface;
 use ArcheeNic\PermissionRegistry\DataTransferObjects\HrTriggerExecutionResult;
 use ArcheeNic\PermissionRegistry\Enums\EmployeeCategory;
 use ArcheeNic\PermissionRegistry\Enums\HrTriggerExecutionStatus;
-use ArcheeNic\PermissionRegistry\Contracts\PermissionTriggerInterface;
 use ArcheeNic\PermissionRegistry\Models\HrEventTriggerAssignment;
 use ArcheeNic\PermissionRegistry\Models\HrTriggerExecutionLog;
 use ArcheeNic\PermissionRegistry\Models\Permission;
@@ -24,8 +24,7 @@ class HrEventTriggerExecutor
     public function __construct(
         private TriggerFieldMappingService $mappingService,
         private TriggerDiscoveryService $triggerDiscoveryService
-    ) {
-    }
+    ) {}
 
     public function execute(int $virtualUserId, string $eventType): bool
     {
@@ -38,15 +37,14 @@ class HrEventTriggerExecutor
     }
 
     /**
-     * @param array<string, mixed> $manualGlobalFields
+     * @param  array<string, mixed>  $manualGlobalFields
      */
     public function executeChainFromIndex(
         int $virtualUserId,
         string $eventType,
         int $startIndex = 0,
         array $manualGlobalFields = []
-    ): bool
-    {
+    ): bool {
         $this->lastResult = null;
 
         $virtualUser = VirtualUser::query()->find($virtualUserId);
@@ -225,7 +223,7 @@ class HrEventTriggerExecutor
             throw new \RuntimeException("Trigger class is not whitelisted: {$className}");
         }
 
-        if (!class_exists($className)) {
+        if (! class_exists($className)) {
             throw new \RuntimeException("Trigger class not found: {$className}");
         }
 
@@ -244,7 +242,7 @@ class HrEventTriggerExecutor
             return $rawCategory;
         }
 
-        if (!is_string($rawCategory)) {
+        if (! is_string($rawCategory)) {
             return null;
         }
 

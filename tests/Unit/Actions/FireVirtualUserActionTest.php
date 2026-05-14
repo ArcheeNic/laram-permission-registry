@@ -83,7 +83,7 @@ class FireVirtualUserActionTest extends TestCase
             $permissionIds = $this->readPrivateProperty($job, 'permissionIds');
 
             return in_array($autoPermission->id, $permissionIds, true)
-                && !in_array($manualPermission->id, $permissionIds, true);
+                && ! in_array($manualPermission->id, $permissionIds, true);
         });
     }
 

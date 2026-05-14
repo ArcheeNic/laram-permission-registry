@@ -4,6 +4,7 @@ namespace ArcheeNic\PermissionRegistry\Livewire\Concerns;
 
 use ArcheeNic\PermissionRegistry\Actions\UpdateVirtualUserGlobalFieldsAction;
 use ArcheeNic\PermissionRegistry\Models\PermissionField;
+use ArcheeNic\PermissionRegistry\Support\FieldMetaOption;
 use ArcheeNic\PermissionRegistry\Support\FieldMetaOptionRegistry;
 
 trait ManagesGlobalFields
@@ -17,14 +18,14 @@ trait ManagesGlobalFields
 
     public function toggleGlobalFields()
     {
-        $this->showGlobalFields = !$this->showGlobalFields;
+        $this->showGlobalFields = ! $this->showGlobalFields;
     }
 
     public function saveGlobalFields()
     {
         $this->clearFlashMessages();
 
-        if (!$this->selectedUserId) {
+        if (! $this->selectedUserId) {
             return;
         }
 
@@ -50,7 +51,7 @@ trait ManagesGlobalFields
     }
 
     /**
-     * @return array<int, \ArcheeNic\PermissionRegistry\Support\FieldMetaOption>
+     * @return array<int, FieldMetaOption>
      */
     public function metaOptionsForField(PermissionField $field): array
     {
