@@ -2,12 +2,23 @@
 
 namespace ArcheeNic\PermissionRegistry\Services;
 
+use ArcheeNic\PermissionRegistry\Enums\PermissionScope;
 use ArcheeNic\PermissionRegistry\Models\PermissionTriggerAssignment;
 use Illuminate\Support\Collection;
 
 class TriggerPermissionMatcherService
 {
     /**
+     * Возвращает пары (permission_id, department_id), которые должны быть выданы
+     * пользователю с заданными department_ids.
+     *
+     * Для resource-scoped прав: department_id из row становится external_id для
+     * resolve в каталоге permission_resources — упор делается на наличие хотя бы
+     * одного включённого grant-триггера c matching class pattern.
+     *
+     * Для service-scoped (legacy): сохранена старая семантика — конкретный
+     * department_id зашит в assignment.config['department_id'].
+     *
      * @param array<int, string> $departmentIds
      * @param array<int, string> $triggerClassPatterns
      * @return Collection<int, array{permission_id: int, permission_name: string, department_id: string}>
@@ -19,20 +30,44 @@ class TriggerPermissionMatcherService
             return collect();
         }
 
-        return $this->collectManagedGrantAssignments($triggerClassPatterns)
-            ->filter(function (PermissionTriggerAssignment $assignment) use ($normalizedDepartments): bool {
-                $departmentId = $this->extractDepartmentId($assignment);
+        $assignments = $this->collectManagedGrantAssignments($triggerClassPatterns);
 
-                return $departmentId !== null && in_array($departmentId, $normalizedDepartments, true);
-            })
-            ->map(function (PermissionTriggerAssignment $assignment): array {
-                return [
-                    'permission_id' => (int) $assignment->permission_id,
-                    'permission_name' => (string) ($assignment->permission?->name ?? ''),
-                    'department_id' => (string) $this->extractDepartmentId($assignment),
-                ];
-            })
-            ->unique(fn (array $item) => $item['permission_id'] . ':' . $item['department_id'])
+        $result = collect();
+
+        foreach ($assignments as $assignment) {
+            $permission = $assignment->permission;
+            if ($permission === null) {
+                continue;
+            }
+            $scope = $permission->scope ?? PermissionScope::Service;
+
+            if ($scope === PermissionScope::Resource) {
+                foreach ($normalizedDepartments as $extId) {
+                    $result->push([
+                        'permission_id' => (int) $assignment->permission_id,
+                        'permission_name' => (string) $permission->name,
+                        'department_id' => (string) $extId,
+                    ]);
+                }
+                continue;
+            }
+
+            $configDeptId = $this->extractDepartmentId($assignment);
+            if ($configDeptId === null) {
+                continue;
+            }
+            if (!in_array($configDeptId, $normalizedDepartments, true)) {
+                continue;
+            }
+            $result->push([
+                'permission_id' => (int) $assignment->permission_id,
+                'permission_name' => (string) $permission->name,
+                'department_id' => $configDeptId,
+            ]);
+        }
+
+        return $result
+            ->unique(fn (array $item) => $item['permission_id'].':'.$item['department_id'])
             ->values();
     }
 
@@ -71,6 +106,10 @@ class TriggerPermissionMatcherService
     }
 
     /**
+     * Включает все assignment'ы (grant, enabled) с trigger class из patterns —
+     * без фильтрации по config.department_id. Для resource-scoped прав config
+     * обычно пуст, и фильтр по нему отрезал бы их от импорта.
+     *
      * @param array<int, string> $triggerClassPatterns
      * @return Collection<int, PermissionTriggerAssignment>
      */
@@ -91,7 +130,6 @@ class TriggerPermissionMatcherService
 
                 return false;
             })
-            ->filter(fn (PermissionTriggerAssignment $assignment): bool => $this->extractDepartmentId($assignment) !== null)
             ->values();
     }
 
