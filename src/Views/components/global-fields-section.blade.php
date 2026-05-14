@@ -34,6 +34,7 @@
          style="display: none;">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
             @foreach($this->globalFieldDefinitions as $field)
+                @php($metaOptions = $this->metaOptionsForField($field))
                 <div class="group">
                     <label for="global_field_{{ $field->id }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         <span class="flex items-center">
@@ -47,11 +48,25 @@
                             />
                         </span>
                     </label>
-                    <input type="text" 
+                    <input type="text"
                            id="global_field_{{ $field->id }}"
                            wire:model="globalFields.{{ $field->id }}"
                            placeholder="{{ $field->default_value ?? '' }}"
                            class="w-full px-3 py-2.5 rounded-lg border border-gray-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 group-hover:border-gray-400 dark:group-hover:border-neutral-500">
+
+                    @if(! empty($metaOptions))
+                        <div class="mt-2 flex flex-wrap gap-3">
+                            @foreach($metaOptions as $option)
+                                <label class="inline-flex items-center text-xs text-gray-600 dark:text-gray-400 select-none">
+                                    <input type="checkbox"
+                                           wire:model="globalFieldsMeta.{{ $field->id }}.{{ $option->key }}"
+                                           @checked($globalFieldsMeta[$field->id][$option->key] ?? $option->defaultValue)
+                                           class="mr-1.5 rounded border-gray-300 dark:border-neutral-600 text-blue-600 focus:ring-blue-500">
+                                    {{ $option->label }}
+                                </label>
+                            @endforeach
+                        </div>
+                    @endif
                 </div>
             @endforeach
         </div>

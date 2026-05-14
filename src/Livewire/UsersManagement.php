@@ -285,6 +285,7 @@ class UsersManagement extends Component
         $this->dependentSelectedPermissions = [];
         $this->dependentPermissionFields = [];
         $this->globalFields = [];
+        $this->globalFieldsMeta = [];
         $this->permissionStatuses = [];
         $this->dependentPermissionStatuses = [];
         $this->hasPendingPermissions = false;
@@ -306,6 +307,11 @@ class UsersManagement extends Component
     {
         foreach ($this->selectedUser->fieldValues as $fieldValue) {
             $this->globalFields[$fieldValue->permission_field_id] = $fieldValue->value;
+
+            $meta = $fieldValue->meta;
+            if (is_array($meta) && $meta !== []) {
+                $this->globalFieldsMeta[$fieldValue->permission_field_id] = $meta;
+            }
         }
     }
 

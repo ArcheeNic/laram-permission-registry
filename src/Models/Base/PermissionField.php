@@ -8,6 +8,7 @@ class PermissionField extends Model
 {
     public const ID = 'id';
     public const NAME = 'name';
+    public const TYPE = 'type';
     public const DEFAULT_VALUE = 'default_value';
     public const IS_GLOBAL = 'is_global';
     public const REQUIRED_ON_USER_CREATE = 'required_on_user_create';
@@ -16,6 +17,7 @@ class PermissionField extends Model
 
     protected $fillable = [
         self::NAME,
+        self::TYPE,
         self::DEFAULT_VALUE,
         self::IS_GLOBAL,
         self::REQUIRED_ON_USER_CREATE,

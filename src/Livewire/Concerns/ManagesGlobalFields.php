@@ -4,10 +4,15 @@ namespace ArcheeNic\PermissionRegistry\Livewire\Concerns;
 
 use ArcheeNic\PermissionRegistry\Actions\UpdateVirtualUserGlobalFieldsAction;
 use ArcheeNic\PermissionRegistry\Models\PermissionField;
+use ArcheeNic\PermissionRegistry\Support\FieldMetaOptionRegistry;
 
 trait ManagesGlobalFields
 {
     public $globalFields = [];
+
+    /** @var array<int, array<string, mixed>> */
+    public $globalFieldsMeta = [];
+
     public $showGlobalFields = false;
 
     public function toggleGlobalFields()
@@ -23,8 +28,14 @@ trait ManagesGlobalFields
             return;
         }
 
-        $updateAction = app(UpdateVirtualUserGlobalFieldsAction::class);
-        $updateAction->execute($this->selectedUserId, $this->globalFields);
+        try {
+            $updateAction = app(UpdateVirtualUserGlobalFieldsAction::class);
+            $updateAction->execute($this->selectedUserId, $this->globalFields, $this->globalFieldsMeta);
+        } catch (\DomainException $e) {
+            $this->setFlashError($e->getMessage());
+
+            return;
+        }
 
         $this->selectUser($this->selectedUserId);
 
@@ -36,5 +47,13 @@ trait ManagesGlobalFields
         return PermissionField::where(PermissionField::IS_GLOBAL, true)
             ->orderBy('name')
             ->get();
+    }
+
+    /**
+     * @return array<int, \ArcheeNic\PermissionRegistry\Support\FieldMetaOption>
+     */
+    public function metaOptionsForField(PermissionField $field): array
+    {
+        return app(FieldMetaOptionRegistry::class)->forFieldType($field->type);
     }
 }

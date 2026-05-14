@@ -48,6 +48,7 @@ use ArcheeNic\PermissionRegistry\Listeners\SendPermissionRevokedNotification;
 use ArcheeNic\PermissionRegistry\Contracts\UserToVirtualUserResolver;
 use ArcheeNic\PermissionRegistry\Middleware\CheckPermission;
 use ArcheeNic\PermissionRegistry\Services\HrEventTriggerExecutor;
+use ArcheeNic\PermissionRegistry\Support\FieldMetaOptionRegistry;
 use ArcheeNic\PermissionRegistry\Widgets\WidgetRegistry;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
@@ -92,6 +93,8 @@ class ServiceProvider extends BaseServiceProvider
         });
 
         $this->app->singleton(ResourceSyncerRegistry::class);
+
+        $this->app->singleton(FieldMetaOptionRegistry::class);
     }
 
     public function boot(): void

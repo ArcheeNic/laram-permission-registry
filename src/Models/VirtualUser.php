@@ -3,7 +3,9 @@
 namespace ArcheeNic\PermissionRegistry\Models;
 
 use ArcheeNic\PermissionRegistry\Enums\EmployeeCategory;
+use ArcheeNic\PermissionRegistry\Enums\PermissionFieldType;
 use ArcheeNic\PermissionRegistry\Enums\VirtualUserStatus;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -86,6 +88,17 @@ class VirtualUser extends Model
     public function fieldValues(): HasMany
     {
         return $this->hasMany(VirtualUserFieldValue::class, 'virtual_user_id');
+    }
+
+    /**
+     * @return Collection<int, VirtualUserFieldValue>
+     */
+    public function valuesByFieldType(PermissionFieldType $type): Collection
+    {
+        return $this->fieldValues()
+            ->with('field')
+            ->whereHas('field', fn ($q) => $q->ofType($type))
+            ->get();
     }
 
     public function hrTriggerExecutionLogs(): HasMany

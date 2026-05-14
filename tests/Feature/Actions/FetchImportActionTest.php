@@ -29,6 +29,7 @@ class FetchImportActionTest extends TestCase
 
         $this->emailField = PermissionField::create([
             'name' => 'email',
+            'type' => \ArcheeNic\PermissionRegistry\Enums\PermissionFieldType::EMAIL->value,
             'is_global' => true,
         ]);
 

@@ -4,10 +4,12 @@ namespace ArcheeNic\PermissionRegistry\Actions;
 
 use ArcheeNic\PermissionRegistry\Enums\ImportExecutionStatus;
 use ArcheeNic\PermissionRegistry\Enums\ImportMatchStatus;
+use ArcheeNic\PermissionRegistry\Enums\PermissionFieldType;
 use ArcheeNic\PermissionRegistry\Enums\VirtualUserStatus;
 use ArcheeNic\PermissionRegistry\Models\ImportExecutionLog;
 use ArcheeNic\PermissionRegistry\Models\ImportFieldMapping;
 use ArcheeNic\PermissionRegistry\Models\ImportStagingRow;
+use ArcheeNic\PermissionRegistry\Models\PermissionField;
 use ArcheeNic\PermissionRegistry\Models\PermissionImport;
 use ArcheeNic\PermissionRegistry\Models\VirtualUserFieldValue;
 use ArcheeNic\PermissionRegistry\Services\ImportDiscoveryService;
@@ -63,28 +65,35 @@ class FetchImportAction
             ImportExecutionLog::STATUS => ImportExecutionStatus::RUNNING->value,
         ]);
 
-        $emailFieldId = $this->resolveEmailFieldId($permissionImportId);
-        $processedEmails = [];
+        $mappedEmailFieldIds = $this->resolveMappedEmailFieldIds($permissionImportId, $fieldMappingSchema);
+        $allEmailFieldIds = $this->resolveAllEmailFieldIds();
+        $matchedVirtualUserIds = [];
 
         foreach ($result->users as $userData) {
-            $email = $this->extractEmail($userData, $fieldMappingSchema, $emailFieldId);
-            $matchResult = $this->matchVirtualUser($email, $emailFieldId, $userData, $fieldMappingSchema);
+            $emails = $this->extractEmails($userData, $fieldMappingSchema, $mappedEmailFieldIds);
+            $matchResult = $this->matchByEmails($emails, $allEmailFieldIds, $userData, $fieldMappingSchema, $mappedEmailFieldIds);
 
-            if ($email !== null) {
-                $processedEmails[] = $this->normalizeEmail($email);
+            if ($matchResult['virtual_user_id'] !== null) {
+                $matchedVirtualUserIds[] = $matchResult['virtual_user_id'];
             }
 
             ImportStagingRow::query()->create([
                 ImportStagingRow::IMPORT_RUN_ID => $importRunId,
                 ImportStagingRow::PERMISSION_IMPORT_ID => $permissionImportId,
-                ImportStagingRow::EXTERNAL_ID => $userData['external_id'] ?? $email ?? Str::uuid()->toString(),
+                ImportStagingRow::EXTERNAL_ID => $userData['external_id'] ?? ($emails[0] ?? Str::uuid()->toString()),
                 ImportStagingRow::FIELDS => $userData,
                 ImportStagingRow::MATCH_STATUS => $matchResult['status']->value,
                 ImportStagingRow::MATCHED_VIRTUAL_USER_ID => $matchResult['virtual_user_id'],
             ]);
         }
 
-        $this->createMissingStagingRows($importRunId, $permissionImportId, $emailFieldId, $processedEmails, $fieldMappingSchema);
+        $this->createMissingStagingRows(
+            $importRunId,
+            $permissionImportId,
+            $allEmailFieldIds,
+            array_values(array_unique($matchedVirtualUserIds)),
+            $fieldMappingSchema,
+        );
 
         $this->recalculateStatuses->handle($importRunId, $permissionImportId);
 
@@ -107,60 +116,102 @@ class FetchImportAction
         }
     }
 
-    private function resolveEmailFieldId(int $permissionImportId): ?int
+    /**
+     * @param array<string, array{permission_field_id: int, is_internal: bool}> $fieldMappingSchema
+     * @return array<int, int>
+     */
+    private function resolveMappedEmailFieldIds(int $permissionImportId, array $fieldMappingSchema): array
     {
-        $mapping = ImportFieldMapping::query()
-            ->where(ImportFieldMapping::PERMISSION_IMPORT_ID, $permissionImportId)
-            ->where(ImportFieldMapping::IS_INTERNAL, true)
-            ->first();
+        $mappedFieldIds = array_values(array_unique(array_map(
+            static fn (array $mapping): int => $mapping['permission_field_id'],
+            $fieldMappingSchema,
+        )));
 
-        return $mapping?->{ImportFieldMapping::PERMISSION_FIELD_ID};
+        if ($mappedFieldIds === []) {
+            return [];
+        }
+
+        return PermissionField::query()
+            ->whereIn(PermissionField::ID, $mappedFieldIds)
+            ->ofType(PermissionFieldType::EMAIL)
+            ->pluck(PermissionField::ID)
+            ->all();
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    private function resolveAllEmailFieldIds(): array
+    {
+        return PermissionField::query()
+            ->ofType(PermissionFieldType::EMAIL)
+            ->pluck(PermissionField::ID)
+            ->all();
     }
 
     /**
      * @param array<string, mixed> $userData
      * @param array<string, array{permission_field_id: int, is_internal: bool}> $fieldMappingSchema
+     * @param array<int, int> $emailFieldIds
+     * @return array<int, string>
      */
-    private function extractEmail(array $userData, array $fieldMappingSchema, ?int $emailFieldId): ?string
+    private function extractEmails(array $userData, array $fieldMappingSchema, array $emailFieldIds): array
     {
-        if ($emailFieldId === null) {
-            return null;
+        if ($emailFieldIds === []) {
+            return [];
         }
 
+        $emails = [];
         foreach ($fieldMappingSchema as $importFieldName => $mappingData) {
-            if ($mappingData['permission_field_id'] === $emailFieldId && isset($userData[$importFieldName])) {
-                return $userData[$importFieldName];
+            if (! in_array($mappingData['permission_field_id'], $emailFieldIds, true)) {
+                continue;
+            }
+
+            $raw = $userData[$importFieldName] ?? null;
+            if (! is_string($raw)) {
+                continue;
+            }
+
+            $normalized = PermissionFieldType::EMAIL->normalize($raw);
+            if ($normalized !== null) {
+                $emails[$normalized] = $normalized;
             }
         }
 
-        return null;
+        return array_values($emails);
     }
 
     /**
+     * @param array<int, string> $emails
+     * @param array<int, int> $allEmailFieldIds
      * @param array<string, mixed> $userData
      * @param array<string, array{permission_field_id: int, is_internal: bool}> $fieldMappingSchema
+     * @param array<int, int> $mappedEmailFieldIds
      * @return array{status: ImportMatchStatus, virtual_user_id: int|null}
      */
-    private function matchVirtualUser(?string $email, ?int $emailFieldId, array $userData, array $fieldMappingSchema): array
-    {
-        if ($email === null || $emailFieldId === null) {
+    private function matchByEmails(
+        array $emails,
+        array $allEmailFieldIds,
+        array $userData,
+        array $fieldMappingSchema,
+        array $mappedEmailFieldIds,
+    ): array {
+        if ($emails === [] || $allEmailFieldIds === []) {
             return ['status' => ImportMatchStatus::NEW, 'virtual_user_id' => null];
         }
 
-        $normalizedEmail = $this->normalizeEmail($email);
-
-        $fieldValueQuery = VirtualUserFieldValue::query()
-            ->where(VirtualUserFieldValue::PERMISSION_FIELD_ID, $emailFieldId)
+        $query = VirtualUserFieldValue::query()
+            ->whereIn(VirtualUserFieldValue::PERMISSION_FIELD_ID, $allEmailFieldIds)
             ->with('virtualUser');
-        $this->applyCaseInsensitiveEmailEquals($fieldValueQuery, VirtualUserFieldValue::VALUE, $normalizedEmail);
-        $fieldValue = $fieldValueQuery->first();
+        $this->applyLowerWhereIn($query, VirtualUserFieldValue::VALUE, $emails);
+        $fieldValue = $query->first();
 
         if ($fieldValue === null) {
             return ['status' => ImportMatchStatus::NEW, 'virtual_user_id' => null];
         }
 
         $virtualUserId = $fieldValue->{VirtualUserFieldValue::VIRTUAL_USER_ID};
-        $status = $this->hasFieldChanges($virtualUserId, $userData, $fieldMappingSchema, $emailFieldId)
+        $status = $this->hasFieldChanges($virtualUserId, $userData, $fieldMappingSchema, $mappedEmailFieldIds)
             ? ImportMatchStatus::CHANGED
             : ImportMatchStatus::EXISTS;
 
@@ -170,8 +221,9 @@ class FetchImportAction
     /**
      * @param array<string, mixed> $userData
      * @param array<string, array{permission_field_id: int, is_internal: bool}> $fieldMappingSchema
+     * @param array<int, int> $mappedEmailFieldIds
      */
-    private function hasFieldChanges(int $virtualUserId, array $userData, array $fieldMappingSchema, int $emailFieldId): bool
+    private function hasFieldChanges(int $virtualUserId, array $userData, array $fieldMappingSchema, array $mappedEmailFieldIds): bool
     {
         $existingValues = VirtualUserFieldValue::query()
             ->where(VirtualUserFieldValue::VIRTUAL_USER_ID, $virtualUserId)
@@ -180,7 +232,7 @@ class FetchImportAction
 
         foreach ($fieldMappingSchema as $importFieldName => $mappingData) {
             $fieldId = $mappingData['permission_field_id'];
-            if ($fieldId === $emailFieldId) {
+            if (in_array($fieldId, $mappedEmailFieldIds, true)) {
                 continue;
             }
 
@@ -197,43 +249,49 @@ class FetchImportAction
     }
 
     /**
-     * @param string[] $processedEmails
+     * @param array<int, int> $allEmailFieldIds
+     * @param array<int, int> $matchedVirtualUserIds
      * @param array<string, array{permission_field_id: int, is_internal: bool}> $fieldMappingSchema
      */
     private function createMissingStagingRows(
         string $importRunId,
         int $permissionImportId,
-        ?int $emailFieldId,
-        array $processedEmails,
+        array $allEmailFieldIds,
+        array $matchedVirtualUserIds,
         array $fieldMappingSchema,
     ): void {
-        if ($emailFieldId === null) {
+        if ($allEmailFieldIds === []) {
             return;
         }
 
         $reverseMap = $this->buildReverseFieldMap($fieldMappingSchema);
 
         $query = VirtualUserFieldValue::query()
-            ->where(VirtualUserFieldValue::PERMISSION_FIELD_ID, $emailFieldId)
+            ->whereIn(VirtualUserFieldValue::PERMISSION_FIELD_ID, $allEmailFieldIds)
             ->whereHas('virtualUser', fn ($q) => $q->where('status', '!=', VirtualUserStatus::DEACTIVATED->value));
 
-        if (!empty($processedEmails)) {
-            $this->applyCaseInsensitiveEmailNotIn($query, VirtualUserFieldValue::VALUE, $processedEmails);
+        if ($matchedVirtualUserIds !== []) {
+            $query->whereNotIn(VirtualUserFieldValue::VIRTUAL_USER_ID, $matchedVirtualUserIds);
         }
 
-        $query->each(function (VirtualUserFieldValue $fieldValue) use ($importRunId, $permissionImportId, $reverseMap) {
-            $virtualUserId = $fieldValue->{VirtualUserFieldValue::VIRTUAL_USER_ID};
+        $missingUserIds = $query
+            ->pluck(VirtualUserFieldValue::VIRTUAL_USER_ID)
+            ->unique()
+            ->values()
+            ->all();
+
+        foreach ($missingUserIds as $virtualUserId) {
             $fields = $this->buildFieldsFromExistingUser($virtualUserId, $reverseMap);
 
             ImportStagingRow::query()->create([
                 ImportStagingRow::IMPORT_RUN_ID => $importRunId,
                 ImportStagingRow::PERMISSION_IMPORT_ID => $permissionImportId,
-                ImportStagingRow::EXTERNAL_ID => 'missing_' . $virtualUserId,
+                ImportStagingRow::EXTERNAL_ID => 'missing_'.$virtualUserId,
                 ImportStagingRow::FIELDS => $fields,
                 ImportStagingRow::MATCH_STATUS => ImportMatchStatus::MISSING->value,
                 ImportStagingRow::MATCHED_VIRTUAL_USER_ID => $virtualUserId,
             ]);
-        });
+        }
     }
 
     /**
@@ -287,31 +345,16 @@ class FetchImportAction
         ];
     }
 
-    private function normalizeEmail(string $email): string
-    {
-        return mb_strtolower(trim($email));
-    }
-
-    private function applyCaseInsensitiveEmailEquals($query, string $column, string $email): void
-    {
-        $query->whereRaw("LOWER({$column}) = ?", [$email]);
-    }
-
     /**
-     * @param array<int, string> $emails
+     * @param array<int, string> $values
      */
-    private function applyCaseInsensitiveEmailNotIn($query, string $column, array $emails): void
+    private function applyLowerWhereIn($query, string $column, array $values): void
     {
-        $normalizedEmails = array_values(array_unique(array_filter(
-            array_map(fn (string $email): string => $this->normalizeEmail($email), $emails),
-            fn (string $email): bool => $email !== ''
-        )));
-
-        if ($normalizedEmails === []) {
+        if ($values === []) {
             return;
         }
 
-        $placeholders = implode(',', array_fill(0, count($normalizedEmails), '?'));
-        $query->whereRaw("LOWER({$column}) NOT IN ({$placeholders})", $normalizedEmails);
+        $placeholders = implode(',', array_fill(0, count($values), '?'));
+        $query->whereRaw("LOWER({$column}) IN ({$placeholders})", array_values($values));
     }
 }
