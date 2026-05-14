@@ -120,6 +120,9 @@ class ExecuteApprovedImportActionTest extends TestCase
         $matcherMock->shouldReceive('getAllManagedPermissionIds')
             ->once()
             ->andReturn([$this->permissionA->id, $this->permissionB->id]);
+        $matcherMock->shouldReceive('getFallbackPermissionIds')
+            ->once()
+            ->andReturn([]);
 
         ImportExecutionLog::create([
             'import_run_id' => $this->importRunId,
@@ -177,6 +180,9 @@ class ExecuteApprovedImportActionTest extends TestCase
         $matcherMock->shouldReceive('getAllManagedPermissionIds')
             ->once()
             ->andReturn([$this->permissionA->id, $this->permissionB->id]);
+        $matcherMock->shouldReceive('getFallbackPermissionIds')
+            ->once()
+            ->andReturn([]);
 
         ImportStagingRow::create([
             'import_run_id' => $this->importRunId,
@@ -216,6 +222,9 @@ class ExecuteApprovedImportActionTest extends TestCase
         $matcherMock->shouldReceive('getAllManagedPermissionIds')
             ->once()
             ->andReturn([$this->permissionA->id, $this->permissionB->id]);
+        $matcherMock->shouldReceive('getFallbackPermissionIds')
+            ->once()
+            ->andReturn([]);
         $matcherMock->shouldReceive('matchByDepartments')->never();
 
         ImportStagingRow::create([
@@ -256,6 +265,9 @@ class ExecuteApprovedImportActionTest extends TestCase
         $matcherMock->shouldReceive('getAllManagedPermissionIds')
             ->once()
             ->andReturn([$this->permissionA->id, $this->permissionB->id]);
+        $matcherMock->shouldReceive('getFallbackPermissionIds')
+            ->once()
+            ->andReturn([]);
         $matcherMock->shouldReceive('normalizeDepartmentIds')
             ->once()
             ->andReturn(['1']);
@@ -295,6 +307,9 @@ class ExecuteApprovedImportActionTest extends TestCase
         $matcherMock->shouldReceive('getAllManagedPermissionIds')
             ->once()
             ->andReturn([$this->permissionA->id]);
+        $matcherMock->shouldReceive('getFallbackPermissionIds')
+            ->once()
+            ->andReturn([]);
         $matcherMock->shouldReceive('matchByDepartments')->never();
 
         ImportStagingRow::create([
