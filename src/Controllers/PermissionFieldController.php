@@ -3,9 +3,11 @@
 namespace ArcheeNic\PermissionRegistry\Controllers;
 
 use App\Http\Controllers\Controller;
+use ArcheeNic\PermissionRegistry\Enums\PermissionFieldType;
 use ArcheeNic\PermissionRegistry\Models\PermissionField;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class PermissionFieldController extends Controller
 {
@@ -23,6 +25,7 @@ class PermissionFieldController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
+            'type' => ['nullable', 'string', Rule::in(array_column(PermissionFieldType::cases(), 'value'))],
             'default_value' => 'nullable|string|max:255',
             'is_global' => 'nullable|boolean',
             'required_on_user_create' => 'nullable|boolean',
@@ -34,6 +37,7 @@ class PermissionFieldController extends Controller
 
         $field = PermissionField::create([
             'name' => $request->name,
+            'type' => $request->input('type', PermissionFieldType::STRING->value),
             'default_value' => $request->default_value,
             'is_global' => $request->boolean('is_global', false),
             'required_on_user_create' => $request->boolean('required_on_user_create', false),
@@ -52,6 +56,7 @@ class PermissionFieldController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
+            'type' => ['nullable', 'string', Rule::in(array_column(PermissionFieldType::cases(), 'value'))],
             'default_value' => 'nullable|string|max:255',
             'is_global' => 'nullable|boolean',
             'required_on_user_create' => 'nullable|boolean',
@@ -63,6 +68,7 @@ class PermissionFieldController extends Controller
 
         $field->update([
             'name' => $request->name,
+            'type' => $request->input('type', PermissionFieldType::STRING->value),
             'default_value' => $request->default_value,
             'is_global' => $request->boolean('is_global', false),
             'required_on_user_create' => $request->boolean('required_on_user_create', false),

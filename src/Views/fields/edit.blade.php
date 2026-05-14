@@ -34,6 +34,22 @@
                     </div>
 
                     <div class="mb-4">
+                        <label for="type" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            {{ __('permission-registry::Field Type') }}
+                        </label>
+                        @php($currentType = old('type', $field->type?->value ?? \ArcheeNic\PermissionRegistry\Enums\PermissionFieldType::STRING->value))
+                        <select name="type" id="type"
+                                class="mt-1 block w-full rounded-md border-gray-300 dark:border-neutral-600 dark:bg-neutral-700 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            @foreach(\ArcheeNic\PermissionRegistry\Enums\PermissionFieldType::cases() as $type)
+                                <option value="{{ $type->value }}" @selected($currentType === $type->value)>{{ $type->value }}</option>
+                            @endforeach
+                        </select>
+                        @error('type')
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-300">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div class="mb-4">
                         <label for="default_value" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                             {{ __('permission-registry::Default Value') }}
                             <x-perm::field-hint
