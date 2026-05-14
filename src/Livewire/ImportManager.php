@@ -7,12 +7,15 @@ use ArcheeNic\PermissionRegistry\Actions\CleanupImportRunAction;
 use ArcheeNic\PermissionRegistry\Actions\ExecuteApprovedImportAction;
 use ArcheeNic\PermissionRegistry\Actions\FetchImportAction;
 use ArcheeNic\PermissionRegistry\Enums\ImportMatchStatus;
+use ArcheeNic\PermissionRegistry\Enums\PermissionScope;
 use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
 use ArcheeNic\PermissionRegistry\Models\ImportExecutionLog;
 use ArcheeNic\PermissionRegistry\Models\ImportFieldMapping;
 use ArcheeNic\PermissionRegistry\Models\ImportStagingRow;
+use ArcheeNic\PermissionRegistry\Models\Permission;
 use ArcheeNic\PermissionRegistry\Models\PermissionField;
 use ArcheeNic\PermissionRegistry\Models\PermissionImport;
+use ArcheeNic\PermissionRegistry\Models\PermissionResource;
 use ArcheeNic\PermissionRegistry\Models\VirtualUserFieldValue;
 use ArcheeNic\PermissionRegistry\Services\ImportDiscoveryService;
 use ArcheeNic\PermissionRegistry\Services\ImportFieldMappingService;
@@ -455,24 +458,26 @@ class ImportManager extends Component
                 $matchedPermissionIds = $fallbackPermissionIds;
             }
 
+            $shouldHavePairs = $this->enrichWithResources($matchedPermissions);
+
             $status = $row->match_status instanceof ImportMatchStatus
                 ? $row->match_status
                 : ImportMatchStatus::tryFrom($row->match_status);
 
             $actions[$row->id] = match ($status) {
-                ImportMatchStatus::NEW => $this->buildNewAction($matchedPermissions),
+                ImportMatchStatus::NEW => $this->buildNewAction($shouldHavePairs),
                 ImportMatchStatus::CHANGED => $this->buildChangedAction(
                     $diffs[$row->id] ?? [],
                     $this->buildPermissionDiff(
                         $row->{ImportStagingRow::MATCHED_VIRTUAL_USER_ID},
-                        $matchedPermissionIds,
+                        $shouldHavePairs,
                         $managedPermissionIds
                     )
                 ),
                 ImportMatchStatus::EXISTS => $this->buildExistsAction(
                     $this->buildPermissionDiff(
                         $row->{ImportStagingRow::MATCHED_VIRTUAL_USER_ID},
-                        $matchedPermissionIds,
+                        $shouldHavePairs,
                         $managedPermissionIds
                     )
                 ),
@@ -672,32 +677,29 @@ class ImportManager extends Component
             ->values();
     }
 
-    private function buildNewAction($matchedPermissions): array
+    /**
+     * @param array<int, array{permission_id:int, label:string}> $pairs
+     */
+    private function buildNewAction(array $pairs): array
     {
         $items = [
             ['icon' => 'user-plus', 'text' => __('permission-registry::messages.import.action_detail_create_user')],
             ['icon' => 'briefcase', 'text' => __('permission-registry::messages.import.action_detail_hire')],
         ];
 
-        $permissionNames = $matchedPermissions
-            ->pluck('permission_name')
-            ->filter()
-            ->unique()
-            ->values()
-            ->all();
-
-        if ($permissionNames !== []) {
+        foreach ($pairs as $pair) {
             $items[] = [
                 'icon' => 'key',
-                'text' => __('permission-registry::messages.import.action_detail_grant_list', [
-                    'names' => implode(', ', $permissionNames),
-                ]),
+                'text' => __('permission-registry::messages.import.action_detail_perm_added', ['name' => $pair['label']]),
             ];
         }
 
         return ['items' => $items];
     }
 
+    /**
+     * @param array{added: array<int, string>, removed: array<int, string>} $permissionDiff
+     */
     private function buildChangedAction(array $diffs, array $permissionDiff): array
     {
         $items = [];
@@ -709,17 +711,17 @@ class ImportManager extends Component
             ];
         }
 
-        foreach ($permissionDiff['added'] as $name) {
+        foreach ($permissionDiff['added'] as $label) {
             $items[] = [
                 'icon' => 'key',
-                'text' => __('permission-registry::messages.import.action_detail_perm_added', ['name' => $name]),
+                'text' => __('permission-registry::messages.import.action_detail_perm_added', ['name' => $label]),
             ];
         }
 
-        foreach ($permissionDiff['removed'] as $name) {
+        foreach ($permissionDiff['removed'] as $label) {
             $items[] = [
                 'icon' => 'key-slash',
-                'text' => __('permission-registry::messages.import.action_detail_perm_removed', ['name' => $name]),
+                'text' => __('permission-registry::messages.import.action_detail_perm_removed', ['name' => $label]),
             ];
         }
 
@@ -730,21 +732,24 @@ class ImportManager extends Component
         return ['items' => $items];
     }
 
+    /**
+     * @param array{added: array<int, string>, removed: array<int, string>} $permissionDiff
+     */
     private function buildExistsAction(array $permissionDiff): array
     {
         $items = [];
 
-        foreach ($permissionDiff['added'] as $name) {
+        foreach ($permissionDiff['added'] as $label) {
             $items[] = [
                 'icon' => 'key',
-                'text' => __('permission-registry::messages.import.action_detail_perm_added', ['name' => $name]),
+                'text' => __('permission-registry::messages.import.action_detail_perm_added', ['name' => $label]),
             ];
         }
 
-        foreach ($permissionDiff['removed'] as $name) {
+        foreach ($permissionDiff['removed'] as $label) {
             $items[] = [
                 'icon' => 'key-slash',
-                'text' => __('permission-registry::messages.import.action_detail_perm_removed', ['name' => $name]),
+                'text' => __('permission-registry::messages.import.action_detail_perm_removed', ['name' => $label]),
             ];
         }
 
@@ -760,23 +765,12 @@ class ImportManager extends Component
         $items = [];
 
         if ($virtualUserId > 0 && $managedPermissionIds !== []) {
-            $permissionNames = \ArcheeNic\PermissionRegistry\Models\Permission::query()
-                ->whereIn('id', GrantedPermission::query()
-                    ->where(GrantedPermission::VIRTUAL_USER_ID, $virtualUserId)
-                    ->whereIn(GrantedPermission::PERMISSION_ID, $managedPermissionIds)
-                    ->pluck(GrantedPermission::PERMISSION_ID)
-                    ->all())
-                ->orderBy('name')
-                ->pluck('name')
-                ->values()
-                ->all();
+            $labels = $this->labelsForCurrentGrants($virtualUserId, $managedPermissionIds);
 
-            if ($permissionNames !== []) {
+            foreach ($labels as $label) {
                 $items[] = [
                     'icon' => 'key-slash',
-                    'text' => __('permission-registry::messages.import.action_detail_revoke_list', [
-                        'names' => implode(', ', $permissionNames),
-                    ]),
+                    'text' => __('permission-registry::messages.import.action_detail_perm_removed', ['name' => $label]),
                 ];
             }
         }
@@ -949,38 +943,190 @@ class ImportManager extends Component
     }
 
     /**
+     * Обогащает матч-коллекцию ресурсами из каталога. Для resource-scoped прав
+     * пара получает resource_id + resource_name; для service-scoped — null.
+     *
+     * @param  \Illuminate\Support\Collection<int, array{permission_id:int, permission_name:string, department_id:string}>  $matchedPermissions
+     * @return array<int, array{permission_id:int, resource_id:?int, label:string, key:string}>
+     */
+    private function enrichWithResources($matchedPermissions): array
+    {
+        $items = $matchedPermissions->all();
+        if ($items === []) {
+            return [];
+        }
+
+        $permissionIds = array_values(array_unique(array_map(static fn (array $i): int => (int) $i['permission_id'], $items)));
+        $permissions = Permission::query()->whereIn('id', $permissionIds)->get()->keyBy('id');
+
+        $resourceLookupKeys = [];
+        foreach ($items as $item) {
+            $permission = $permissions[(int) $item['permission_id']] ?? null;
+            if (!$permission) {
+                continue;
+            }
+            $scope = $permission->scope ?? PermissionScope::Service;
+            if ($scope !== PermissionScope::Resource || !$permission->resource_kind) {
+                continue;
+            }
+            $resourceLookupKeys[$permission->service.'|'.$permission->resource_kind][] = (string) $item['department_id'];
+        }
+
+        $resourceMap = [];
+        foreach ($resourceLookupKeys as $compound => $externalIds) {
+            [$service, $kind] = explode('|', $compound, 2);
+            $externalIds = array_values(array_unique(array_filter($externalIds, static fn (string $v): bool => $v !== '')));
+            if ($externalIds === []) {
+                continue;
+            }
+            PermissionResource::query()
+                ->where('service', $service)
+                ->where('kind', $kind)
+                ->whereIn('external_id', $externalIds)
+                ->get()
+                ->each(function (PermissionResource $resource) use (&$resourceMap, $service, $kind) {
+                    $resourceMap[$service.'|'.$kind.'|'.$resource->external_id] = $resource;
+                });
+        }
+
+        $pairs = [];
+        $seen = [];
+        foreach ($items as $item) {
+            $permissionId = (int) $item['permission_id'];
+            $permission = $permissions[$permissionId] ?? null;
+            if (!$permission) {
+                continue;
+            }
+            $scope = $permission->scope ?? PermissionScope::Service;
+
+            if ($scope !== PermissionScope::Resource) {
+                $key = $permissionId.'|';
+                if (isset($seen[$key])) continue;
+                $seen[$key] = true;
+                $pairs[] = [
+                    'permission_id' => $permissionId,
+                    'resource_id' => null,
+                    'label' => (string) $permission->name,
+                    'key' => $key,
+                ];
+                continue;
+            }
+
+            if (!$permission->resource_kind) continue;
+
+            $resource = $resourceMap[$permission->service.'|'.$permission->resource_kind.'|'.((string) $item['department_id'])] ?? null;
+            if ($resource === null) continue;
+
+            $key = $permissionId.'|'.$resource->id;
+            if (isset($seen[$key])) continue;
+            $seen[$key] = true;
+            $pairs[] = [
+                'permission_id' => $permissionId,
+                'resource_id' => (int) $resource->id,
+                'label' => $permission->name.' ('.$resource->name.')',
+                'key' => $key,
+            ];
+        }
+
+        usort($pairs, static fn (array $a, array $b): int => strcmp($a['label'], $b['label']));
+
+        return $pairs;
+    }
+
+    /**
+     * Сравнение «что должен иметь» (пары) с «что имеет сейчас» (granted_permissions
+     * с permission_id ∈ managed) — по парам (permission_id, resource_id). Возвращает
+     * человекочитаемые labels для добавления/удаления.
+     *
+     * @param  array<int, array{permission_id:int, resource_id:?int, label:string, key:string}>  $shouldHavePairs
+     * @param  array<int, int>  $managedPermissionIds
      * @return array{added: array<int, string>, removed: array<int, string>}
      */
-    private function buildPermissionDiff(?int $virtualUserId, array $shouldHaveIds, array $managedPermissionIds): array
+    private function buildPermissionDiff(?int $virtualUserId, array $shouldHavePairs, array $managedPermissionIds): array
     {
         if (! $virtualUserId || $managedPermissionIds === []) {
             return ['added' => [], 'removed' => []];
         }
 
-        $currentIds = GrantedPermission::query()
-            ->where(GrantedPermission::VIRTUAL_USER_ID, $virtualUserId)
-            ->whereIn(GrantedPermission::PERMISSION_ID, $managedPermissionIds)
-            ->pluck(GrantedPermission::PERMISSION_ID)
-            ->map(static fn (mixed $id): int => (int) $id)
-            ->all();
+        $shouldByKey = [];
+        foreach ($shouldHavePairs as $pair) {
+            $shouldByKey[$pair['key']] = $pair['label'];
+        }
 
-        $toAdd = array_values(array_diff($shouldHaveIds, $currentIds));
-        $toRemove = array_values(array_diff($currentIds, $shouldHaveIds));
+        $currentByKey = $this->loadCurrentGrantsAsLabels($virtualUserId, $managedPermissionIds);
+
+        $added = array_diff_key($shouldByKey, $currentByKey);
+        $removed = array_diff_key($currentByKey, $shouldByKey);
+
+        $sort = static function (array $arr): array {
+            sort($arr);
+            return $arr;
+        };
 
         return [
-            'added' => \ArcheeNic\PermissionRegistry\Models\Permission::query()
-                ->whereIn('id', $toAdd)
-                ->orderBy('name')
-                ->pluck('name')
-                ->values()
-                ->all(),
-            'removed' => \ArcheeNic\PermissionRegistry\Models\Permission::query()
-                ->whereIn('id', $toRemove)
-                ->orderBy('name')
-                ->pluck('name')
-                ->values()
-                ->all(),
+            'added' => $sort(array_values($added)),
+            'removed' => $sort(array_values($removed)),
         ];
+    }
+
+    /**
+     * @param  array<int, int>  $managedPermissionIds
+     * @return array<string, string>  ключ "permission_id|resource_id" → label
+     */
+    private function loadCurrentGrantsAsLabels(int $virtualUserId, array $managedPermissionIds): array
+    {
+        $grants = GrantedPermission::query()
+            ->where(GrantedPermission::VIRTUAL_USER_ID, $virtualUserId)
+            ->whereIn(GrantedPermission::PERMISSION_ID, $managedPermissionIds)
+            ->where('enabled', true)
+            ->get(['permission_id', 'resource_id']);
+
+        if ($grants->isEmpty()) {
+            return [];
+        }
+
+        $permissionIds = $grants->pluck('permission_id')->unique()->map(static fn ($id): int => (int) $id)->all();
+        $resourceIds = $grants->pluck('resource_id')->filter()->unique()->map(static fn ($id): int => (int) $id)->all();
+
+        $permissions = Permission::query()->whereIn('id', $permissionIds)->get()->keyBy('id');
+        $resources = $resourceIds === []
+            ? collect()
+            : PermissionResource::query()->whereIn('id', $resourceIds)->get()->keyBy('id');
+
+        $map = [];
+        foreach ($grants as $g) {
+            $permission = $permissions[(int) $g->permission_id] ?? null;
+            if (!$permission) continue;
+
+            $resourceId = $g->resource_id !== null ? (int) $g->resource_id : null;
+            $key = $g->permission_id.'|'.($resourceId ?? '');
+            if (isset($map[$key])) continue;
+
+            if ($resourceId === null) {
+                $map[$key] = (string) $permission->name;
+                continue;
+            }
+
+            $resource = $resources[$resourceId] ?? null;
+            $map[$key] = $resource
+                ? $permission->name.' ('.$resource->name.')'
+                : $permission->name.' (#'.$resourceId.')';
+        }
+
+        return $map;
+    }
+
+    /**
+     * Названия текущих managed-грантов для пользователя — для блока MISSING (увольнение).
+     *
+     * @param  array<int, int>  $managedPermissionIds
+     * @return array<int, string>
+     */
+    private function labelsForCurrentGrants(int $virtualUserId, array $managedPermissionIds): array
+    {
+        $labels = array_values($this->loadCurrentGrantsAsLabels($virtualUserId, $managedPermissionIds));
+        sort($labels);
+        return $labels;
     }
 
     /**
