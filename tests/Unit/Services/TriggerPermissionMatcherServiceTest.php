@@ -81,6 +81,39 @@ class TriggerPermissionMatcherServiceTest extends TestCase
         $this->assertSame([$permissionA->id], $managed);
     }
 
+    public function test_get_all_managed_permission_ids_skips_soft_deleted_permissions(): void
+    {
+        [$alive] = $this->createBitrixGrantAssignments('15');
+        [$deleted] = $this->createBitrixGrantAssignments('412');
+        $deleted->delete();
+
+        $managed = $this->service->getAllManagedPermissionIds(['App\\Triggers\\Bitrix24%']);
+
+        $this->assertSame([$alive->id], $managed);
+    }
+
+    public function test_get_fallback_permission_ids_skips_soft_deleted_permissions(): void
+    {
+        [$alive] = $this->createBitrixGrantAssignments('15');
+        [$deleted] = $this->createBitrixGrantAssignments('412');
+        $deleted->delete();
+
+        $fallback = $this->service->getFallbackPermissionIds('App\\Triggers\\Bitrix24AddToDepartmentTrigger');
+
+        $this->assertSame([$alive->id], $fallback);
+    }
+
+    public function test_match_by_departments_skips_soft_deleted_permissions(): void
+    {
+        [$alive] = $this->createBitrixGrantAssignments('15');
+        [$deleted] = $this->createBitrixGrantAssignments('412');
+        $deleted->delete();
+
+        $matched = $this->service->matchByDepartments(['15', '412'], ['App\\Triggers\\Bitrix24%']);
+
+        $this->assertSame([$alive->id], $matched->pluck('permission_id')->all());
+    }
+
     /**
      * @return array{0: Permission, 1?: Permission}
      */

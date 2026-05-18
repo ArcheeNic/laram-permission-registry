@@ -95,7 +95,8 @@ class TriggerPermissionMatcherService
         }
 
         return PermissionTriggerAssignment::query()
-            ->with('trigger')
+            ->with(['trigger', 'permission'])
+            ->whereHas('permission')
             ->where(PermissionTriggerAssignment::EVENT_TYPE, 'grant')
             ->where(PermissionTriggerAssignment::IS_ENABLED, true)
             ->get()
@@ -118,6 +119,7 @@ class TriggerPermissionMatcherService
     {
         return PermissionTriggerAssignment::query()
             ->with(['trigger', 'permission'])
+            ->whereHas('permission')
             ->where(PermissionTriggerAssignment::EVENT_TYPE, 'grant')
             ->where(PermissionTriggerAssignment::IS_ENABLED, true)
             ->get()
