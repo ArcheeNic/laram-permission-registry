@@ -187,6 +187,8 @@ class GrantPermissionAction
             'management_mode' => ManagementMode::AUTOMATED->value,
             'resource_id' => $resource?->id,
             'resource_external_id' => $resource?->external_id,
+            'field_values' => $fieldValues,
+            'meta' => $meta,
         ]);
 
         return $grantedPermission;
@@ -225,6 +227,8 @@ class GrantPermissionAction
             'management_mode' => ManagementMode::MANUAL->value,
             'resource_id' => $resource?->id,
             'resource_external_id' => $resource?->external_id,
+            'field_values' => $fieldValues,
+            'meta' => $meta,
         ]);
 
         return $grantedPermission;
@@ -266,6 +270,8 @@ class GrantPermissionAction
             'management_mode' => ManagementMode::DECLARATIVE->value,
             'resource_id' => $resource?->id,
             'resource_external_id' => $resource?->external_id,
+            'field_values' => $fieldValues,
+            'meta' => $meta,
         ]);
 
         return $grantedPermission;
