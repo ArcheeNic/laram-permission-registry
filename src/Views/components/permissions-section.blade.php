@@ -51,12 +51,12 @@
     <div>
         <h5 class="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">{{ __('permission-registry::Direct Permissions') }}</h5>
         <div class="bg-gray-50 dark:bg-neutral-900 p-4 rounded-lg border border-gray-200 dark:border-neutral-700">
-            @if($this->availablePermissions && $this->availablePermissions->count() > 0)
-                <div class="mb-4">
-                    <input type="text" wire:model.live="permissionSearch" placeholder="{{ __('permission-registry::Search permissions') }}"
-                           class="text-sm rounded-lg border-gray-300 dark:border-neutral-600 dark:bg-neutral-700 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 w-full">
-                </div>
+            <div class="mb-4">
+                <input type="text" wire:model.live.debounce.300ms="permissionSearch" placeholder="{{ __('permission-registry::Search permissions') }}"
+                       class="text-sm rounded-lg border-gray-300 dark:border-neutral-600 dark:bg-neutral-700 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 w-full">
+            </div>
 
+            @if($this->availablePermissions && $this->availablePermissions->count() > 0)
                 <x-pr::permissions-table
                     :permissions="$this->availablePermissions"
                     :selectedPermissions="$this->selectedPermissions"
@@ -87,6 +87,8 @@
                 <x-pr::debug-panel :isProcessing="$this->isProcessing" :completedPermissionsWithErrors="$this->completedPermissionsWithErrors" :processingPermissions="$this->processingPermissions" />
                 <x-pr::completed-triggers-panel :completedPermissionsWithErrors="$this->completedPermissionsWithErrors" :isProcessing="$this->isProcessing" />
                 <x-pr::processing-triggers-panel :processingPermissions="$this->processingPermissions" :isProcessing="$this->isProcessing" />
+            @elseif(filled($permissionSearch))
+                <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('permission-registry::Try adjusting your search criteria') }}</p>
             @else
                 <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('permission-registry::No permissions available') }}</p>
             @endif

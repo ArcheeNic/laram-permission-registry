@@ -9,6 +9,7 @@ use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
 use ArcheeNic\PermissionRegistry\Models\Permission;
 use ArcheeNic\PermissionRegistry\Models\PermissionResource;
 use ArcheeNic\PermissionRegistry\Models\Position;
+use ArcheeNic\PermissionRegistry\Models\VirtualUser;
 use ArcheeNic\PermissionRegistry\Services\PermissionDependencyResolver;
 use Illuminate\Support\Collection;
 
@@ -48,6 +49,19 @@ trait ManagesPermissions
             unset($this->expandedDependentPermissionFields[$permissionId]);
         } else {
             $this->expandedDependentPermissionFields[$permissionId] = true;
+        }
+    }
+
+    protected function initializeResourcePermissionContainers(): void
+    {
+        $resourceScopedIds = Permission::query()
+            ->where('scope', PermissionScope::Resource)
+            ->pluck('id');
+
+        foreach ($resourceScopedIds as $permId) {
+            if (! array_key_exists($permId, $this->permissionResources) || ! is_array($this->permissionResources[$permId])) {
+                $this->permissionResources[$permId] = [];
+            }
         }
     }
 
@@ -120,6 +134,11 @@ trait ManagesPermissions
             return collect();
         }
 
+        $user = $this->loadDependentPermissionsSourceUser();
+        if (! $user) {
+            return collect();
+        }
+
         $result = collect();
 
         $userGrantedPermissions = GrantedPermission::where('virtual_user_id', $this->selectedUserId)
@@ -127,10 +146,23 @@ trait ManagesPermissions
             ->get()
             ->keyBy('permission_id');
 
-        $this->collectPositionPermissions($result, $userGrantedPermissions);
-        $this->collectGroupPermissions($result, $userGrantedPermissions);
+        $this->collectPositionPermissions($result, $userGrantedPermissions, $user);
+        $this->collectGroupPermissions($result, $userGrantedPermissions, $user);
 
         return $result->unique('id')->values();
+    }
+
+    protected function loadDependentPermissionsSourceUser(): ?VirtualUser
+    {
+        return VirtualUser::with([
+            'positions.permissions',
+            'positions.groups.permissions',
+            'positions.parent.permissions',
+            'positions.parent.groups.permissions',
+            'positions.parent.parent.permissions',
+            'positions.parent.parent.groups.permissions',
+            'groups.permissions',
+        ])->find($this->selectedUserId);
     }
 
     public function saveUserPermissions()
@@ -194,9 +226,9 @@ trait ManagesPermissions
         return $fields;
     }
 
-    private function collectPositionPermissions($result, $userGrantedPermissions): void
+    private function collectPositionPermissions($result, $userGrantedPermissions, VirtualUser $user): void
     {
-        foreach ($this->selectedUser->positions as $position) {
+        foreach ($user->positions as $position) {
             $positionsHierarchy = $this->getAllPositionsInHierarchy($position);
 
             foreach ($positionsHierarchy as $hierarchyPosition) {
@@ -222,9 +254,9 @@ trait ManagesPermissions
         }
     }
 
-    private function collectGroupPermissions($result, $userGrantedPermissions): void
+    private function collectGroupPermissions($result, $userGrantedPermissions, VirtualUser $user): void
     {
-        foreach ($this->selectedUser->groups as $group) {
+        foreach ($user->groups as $group) {
             foreach ($group->permissions as $permission) {
                 $result->push($this->buildPermissionData(
                     $permission, $userGrantedPermissions, 'group', $group->id, $group->name

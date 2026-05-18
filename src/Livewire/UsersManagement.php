@@ -354,6 +354,8 @@ class UsersManagement extends Component
             $this->permissionResources[$permId] = array_values(array_unique($ids));
         }
 
+        $this->initializeResourcePermissionContainers();
+
         foreach ($allUserPermissions as $granted) {
             foreach ($granted->permission->fields as $field) {
                 if ($field->is_global && isset($this->globalFields[$field->id])) {
