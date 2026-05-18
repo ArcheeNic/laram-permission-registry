@@ -5,138 +5,95 @@ namespace ArcheeNic\PermissionRegistry\Actions;
 use ArcheeNic\PermissionRegistry\Jobs\GrantMultiplePermissionsJob;
 use ArcheeNic\PermissionRegistry\Jobs\RevokeMultiplePermissionsJob;
 use ArcheeNic\PermissionRegistry\Models\GrantedPermission;
-use ArcheeNic\PermissionRegistry\Models\PermissionGroup;
-use ArcheeNic\PermissionRegistry\Models\Position;
-use ArcheeNic\PermissionRegistry\Models\VirtualUserGroup;
-use ArcheeNic\PermissionRegistry\Models\VirtualUserPosition;
+use ArcheeNic\PermissionRegistry\Services\UserAutoGrantPairsCollector;
 
 class ReconcileUserPermissionsAction
 {
+    public function __construct(
+        private UserAutoGrantPairsCollector $pairsCollector
+    ) {}
+
     public function handle(int $userId): void
     {
-        $targetPermissionIds = $this->getTargetPermissionIds($userId);
+        $targetPairs = $this->pairsCollector->collect($userId);
 
-        $currentEnabledPermissionIds = GrantedPermission::query()
-            ->where('virtual_user_id', $userId)
-            ->where('enabled', true)
-            ->pluck('permission_id')
-            ->toArray();
+        $currentEnabledPairs = [];
+        $currentAutoGrantedPairs = [];
 
-        $permissionsToGrant = array_values(array_diff($targetPermissionIds, $currentEnabledPermissionIds));
+        GrantedPermission::query()
+            ->where(GrantedPermission::VIRTUAL_USER_ID, $userId)
+            ->where(GrantedPermission::ENABLED, true)
+            ->get([
+                GrantedPermission::PERMISSION_ID,
+                GrantedPermission::RESOURCE_ID,
+                GrantedPermission::META,
+            ])
+            ->each(function (GrantedPermission $granted) use (&$currentEnabledPairs, &$currentAutoGrantedPairs) {
+                $permissionId = (int) $granted->getAttribute(GrantedPermission::PERMISSION_ID);
+                $rawResourceId = $granted->getAttribute(GrantedPermission::RESOURCE_ID);
+                $resourceId = $rawResourceId !== null ? (int) $rawResourceId : null;
+                $key = UserAutoGrantPairsCollector::key($permissionId, $resourceId);
+                $pair = ['permission_id' => $permissionId, 'resource_id' => $resourceId];
 
-        $autoGrantedEnabledPermissionIds = GrantedPermission::query()
-            ->where('virtual_user_id', $userId)
-            ->where('enabled', true)
-            ->where('meta->auto_granted', true)
-            ->pluck('permission_id')
-            ->toArray();
+                $currentEnabledPairs[$key] = $pair;
 
-        $permissionsToRevoke = array_values(array_diff($autoGrantedEnabledPermissionIds, $targetPermissionIds));
+                $meta = $granted->getAttribute(GrantedPermission::META);
+                if (is_array($meta) && (($meta['auto_granted'] ?? false) === true)) {
+                    $currentAutoGrantedPairs[$key] = $pair;
+                }
+            });
 
-        if (! empty($permissionsToGrant)) {
-            $permissionsData = array_map(static fn (int $permissionId): array => [
-                'permissionId' => $permissionId,
+        $pairsToGrant = [];
+        foreach (array_keys($targetPairs) as $key) {
+            if (isset($currentEnabledPairs[$key])) {
+                continue;
+            }
+            $pairsToGrant[] = $this->splitKey($key);
+        }
+
+        $pairsToRevoke = [];
+        foreach ($currentAutoGrantedPairs as $key => $pair) {
+            if (isset($targetPairs[$key])) {
+                continue;
+            }
+            $pairsToRevoke[] = $pair;
+        }
+
+        if (! empty($pairsToGrant)) {
+            $permissionsData = array_map(static fn (array $pair): array => [
+                'permissionId' => $pair['permission_id'],
+                'resourceId' => $pair['resource_id'],
                 'fieldValues' => [],
                 'meta' => [
                     'auto_granted' => true,
                     'auto_grant_source' => 'reconcile',
                 ],
                 'expiresAt' => null,
-            ], $permissionsToGrant);
+            ], $pairsToGrant);
 
             GrantMultiplePermissionsJob::dispatch($userId, $permissionsData);
         }
 
-        if (! empty($permissionsToRevoke)) {
-            RevokeMultiplePermissionsJob::dispatch($userId, $permissionsToRevoke);
+        if (! empty($pairsToRevoke)) {
+            $revokeData = array_map(static fn (array $pair): array => [
+                'permissionId' => $pair['permission_id'],
+                'resourceId' => $pair['resource_id'],
+            ], $pairsToRevoke);
+
+            RevokeMultiplePermissionsJob::dispatch($userId, $revokeData);
         }
     }
 
     /**
-     * @return array<int>
+     * @return array{permission_id:int, resource_id:?int}
      */
-    private function getTargetPermissionIds(int $userId): array
+    private function splitKey(string $key): array
     {
-        $permissionIds = [];
+        [$permissionPart, $resourcePart] = explode('|', $key, 2) + [null, ''];
 
-        $positionIds = VirtualUserPosition::query()
-            ->where('virtual_user_id', $userId)
-            ->pluck('position_id')
-            ->toArray();
-
-        foreach ($positionIds as $positionId) {
-            $this->collectPositionPermissionIds($positionId, $permissionIds);
-        }
-
-        $groupIds = VirtualUserGroup::query()
-            ->where('virtual_user_id', $userId)
-            ->pluck('permission_group_id')
-            ->toArray();
-
-        foreach ($groupIds as $groupId) {
-            $this->collectGroupPermissionIds($groupId, $permissionIds);
-        }
-
-        return array_values(array_unique($permissionIds));
-    }
-
-    /**
-     * @param  array<int>  $permissionIds
-     * @param  array<int>  $processedPositions
-     */
-    private function collectPositionPermissionIds(
-        int $positionId,
-        array &$permissionIds,
-        array $processedPositions = []
-    ): void {
-        if (in_array($positionId, $processedPositions, true)) {
-            return;
-        }
-
-        $processedPositions[] = $positionId;
-
-        $position = Position::query()
-            ->with([
-                'permissions' => fn ($query) => $query->where('auto_grant', true),
-                'groups.permissions' => fn ($query) => $query->where('auto_grant', true),
-                'parent',
-            ])
-            ->find($positionId);
-
-        if (! $position) {
-            return;
-        }
-
-        foreach ($position->permissions as $permission) {
-            $permissionIds[] = $permission->id;
-        }
-
-        foreach ($position->groups as $group) {
-            foreach ($group->permissions as $permission) {
-                $permissionIds[] = $permission->id;
-            }
-        }
-
-        if ($position->parent) {
-            $this->collectPositionPermissionIds($position->parent->id, $permissionIds, $processedPositions);
-        }
-    }
-
-    /**
-     * @param  array<int>  $permissionIds
-     */
-    private function collectGroupPermissionIds(int $groupId, array &$permissionIds): void
-    {
-        $group = PermissionGroup::query()
-            ->with(['permissions' => fn ($query) => $query->where('auto_grant', true)])
-            ->find($groupId);
-
-        if (! $group) {
-            return;
-        }
-
-        foreach ($group->permissions as $permission) {
-            $permissionIds[] = $permission->id;
-        }
+        return [
+            'permission_id' => (int) $permissionPart,
+            'resource_id' => $resourcePart === '' ? null : (int) $resourcePart,
+        ];
     }
 }

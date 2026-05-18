@@ -80,7 +80,11 @@ class FireVirtualUserActionTest extends TestCase
         ]);
 
         Queue::assertPushed(RevokeMultiplePermissionsJob::class, function (RevokeMultiplePermissionsJob $job) use ($autoPermission, $manualPermission) {
-            $permissionIds = $this->readPrivateProperty($job, 'permissionIds');
+            $entries = $this->readPrivateProperty($job, 'permissionIds');
+            $permissionIds = array_map(
+                static fn (mixed $entry): int => is_array($entry) ? (int) $entry['permissionId'] : (int) $entry,
+                $entries
+            );
 
             return in_array($autoPermission->id, $permissionIds, true)
                 && ! in_array($manualPermission->id, $permissionIds, true);
