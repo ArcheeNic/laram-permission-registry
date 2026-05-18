@@ -39,7 +39,7 @@ class GrantedPermission extends BaseGrantedPermission
 
     public function permission(): BelongsTo
     {
-        return $this->belongsTo(Permission::class);
+        return $this->belongsTo(Permission::class)->withTrashed();
     }
 
     public function resource(): BelongsTo
