@@ -160,7 +160,7 @@
                             <div class="flex flex-wrap gap-1 mb-1.5">
                                 @foreach($grantedPermissions->take(2) as $grantedPermission)
                                     <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300">
-                                        {{ $grantedPermission->permission->name }}
+                                        {{ $grantedPermission->permission?->name ?? __('permission-registry::messages.not_available') }}
                                     </span>
                                 @endforeach
                                 @if($grantedPermissions->count() > 2)

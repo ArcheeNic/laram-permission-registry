@@ -187,4 +187,5 @@ return [
     'triggers_overlap_title' => 'Trigger configuration overlap',
     'triggers_overlap_warning' => 'Department :department is also used in permissions: :permissions',
     'other_service' => 'Other',
+    'not_available' => 'unavailable',
 ];

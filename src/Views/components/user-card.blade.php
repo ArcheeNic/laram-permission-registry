@@ -152,7 +152,7 @@
                         <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium
                                      bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300
                                      border border-emerald-200 dark:border-emerald-800">
-                            {{ $grantedPermission->permission->name }}
+                            {{ $grantedPermission->permission?->name ?? __('permission-registry::messages.not_available') }}
                         </span>
                     @endforeach
                     @if($user->grantedPermissions->count() > 2)

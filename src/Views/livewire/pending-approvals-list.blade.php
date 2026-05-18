@@ -30,7 +30,7 @@
                 <div>
                     <span class="text-sm text-gray-500 dark:text-gray-400">{{ __('permission-registry::Permission') }}</span>
                     <p class="text-gray-900 dark:text-gray-100 font-medium">
-                        {{ $req->grantedPermission->permission->service }} / {{ $req->grantedPermission->permission->name }}
+                        {{ $req->grantedPermission->permission?->service ?? __('permission-registry::messages.not_available') }} / {{ $req->grantedPermission->permission?->name ?? __('permission-registry::messages.not_available') }}
                     </p>
                 </div>
                 <div>
@@ -125,7 +125,7 @@
                                         {{ $request->grantedPermission->user->name ?? '—' }}
                                     </td>
                                     <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                                        {{ $request->grantedPermission->permission->service }} / {{ $request->grantedPermission->permission->name }}
+                                        {{ $request->grantedPermission->permission?->service ?? __('permission-registry::messages.not_available') }} / {{ $request->grantedPermission->permission?->name ?? __('permission-registry::messages.not_available') }}
                                     </td>
                                     <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
                                         {{ $request->created_at->format('d.m.Y H:i') }}
@@ -148,7 +148,7 @@
                                 <div>
                                     <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $request->grantedPermission->user->name ?? '—' }}</p>
                                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                        {{ $request->grantedPermission->permission->service }} / {{ $request->grantedPermission->permission->name }}
+                                        {{ $request->grantedPermission->permission?->service ?? __('permission-registry::messages.not_available') }} / {{ $request->grantedPermission->permission?->name ?? __('permission-registry::messages.not_available') }}
                                     </p>
                                 </div>
                                 <span class="text-xs text-gray-400 dark:text-gray-500">{{ $request->created_at->format('d.m.Y') }}</span>

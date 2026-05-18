@@ -63,10 +63,10 @@
                                 @foreach($grantedPermissions as $grantedPermission)
                                     <tr>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                            {{ $grantedPermission->permission->service }}
+                                            {{ $grantedPermission->permission?->service ?? __('permission-registry::messages.not_available') }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
-                                            {{ $grantedPermission->permission->name }}
+                                            {{ $grantedPermission->permission?->name ?? __('permission-registry::messages.not_available') }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                             @if($grantedPermission->resource)
