@@ -27,7 +27,7 @@ class FireVirtualUserAction
             $user->save();
 
             $this->reconcileUserPermissionsAction->handle($user->id);
-            $this->processFireRevocationsAction->handle($user->id);
+            $this->processFireRevocationsAction->handle($user->id, includeAutoGranted: true);
 
             return $user->fresh();
         });
