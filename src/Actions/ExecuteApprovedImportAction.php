@@ -443,6 +443,7 @@ class ExecuteApprovedImportAction
             PermissionResource::query()
                 ->where('service', $entry['service'])
                 ->where('kind', $entry['kind'])
+                ->where(PermissionResource::IS_IGNORED, false)
                 ->whereIn('external_id', $externalIds)
                 ->get()
                 ->each(function (PermissionResource $resource) use (&$resourceMap, $entry) {

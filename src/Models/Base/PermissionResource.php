@@ -15,6 +15,7 @@ use Illuminate\Support\Carbon;
  * @property array<string, mixed>|null $metadata
  * @property Carbon|null $synced_at
  * @property bool $present_in_source
+ * @property bool $is_ignored
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
@@ -39,6 +40,8 @@ class PermissionResource extends Model
 
     public const PRESENT_IN_SOURCE = 'present_in_source';
 
+    public const IS_IGNORED = 'is_ignored';
+
     public const CREATED_AT = 'created_at';
 
     public const UPDATED_AT = 'updated_at';
@@ -56,11 +59,13 @@ class PermissionResource extends Model
         self::METADATA,
         self::SYNCED_AT,
         self::PRESENT_IN_SOURCE,
+        self::IS_IGNORED,
     ];
 
     protected $casts = [
         self::METADATA => 'array',
         self::PRESENT_IN_SOURCE => 'boolean',
+        self::IS_IGNORED => 'boolean',
         self::SYNCED_AT => 'datetime',
     ];
 }

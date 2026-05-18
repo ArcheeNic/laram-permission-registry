@@ -28,6 +28,9 @@ class SyncResourcesAction
                     continue;
                 }
                 $seenExternalIds[] = $result['external_id'];
+                if ($result['ignored']) {
+                    continue;
+                }
                 if ($result['created']) {
                     $created++;
                 } else {
@@ -42,6 +45,7 @@ class SyncResourcesAction
                 ->where('service', $service)
                 ->where('kind', $kind)
                 ->where('present_in_source', true)
+                ->where('is_ignored', false)
                 ->whereNotIn('external_id', $seenExternalIds)
                 ->update([
                     'present_in_source' => false,
@@ -87,7 +91,7 @@ class SyncResourcesAction
         DB::transaction(function () use ($syncer, $service, $kind, $now, $externalIds, &$created, &$updated, &$reappeared, &$errors) {
             foreach ($syncer->fetchByIds($externalIds) as $row) {
                 $result = $this->upsertRow($service, $kind, $row, $now, $errors);
-                if ($result === null) {
+                if ($result === null || $result['ignored']) {
                     continue;
                 }
                 if ($result['created']) {
@@ -150,7 +154,7 @@ class SyncResourcesAction
     }
 
     /**
-     * @return array{external_id:string, created:bool, reappeared:bool}|null
+     * @return array{external_id:string, created:bool, reappeared:bool, ignored:bool}|null
      */
     private function upsertRow(string $service, string $kind, mixed $row, \DateTimeInterface $now, array &$errors): ?array
     {
@@ -176,7 +180,11 @@ class SyncResourcesAction
                     PermissionResource::PRESENT_IN_SOURCE => true,
                 ]);
 
-                return ['external_id' => $externalId, 'created' => true, 'reappeared' => false];
+                return ['external_id' => $externalId, 'created' => true, 'reappeared' => false, 'ignored' => false];
+            }
+
+            if ($existing->is_ignored) {
+                return ['external_id' => $externalId, 'created' => false, 'reappeared' => false, 'ignored' => true];
             }
 
             $wasMissing = ! $existing->present_in_source;
@@ -186,7 +194,7 @@ class SyncResourcesAction
             $existing->present_in_source = true;
             $existing->save();
 
-            return ['external_id' => $externalId, 'created' => false, 'reappeared' => $wasMissing];
+            return ['external_id' => $externalId, 'created' => false, 'reappeared' => $wasMissing, 'ignored' => false];
         } catch (\Throwable $e) {
             $errors[] = [
                 'external_id' => $row['external_id'] ?? null,

@@ -22,6 +22,8 @@ class ResourcesList extends Component
 
     public string $presence = 'present';
 
+    public string $ignored = 'active';
+
     public int $perPage = 25;
 
     public bool $showFormModal = false;
@@ -43,6 +45,7 @@ class ResourcesList extends Component
         'service' => ['except' => ''],
         'kind' => ['except' => ''],
         'presence' => ['except' => 'present'],
+        'ignored' => ['except' => 'active'],
     ];
 
     public function updatingSearch(): void
@@ -63,6 +66,30 @@ class ResourcesList extends Component
     public function updatingPresence(): void
     {
         $this->resetPage();
+    }
+
+    public function updatingIgnored(): void
+    {
+        $this->resetPage();
+    }
+
+    public function toggleIgnore(int $resourceId): void
+    {
+        $this->authorize('permission-registry.manage');
+
+        $resource = PermissionResource::query()->find($resourceId);
+        if (! $resource) {
+            session()->flash('error', __('permission-registry::Resource not found'));
+
+            return;
+        }
+
+        $resource->is_ignored = ! $resource->is_ignored;
+        $resource->save();
+
+        session()->flash('success', $resource->is_ignored
+            ? __('permission-registry::Resource ignored')
+            : __('permission-registry::Resource un-ignored'));
     }
 
     public function openCreate(): void
@@ -306,6 +333,8 @@ class ResourcesList extends Component
             ->when($this->kind !== '', fn ($q) => $q->where('kind', $this->kind))
             ->when($this->presence === 'present', fn ($q) => $q->where('present_in_source', true))
             ->when($this->presence === 'missing', fn ($q) => $q->where('present_in_source', false))
+            ->when($this->ignored === 'active', fn ($q) => $q->where('is_ignored', false))
+            ->when($this->ignored === 'ignored', fn ($q) => $q->where('is_ignored', true))
             ->withCount('grantedPermissions')
             ->orderBy('service')
             ->orderBy('kind')

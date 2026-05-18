@@ -40,6 +40,13 @@
                 <option value="missing">{{ __('permission-registry::Disappeared') }}</option>
             </select>
 
+            <select wire:model.live="ignored"
+                    class="rounded-md shadow-sm border-gray-300 dark:border-gray-600 dark:bg-neutral-700 dark:text-gray-200">
+                <option value="active">{{ __('permission-registry::Active only') }}</option>
+                <option value="all">{{ __('permission-registry::All (incl. ignored)') }}</option>
+                <option value="ignored">{{ __('permission-registry::Ignored only') }}</option>
+            </select>
+
             <div class="ml-auto flex gap-2">
                 <button wire:click="openCreate"
                         type="button"
@@ -87,11 +94,16 @@
                     <td class="px-4 py-2 text-center text-sm text-gray-700 dark:text-gray-300">{{ $resource->granted_permissions_count }}</td>
                     <td class="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">{{ optional($resource->synced_at)->format('Y-m-d H:i') ?? '—' }}</td>
                     <td class="px-4 py-2 text-center text-xs">
-                        @if($resource->present_in_source)
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">{{ __('permission-registry::present') }}</span>
-                        @else
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">{{ __('permission-registry::missing') }}</span>
-                        @endif
+                        <div class="inline-flex flex-wrap justify-center gap-1">
+                            @if($resource->present_in_source)
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">{{ __('permission-registry::present') }}</span>
+                            @else
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">{{ __('permission-registry::missing') }}</span>
+                            @endif
+                            @if($resource->is_ignored)
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full font-medium bg-gray-200 text-gray-700 dark:bg-neutral-700 dark:text-gray-300">{{ __('permission-registry::ignored') }}</span>
+                            @endif
+                        </div>
                     </td>
                     <td class="px-4 py-2 text-right">
                         <div class="inline-flex flex-wrap justify-end gap-1">
@@ -106,6 +118,11 @@
                                     type="button"
                                     class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-neutral-700 dark:text-gray-200 dark:hover:bg-neutral-600">
                                 {{ __('permission-registry::Edit') }}
+                            </button>
+                            <button wire:click="toggleIgnore({{ $resource->id }})"
+                                    type="button"
+                                    class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md {{ $resource->is_ignored ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-slate-500 text-white hover:bg-slate-600' }}">
+                                {{ $resource->is_ignored ? __('permission-registry::Un-ignore') : __('permission-registry::Ignore') }}
                             </button>
                             @if($resource->granted_permissions_count === 0)
                                 <button wire:click="deleteResource({{ $resource->id }})"
