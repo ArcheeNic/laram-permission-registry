@@ -334,7 +334,9 @@ trait ManagesPermissions
                     static fn ($v) => (int) $v,
                     $this->permissionResources[$permId] ?? []
                 )));
-                $existing = $userPermissions->where('permission_id', $permId)->where('enabled', true);
+                $existing = $userPermissions->where('permission_id', $permId)
+                    ->where('enabled', true)
+                    ->reject(fn ($g) => $g->hasErrorStatus());
                 $existingResourceIds = $existing->pluck('resource_id')->filter()->values()->all();
 
                 $toGrant = array_diff($selectedResourceIds, $existingResourceIds);
@@ -349,7 +351,7 @@ trait ManagesPermissions
                 }
             } else {
                 $existingPermission = $userPermissions->firstWhere(fn ($g) => $g->permission_id === $permId && $g->resource_id === null);
-                if ($isSelected && (! $existingPermission || ! $existingPermission->enabled)) {
+                if ($isSelected && (! $existingPermission || ! $existingPermission->enabled || $existingPermission->hasErrorStatus())) {
                     $permissionsToGrant[] = [
                         'permissionId' => $permId,
                         'resourceId' => null,
@@ -426,7 +428,7 @@ trait ManagesPermissions
         foreach ($this->dependentSelectedPermissions as $permId => $isEnabled) {
             $existingPermission = $userPermissions->first(fn ($g) => $g->permission_id === $permId && $g->resource_id === null);
 
-            if ($isEnabled && (! $existingPermission || ! $existingPermission->enabled)) {
+            if ($isEnabled && (! $existingPermission || ! $existingPermission->enabled || $existingPermission->hasErrorStatus())) {
                 $dependentPermissionsToGrant[] = [
                     'permissionId' => $permId,
                     'resourceId' => null,

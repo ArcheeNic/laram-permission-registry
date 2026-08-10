@@ -3,6 +3,7 @@
 namespace ArcheeNic\PermissionRegistry\Models;
 
 use ArcheeNic\PermissionRegistry\Database\Factories\GrantedPermissionFactory;
+use ArcheeNic\PermissionRegistry\Enums\GrantedPermissionStatus;
 use ArcheeNic\PermissionRegistry\Models\Base\GrantedPermission as BaseGrantedPermission;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -31,6 +32,11 @@ class GrantedPermission extends BaseGrantedPermission
         self::GRANTED_AT => 'datetime',
         self::EXPIRES_AT => 'datetime',
     ];
+
+    public function hasErrorStatus(): bool
+    {
+        return GrantedPermissionStatus::tryFrom((string) $this->status)?->hasError() ?? false;
+    }
 
     public function user(): BelongsTo
     {
