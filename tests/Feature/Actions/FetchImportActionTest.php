@@ -256,6 +256,44 @@ class FetchImportActionTest extends TestCase
         $this->assertSame(1, ImportStagingRow::where('import_run_id', $runId2)->count());
     }
 
+    public function test_excluded_email_is_not_matched_and_not_reported_missing(): void
+    {
+        config(['permission-registry.import.excluded_emails' => ['shared@test.com']]);
+
+        $holder = VirtualUser::create(['name' => 'Общий ящик', 'status' => VirtualUserStatus::ACTIVE->value]);
+        VirtualUserFieldValue::create([
+            'virtual_user_id' => $holder->id,
+            'permission_field_id' => $this->emailField->id,
+            'value' => 'shared@test.com',
+        ]);
+
+        $regular = VirtualUser::create(['name' => 'Обычный сотрудник', 'status' => VirtualUserStatus::ACTIVE->value]);
+        VirtualUserFieldValue::create([
+            'virtual_user_id' => $regular->id,
+            'permission_field_id' => $this->emailField->id,
+            'value' => 'regular@test.com',
+        ]);
+
+        $this->registerImporter([
+            ['external_id' => 'ext-shared', 'email' => 'shared@test.com'],
+        ]);
+
+        $importRunId = app(FetchImportAction::class)->handle($this->import->id);
+        $rows = ImportStagingRow::where('import_run_id', $importRunId)->get();
+
+        // строка с общим ящиком ни к кому не привязана
+        $sharedRow = $rows->firstWhere('external_id', 'ext-shared');
+        $this->assertNotNull($sharedRow);
+        $this->assertNull($sharedRow->matched_virtual_user_id);
+
+        // владелец общего ящика не попал в кандидаты на отзыв, обычный сотрудник — попал
+        $missingUserIds = $rows->where('match_status', ImportMatchStatus::MISSING)
+            ->pluck('matched_virtual_user_id')
+            ->all();
+        $this->assertNotContains($holder->id, $missingUserIds);
+        $this->assertContains($regular->id, $missingUserIds);
+    }
+
     private function registerImporter(array $users): void
     {
         FetchImportTestImporter::$usersToReturn = $users;

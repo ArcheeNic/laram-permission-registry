@@ -173,6 +173,10 @@ class FetchImportAction
 
             $normalized = PermissionFieldType::EMAIL->normalize($raw);
             if ($normalized !== null) {
+                if (in_array($normalized, $this->excludedEmails(), true)) {
+                    continue;
+                }
+
                 $emails[$normalized] = $normalized;
             }
         }
@@ -273,6 +277,12 @@ class FetchImportAction
             $query->whereNotIn(VirtualUserFieldValue::VIRTUAL_USER_ID, $matchedVirtualUserIds);
         }
 
+        $excludedEmails = $this->excludedEmails();
+
+        if ($excludedEmails !== []) {
+            $this->applyLowerWhereNotIn($query, VirtualUserFieldValue::VALUE, $excludedEmails);
+        }
+
         $missingUserIds = $query
             ->pluck(VirtualUserFieldValue::VIRTUAL_USER_ID)
             ->unique()
@@ -347,6 +357,33 @@ class FetchImportAction
     /**
      * @param  array<int, string>  $values
      */
+    /**
+     * @param  array<int, string>  $values
+     */
+    private function applyLowerWhereNotIn($query, string $column, array $values): void
+    {
+        if ($values === []) {
+            return;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($values), '?'));
+        $query->whereRaw("LOWER({$column}) NOT IN ({$placeholders})", array_values($values));
+    }
+
+    /**
+     * Общие и служебные ящики не участвуют в сопоставлении: они не принадлежат
+     * конкретному сотруднику, а сопоставление идёт по почте.
+     *
+     * @return array<int, string>
+     */
+    private function excludedEmails(): array
+    {
+        return array_values(array_filter(array_map(
+            static fn ($email): string => mb_strtolower(trim((string) $email)),
+            (array) config('permission-registry.import.excluded_emails', [])
+        ), static fn (string $email): bool => $email !== ''));
+    }
+
     private function applyLowerWhereIn($query, string $column, array $values): void
     {
         if ($values === []) {
